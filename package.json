@@ -1,0 +1,36 @@
+{
+  "name": "utapi",
+  "version": "1.0.0",
+  "description": "API for tracking resource utilization and reporting metrics",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scality/utapi.git"
+  },
+  "author": "Scality",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/scality/utapi/issues"
+  },
+  "homepage": "https://github.com/scality/utapi#readme",
+  "dependencies": {
+    "arsenal": "scality/Arsenal",
+    "babel-core": "^6.2.1",
+    "babel-plugin-transform-es2015-destructuring": "^6.1.18",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.2.0",
+    "babel-plugin-transform-es2015-parameters": "^6.2.0",
+    "werelogs": "scality/werelogs"
+  },
+  "devDependencies": {
+    "eslint": "^2.4.0",
+    "eslint-config-airbnb": "^6.0.0",
+    "eslint-config-scality": "scality/Guidelines",
+    "mocha": "^3.0.2"
+  },
+  "scripts": {
+    "lint": "eslint $(git ls-files '*.js')",
+    "lint_md": "mdlint $(git ls-files '*.md')",
+    "start": "node index.js"
+  },
+  "private": true
+}
