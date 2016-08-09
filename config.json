@@ -1,0 +1,12 @@
+{
+    "port": 8100,
+    "workers": 10,
+    "log": {
+        "logLevel": "info",
+        "dumpLevel": "error"
+    },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
+    }
+}
