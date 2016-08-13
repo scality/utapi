@@ -1,4 +1,6 @@
 import { errors } from 'arsenal';
+import validateBuckets from './validateBuckets';
+import validateTimeRange from './validateTimeRange';
 
 const _keys = Symbol();
 const _dict = Symbol();
@@ -7,12 +9,18 @@ const _error = Symbol();
 /*
  * Map to link input with check functions
  */
-const keyMap = new Map([]);
+const keyMap = new Map([
+    ['buckets', validateBuckets],
+    ['timeRange', validateTimeRange],
+]);
 
 /*
  * Map to link input with error to return
  */
-const keyError = new Map([]);
+const keyError = new Map([
+    ['buckets', errors.InvalidParameterValue],
+    ['timeRange', errors.InvalidParameterValue],
+]);
 
 /**
  * Class to validate input from http request,

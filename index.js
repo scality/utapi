@@ -2,5 +2,5 @@
 
 require('babel-core/register');
 module.exports = {
-    UtapiServer: require('./lib/server.js'),
+    UtapiServer: require('./lib/server.js').default,
 };
