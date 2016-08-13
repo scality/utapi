@@ -1,3 +1,4 @@
+import url from 'url';
 import { errors } from 'arsenal';
 import safeJsonParse from '../utils/safeJsonParse';
 
@@ -36,6 +37,13 @@ class Router {
      */
     static extractRequestData(req, cb) {
         const body = [];
+        const { pathname, query } = url.parse(req.url, true);
+        const resource = pathname.substring(1) || 'service';
+        const reqData = {
+            resource,
+        };
+        // assign query params
+        Object.assign(reqData, query);
         req.on('data', data => body.push(data))
         .on('error', cb)
         .on('end', () => {
@@ -43,7 +51,7 @@ class Router {
             if (jsonParseRes.error) {
                 return cb(errors.InvalidParameterValue);
             }
-            return cb(null, jsonParseRes.result);
+            return cb(null, Object.assign(reqData, jsonParseRes.result));
         });
     }
 
@@ -57,7 +65,7 @@ class Router {
      */
     _finalizeRequest(utapiRequest, route, res, cb) {
         // const log = utapiRequest.getLog();
-        utapiRequest.setStatusCode(route.getCode());
+        utapiRequest.setStatusCode(route.getStatusCode());
         return route.getResponseBuilder()(utapiRequest, res, cb);
     }
 
@@ -95,7 +103,19 @@ class Router {
      * @return {undefined}
      */
     _validateRoute(utapiRequest, route, data, cb) {
-        // TODO: perform validation
+        const log = utapiRequest.getLog();
+        log.trace('checking input data validity', {
+            method: 'Router._validateRoute',
+        });
+        const validator = route.getValidator()(data);
+        const validationResult = validator.validate();
+        if (!validationResult) {
+            log.trace('input parameters are not well formated or missing', {
+                method: 'Router._validateRoute',
+            });
+            return cb(validator.getValidationError());
+        }
+        utapiRequest.setValidator(validator);
         return this._startRequest(utapiRequest, route, cb);
     }
 
@@ -122,25 +142,42 @@ class Router {
             if (!requestData) {
                 return cb(errors.InvalidParameterValue);
             }
-            if (!requestData.Action) {
+            const { Action, Version, resource } = requestData;
+            if (!Action) {
                 log.trace('missing action parameter', {
                     method: 'Router.doRoute',
                 });
                 return cb(errors.InvalidAction);
             }
+            if (!Version) {
+                // version is optional
+                log.trace('missing version parameter', {
+                    method: 'Router.doRoute',
+                });
+            }
             if (!this._routes[req.method]) {
                 log.trace('cannot find route with this method', {
                     method: 'Router.doRoute',
+                    httpMethod: req.method,
                 });
                 return cb(errors.NotImplemented);
             }
-            const route = this._routes[req.method][requestData.Action];
+            if (!this._routes[req.method][resource]) {
+                log.trace('cannot find resource with this method', {
+                    method: 'Router.doRoute',
+                    httpMethod: req.method,
+                    resource,
+                });
+                return cb(errors.NotImplemented);
+            }
+            const route = this._routes[req.method][resource][Action];
             if (!route) {
                 log.trace('cannot find route for this Action under this ' +
                     'http method', {
                         method: 'Router.doRoute',
-                        Action: requestData.Action,
                         httpMethod: req.method,
+                        resource,
+                        Action: requestData.Action,
                     });
                 return cb(errors.NotImplemented);
             }
