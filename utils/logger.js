@@ -1,4 +1,4 @@
-import Logger from 'werelogs';
+import { Logger } from 'werelogs';
 import _config from '../Config';
 
 export default new Logger('Utapi', {
