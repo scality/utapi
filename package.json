@@ -19,7 +19,7 @@
     "babel-plugin-transform-es2015-destructuring": "^6.1.18",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.2.0",
     "babel-plugin-transform-es2015-parameters": "^6.2.0",
-    "redis": "^2.6.2",
+    "ioredis": "^2.3.0",
     "werelogs": "scality/werelogs"
   },
   "devDependencies": {
