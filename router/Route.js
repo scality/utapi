@@ -67,6 +67,14 @@ export default class Route {
      * @return {number} Http status code
      */
     getStatusCode() {
-        return this._properties.code;
+        return this._properties.statusCode;
+    }
+
+    /**
+    * Return the resource the route should be acting on
+    * @return {string} resource (service/bucket/account/user)
+    */
+    getResource() {
+        return this._properties.resource;
     }
 }

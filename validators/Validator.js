@@ -1,0 +1,107 @@
+import { errors } from 'arsenal';
+
+const _keys = Symbol();
+const _dict = Symbol();
+const _error = Symbol();
+
+/*
+ * Map to link input with check functions
+ */
+const keyMap = new Map([]);
+
+/*
+ * Map to link input with error to return
+ */
+const keyError = new Map([]);
+
+/**
+ * Class to validate input from http request,
+ * once create, input are immutable
+ *
+ * @class Validator
+ */
+export default class Validator {
+
+    /**
+     * Constructor
+     * @param {object} keys - Key value object, form { key: (boolean:required) }
+     * @param {object} dict - Http request input
+     * @return {object} Instance of Validator
+     */
+    constructor(keys, dict) {
+        this[_keys] = keys;
+        this[_dict] = dict;
+        this[_error] = null;
+    }
+
+    /**
+     * Validates input data and required fields
+     * @return {boolean} validation result
+     */
+    validate() {
+        const keys = this[_keys];
+        const dict = this[_dict];
+        const valid = Object.keys(dict).every(item => {
+            // ignore optional params
+            if (keys[item] === undefined) {
+                return true;
+            }
+            if (typeof keys[item] === 'boolean') {
+                const check = keyMap.get(item);
+                if (!check) {
+                    const errmsg =
+                        `Validator::validate()-> Invalid check for ${item}`;
+                    throw new Error(errmsg);
+                }
+                // return error if check failed
+                if (!check.apply(null, [dict[item]])) {
+                    this[_error] = keyError.get(item);
+                    return false;
+                }
+                return true;
+            }
+            // if not boolean
+            this[_error] = errors.WrongFormat;
+            return false;
+        });
+        return valid && Object.keys(keys).every(key => {
+            if (keys[key] === true) {
+                if (dict[key] === undefined) {
+                    this[_error] = errors.WrongFormat;
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    /**
+     * Returns validation error
+     * @return {ArsenalError} arsenal error object
+     */
+    getValidationError() {
+        return this[_error];
+    }
+
+    /**
+     * Get request param
+     *
+     * @param {string} key - Key to retrieve
+     * @return {*} Return the value matching with the key from user input
+     * @throws {Error} Return an error if the key is not register in validator
+     */
+    get(key) {
+        if (typeof this[_keys][key] === 'boolean') {
+            const value = this[_dict][key];
+            if (typeof value === 'object' && !(value instanceof Array)) {
+                return Object.assign({}, value);
+            }
+            if (value instanceof Array) {
+                return value.slice();
+            }
+            return value;
+        }
+        throw new Error(`Validator::get(${key})-> Invalid key`);
+    }
+
+}
