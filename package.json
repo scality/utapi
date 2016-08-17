@@ -15,6 +15,7 @@
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
     "arsenal": "scality/Arsenal",
+    "async": "^2.0.1",
     "babel-core": "^6.2.1",
     "babel-plugin-transform-es2015-destructuring": "^6.1.18",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.2.0",

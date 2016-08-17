@@ -1,16 +1,15 @@
-// import BucketsHandler from '../BucketsHandler';
-// import validatorBucketListMetrics from '../validator/bucketListMetrics';
-// import bucketsListMetricsResponse from '../response/bucketListMetrics';
+import BucketsHandler from '../handlers/BucketsHandler';
+import validateBucketsListMetrics from '../validators/bucketsListMetrics';
+import bucketsListMetricsResponse from '../responses/bucketsListMetrics';
 
-// routes
 export default [
-    // {
-    //     validator: validatorBucketListMetrics,
-    //     handler: BucketsHandler.listMetrics,
-    //     method: 'POST',
-    //     action: 'ListMetrics',
-    //     resource: 'buckets',
-    //     responseBuilder: bucketsListMetricsResponse,
-    //     statusCode: 200,
-    // },
+    {
+        validator: validateBucketsListMetrics,
+        handler: BucketsHandler.listMetrics,
+        method: 'POST',
+        action: 'ListMetrics',
+        resource: 'buckets',
+        responseBuilder: bucketsListMetricsResponse,
+        statusCode: 200,
+    },
 ];
