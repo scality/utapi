@@ -10,3 +10,4 @@ test:
     override:
         - npm run --silent lint_md
         - npm run --silent lint
+        - npm run ft_test
