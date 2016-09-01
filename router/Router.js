@@ -1,6 +1,8 @@
+import assert from 'assert';
 import url from 'url';
-import { errors } from 'arsenal';
+import { auth, errors, policies } from 'arsenal';
 import safeJsonParse from '../utils/safeJsonParse';
+import vault from '../lib/Vault';
 
 class Router {
 
@@ -116,7 +118,7 @@ class Router {
             return cb(validator.getValidationError());
         }
         utapiRequest.setValidator(validator);
-        return this._startRequest(utapiRequest, route, cb);
+        return this._processSecurityChecks(utapiRequest, route, cb);
     }
 
     /**
@@ -182,22 +184,88 @@ class Router {
                 return cb(errors.NotImplemented);
             }
             utapiRequest.setRoute(route);
-            return this._processSecurityChecks(utapiRequest, route,
-                requestData, cb);
+            return this._validateRoute(utapiRequest, route, requestData, cb);
         });
     }
 
     /**
-     * Process security checks according to the route
+     * Send authentication and authorization request to vault
+     * @param {UtapiRequest} utapiRequest - Utapi request object
+     * @param {function} cb - Callback (err)
+     * @return {undefined}
+     */
+    _authSquared(utapiRequest, cb) {
+        const log = utapiRequest.getLog();
+        const authHeader = utapiRequest.getRequestHeaders().authorization;
+        if (!authHeader || !authHeader.startsWith('AWS4')) {
+            log.trace('missing auth header for v4 auth');
+            return cb(errors.InvalidRequest.customizeDescription('Must ' +
+                'use Auth V4 for this request.'));
+        }
+        // resourceType will either be "buckets", "accounts" or "users"
+        const resourceType = utapiRequest.getResource();
+        const validator = utapiRequest.getValidator();
+        // specific resources will be names of buckets, accounts or users
+        const specificResources = validator.get(resourceType);
+
+        const requestContexts = specificResources.map(specificResource =>
+            new policies.RequestContext(utapiRequest.getRequestHeaders(),
+            utapiRequest.getRequestQuery(), resourceType, specificResource,
+            utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
+            utapiRequest.getAction(), 'utapi')
+        );
+        auth.setAuthHandler(vault);
+        const requestPlusPath = utapiRequest.getRequest();
+        requestPlusPath.path = utapiRequest.getRequestPath();
+        return auth.doAuth(requestPlusPath, log, (err, authResults) => {
+            if (err) {
+                return cb(err);
+            }
+            // Will only have authorizationResults if request is from a user
+            // rather than an account
+            if (authResults) {
+                const authorizedResources = [];
+                authResults.forEach(result => {
+                    if (result.isAllowed) {
+                        assert(typeof result.arn === 'string');
+                        assert(result.arn.indexOf('/') > -1);
+                        // result.arn should be of format:
+                        // arn:scality:utapi:::resourcetype/resource
+                        const resource = result.arn.split('/')[1];
+                        authorizedResources.push(resource);
+                        log.trace('access granted for resource', { resource });
+                    }
+                });
+                if (authorizedResources.length === 0) {
+                    log.trace('not authorized to access any requested ' +
+                    'resources');
+                    return cb(errors.AccessDenied);
+                }
+                // Change list of resources to those that are authorized
+                validator.set(resourceType, authorizedResources);
+            }
+            log.trace('passed security checks');
+            return cb();
+        },
+        's3', requestContexts);
+    }
+
+    /**
+     * Process security checks
      * @param {UtapiRequest} utapiRequest - Utapi request object
      * @param {Route} route - Route information object
-     * @param {object} requestData - data from the request
      * @param {function} cb - Callback (err, result)
      * @return {undefined}
      */
-    _processSecurityChecks(utapiRequest, route, requestData, cb) {
-        // TODO: auth v4 and authorization with policies
-        return this._validateRoute(utapiRequest, route, requestData, cb);
+    _processSecurityChecks(utapiRequest, route, cb) {
+        const log = utapiRequest.getLog();
+        return this._authSquared(utapiRequest, err => {
+            if (err) {
+                log.trace('error from vault', { errors: err });
+                return cb(err);
+            }
+            return this._startRequest(utapiRequest, route, cb);
+        });
     }
 
 }
