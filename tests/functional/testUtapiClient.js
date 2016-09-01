@@ -46,7 +46,7 @@ describe('Counters', () => {
             next => utapiClient.pushMetricListBucket(testBucket, Date.now(),
                 next),
             next => utapiClient.pushMetricPutObject(testBucket, Date.now(), 8,
-                next),
+                0, next),
             next => utapiClient.pushMetricGetObject(testBucket, Date.now(), 8,
                 next),
             next => utapiClient.pushMetricDeleteObject(testBucket, Date.now(),
