@@ -35,27 +35,25 @@ describe('Counters', () => {
 
     it('should set global counters (other than create bucket counter) to 0 on' +
         ' bucket creation', done => {
-        const now = Date.now();
-        utapiClient.pushMetricCreateBucket(reqUid, testBucket, now,
+        utapiClient.pushMetricCreateBucket(reqUid, testBucket,
             () => _assertCounters(testBucket, done));
     });
 
     it('should reset global counters on bucket re-creation', done => {
         series([
             next => utapiClient.pushMetricCreateBucket(reqUid, testBucket,
-                Date.now(), next),
-            next => utapiClient.pushMetricListBucket(reqUid, testBucket,
-                Date.now(), next),
-            next => utapiClient.pushMetricPutObject(reqUid, testBucket,
-                Date.now(), 8, 0, next),
-            next => utapiClient.pushMetricGetObject(reqUid, testBucket,
-                Date.now(), 8, next),
-            next => utapiClient.pushMetricDeleteObject(reqUid, testBucket,
-                Date.now(), 8, next),
+                next),
+            next => utapiClient.pushMetricListBucket(reqUid, testBucket, next),
+            next => utapiClient.pushMetricPutObject(reqUid, testBucket, 8, 0,
+                next),
+            next => utapiClient.pushMetricGetObject(reqUid, testBucket, 8,
+                next),
+            next => utapiClient.pushMetricDeleteObject(reqUid, testBucket, 8,
+                next),
             next => utapiClient.pushMetricDeleteBucket(reqUid, testBucket,
-                Date.now(), next),
+                next),
             next => utapiClient.pushMetricCreateBucket(reqUid, testBucket,
-                Date.now(), next),
+                next),
         ], () => _assertCounters(testBucket, done));
     });
 });
