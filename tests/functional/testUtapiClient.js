@@ -8,6 +8,7 @@ const testBucket = 'foo';
 const memBackend = new MemoryBackend();
 const datastore = new Datastore();
 const utapiClient = new UtapiClient();
+const reqUid = 'foo';
 datastore.setClient(memBackend);
 utapiClient.setDataStore(datastore);
 
@@ -35,26 +36,26 @@ describe('Counters', () => {
     it('should set global counters (other than create bucket counter) to 0 on' +
         ' bucket creation', done => {
         const now = Date.now();
-        utapiClient.pushMetricCreateBucket(testBucket, now,
+        utapiClient.pushMetricCreateBucket(reqUid, testBucket, now,
             () => _assertCounters(testBucket, done));
     });
 
     it('should reset global counters on bucket re-creation', done => {
         series([
-            next => utapiClient.pushMetricCreateBucket(testBucket, Date.now(),
-                next),
-            next => utapiClient.pushMetricListBucket(testBucket, Date.now(),
-                next),
-            next => utapiClient.pushMetricPutObject(testBucket, Date.now(), 8,
-                0, next),
-            next => utapiClient.pushMetricGetObject(testBucket, Date.now(), 8,
-                next),
-            next => utapiClient.pushMetricDeleteObject(testBucket, Date.now(),
-                8, next),
-            next => utapiClient.pushMetricDeleteBucket(testBucket, Date.now(),
-                next),
-            next => utapiClient.pushMetricCreateBucket(testBucket, Date.now(),
-                next),
+            next => utapiClient.pushMetricCreateBucket(reqUid, testBucket,
+                Date.now(), next),
+            next => utapiClient.pushMetricListBucket(reqUid, testBucket,
+                Date.now(), next),
+            next => utapiClient.pushMetricPutObject(reqUid, testBucket,
+                Date.now(), 8, 0, next),
+            next => utapiClient.pushMetricGetObject(reqUid, testBucket,
+                Date.now(), 8, next),
+            next => utapiClient.pushMetricDeleteObject(reqUid, testBucket,
+                Date.now(), 8, next),
+            next => utapiClient.pushMetricDeleteBucket(reqUid, testBucket,
+                Date.now(), next),
+            next => utapiClient.pushMetricCreateBucket(reqUid, testBucket,
+                Date.now(), next),
         ], () => _assertCounters(testBucket, done));
     });
 });
