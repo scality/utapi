@@ -3,7 +3,7 @@ import { mapSeries, series } from 'async';
 import UtapiClient from '../../lib/UtapiClient';
 import MemoryBackend from '../../lib/backend/Memory';
 import Datastore from '../../lib/Datastore';
-import { getBucketGlobalCounters, getMetricFromKey } from '../../lib/schema';
+import { getBucketCounters, getMetricFromKey } from '../../lib/schema';
 const testBucket = 'foo';
 const memBackend = new MemoryBackend();
 const datastore = new Datastore();
@@ -13,8 +13,8 @@ datastore.setClient(memBackend);
 utapiClient.setDataStore(datastore);
 
 function _assertCounters(bucket, cb) {
-    const gCounters = getBucketGlobalCounters(testBucket);
-    return mapSeries(gCounters, (item, next) =>
+    const counters = getBucketCounters(testBucket);
+    return mapSeries(counters, (item, next) =>
         memBackend.get(item, (err, res) => {
             if (err) {
                 return next(err);
@@ -33,13 +33,13 @@ function _assertCounters(bucket, cb) {
 describe('Counters', () => {
     afterEach(() => memBackend.flushDb());
 
-    it('should set global counters (other than create bucket counter) to 0 on' +
+    it('should set counters (other than create bucket counter) to 0 on' +
         ' bucket creation', done => {
         utapiClient.pushMetricCreateBucket(reqUid, testBucket,
             () => _assertCounters(testBucket, done));
     });
 
-    it('should reset global counters on bucket re-creation', done => {
+    it('should reset counters on bucket re-creation', done => {
         series([
             next => utapiClient.pushMetricCreateBucket(reqUid, testBucket,
                 next),
