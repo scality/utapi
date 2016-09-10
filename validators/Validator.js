@@ -19,7 +19,12 @@ const keyMap = new Map([
  */
 const keyError = new Map([
     ['buckets', errors.InvalidParameterValue],
-    ['timeRange', errors.InvalidParameterValue],
+    ['timeRange', errors.InvalidParameterValue.customizeDescription(
+        'Timestamps must be one of the following intervals for any day/hour' +
+            ' (mm:ss:SS) - start must be one of [00:00:000, 15:00:000, ' +
+            '30:00:000, 45:00:000], end must be one of [14:59:999,' +
+            ' 29:59:999, 44:59:999, 59:59:999].'
+    )],
 ]);
 
 /**
