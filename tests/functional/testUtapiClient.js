@@ -21,11 +21,7 @@ function _assertCounters(bucket, cb) {
             }
             const metric = getMetricFromKey(item, bucket)
                 .replace(':counter', '');
-            if (item.indexOf('CreateBucket') !== -1) {
-                assert.equal(res, 1, `${metric} must be 1`);
-            } else {
-                assert.equal(res, 0, `${metric} must be 0`);
-            }
+            assert.equal(res, 0, `${metric} must be 0`);
             return next();
         }), cb);
 }
@@ -33,8 +29,7 @@ function _assertCounters(bucket, cb) {
 describe('Counters', () => {
     afterEach(() => memBackend.flushDb());
 
-    it('should set counters (other than create bucket counter) to 0 on' +
-        ' bucket creation', done => {
+    it('should set counters to 0 on bucket creation', done => {
         utapiClient.pushMetricCreateBucket(reqUid, testBucket,
             () => _assertCounters(testBucket, done));
     });
