@@ -21,6 +21,7 @@
     "babel-plugin-transform-es2015-modules-commonjs": "^6.2.0",
     "babel-plugin-transform-es2015-parameters": "^6.2.0",
     "ioredis": "^2.3.0",
+    "vaultclient": "scality/vaultclient",
     "werelogs": "scality/werelogs"
   },
   "devDependencies": {

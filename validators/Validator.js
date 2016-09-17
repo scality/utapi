@@ -117,4 +117,19 @@ export default class Validator {
         throw new Error(`Validator::get(${key})-> Invalid key`);
     }
 
+    /**
+     * Set key value
+     *
+     * @param {string} key - Key to set
+     * @param {string | array} value - value to retrieve
+     * @return {undefined}
+     */
+    set(key, value) {
+        if (typeof this[_keys][key] === 'boolean') {
+            this[_dict][key] = value;
+            return;
+        }
+        throw new Error(`Validator::set(${key})-> Invalid key`);
+    }
+
 }
