@@ -2,15 +2,17 @@ import assert from 'assert';
 import url from 'url';
 import { auth, errors, policies } from 'arsenal';
 import safeJsonParse from '../utils/safeJsonParse';
-import vault from '../lib/Vault';
+import Vault from '../lib/Vault';
 
 class Router {
 
     /**
      * @constructor
+     * @param {Config} config - Config instance
      */
-    constructor() {
+    constructor(config) {
         this._routes = {};
+        this._vault = new Vault(config);
     }
 
     /**
@@ -214,7 +216,7 @@ class Router {
             utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
             utapiRequest.getAction(), 'utapi')
         );
-        auth.setAuthHandler(vault);
+        auth.setAuthHandler(this._vault);
         const requestPlusPath = utapiRequest.getRequest();
         requestPlusPath.path = utapiRequest.getRequestPath();
         return auth.doAuth(requestPlusPath, log, (err, authResults) => {
