@@ -1,5 +1,5 @@
 import assert from 'assert';
-import MemoryBackend from '../../lib/backend/Memory';
+import MemoryBackend from '../../src/lib/backend/Memory';
 
 
 describe('Test Memory Backend', () => {
