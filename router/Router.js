@@ -216,10 +216,10 @@ class Router {
             utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
             utapiRequest.getAction(), 'utapi')
         );
-        auth.setAuthHandler(this._vault);
+        auth.setHandler(this._vault);
         const requestPlusPath = utapiRequest.getRequest();
         requestPlusPath.path = utapiRequest.getRequestPath();
-        return auth.doAuth(requestPlusPath, log, (err, authResults) => {
+        return auth.server.doAuth(requestPlusPath, log, (err, authResults) => {
             if (err) {
                 return cb(err);
             }
