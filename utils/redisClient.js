@@ -12,6 +12,7 @@ export default function redisClient(config, log) {
         enableOfflineQueue: false,
         // keep alive 3 seconds
         keepAlive: 3000,
+        dropBufferSupport: true,
     }, config));
     redisClient.on('error', err => log.trace('error with redis client', {
         error: err,
