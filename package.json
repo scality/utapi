@@ -20,6 +20,7 @@
     "babel-plugin-transform-es2015-destructuring": "^6.1.18",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.2.0",
     "babel-plugin-transform-es2015-parameters": "^6.2.0",
+    "hiredis": "^0.5.0",
     "ioredis": "^2.3.0",
     "vaultclient": "scality/vaultclient#rel/6.2",
     "werelogs": "scality/werelogs#rel/6.2"
