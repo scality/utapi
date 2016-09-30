@@ -39,5 +39,8 @@
     "start": "node index.js",
     "test": "mocha --compilers js:babel-core/register --recursive tests/unit"
   },
-  "private": true
+  "private": true,
+  "optionalDependencies": {
+    "hiredis": "^0.5.0"
+  }
 }
