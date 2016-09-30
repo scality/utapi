@@ -126,7 +126,7 @@ class UtapiServer {
         * directly to the socket, without node.js trying to encode the data
         * over and over again.
         */
-        const payload = new Buffer(JSON.stringify(data));
+        const payload = Buffer.from(JSON.stringify(data), 'utf8');
         res.writeHead(code, {
             'server': 'ScalityS3',
             'x-scal-request-id': log.getSerializedUids(),
