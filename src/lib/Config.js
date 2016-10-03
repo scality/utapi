@@ -12,7 +12,7 @@ class Config {
          * It can be overridden using the UTAPI_CONFIG_FILE environment var.
          */
         this._basePath = path.resolve(__dirname, '..');
-        this.path = `${this._basePath}/config.json`;
+        this.path = `${this._basePath}/../config.json`;
         if (process.env.UTAPI_CONFIG_FILE !== undefined) {
             this.path = process.env.UTAPI_CONFIG_FILE;
         }

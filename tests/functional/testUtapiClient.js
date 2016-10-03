@@ -1,9 +1,9 @@
 import assert from 'assert';
 import { mapSeries, series } from 'async';
-import UtapiClient from '../../lib/UtapiClient';
-import MemoryBackend from '../../lib/backend/Memory';
-import Datastore from '../../lib/Datastore';
-import { getBucketCounters, getMetricFromKey } from '../../lib/schema';
+import UtapiClient from '../../src/lib/UtapiClient';
+import MemoryBackend from '../../src/lib/backend/Memory';
+import Datastore from '../../src/lib/Datastore';
+import { getBucketCounters, getMetricFromKey } from '../../src/lib/schema';
 const testBucket = 'foo';
 const memBackend = new MemoryBackend();
 const datastore = new Datastore();

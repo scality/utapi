@@ -1,8 +1,8 @@
 import assert from 'assert';
-import Buckets from '../../lib/Buckets';
-import MemoryBackend from '../../lib/backend/Memory';
-import Datastore from '../../lib/Datastore';
-import { genBucketStateKey, genBucketKey } from '../../lib/schema';
+import Buckets from '../../src/lib/Buckets';
+import MemoryBackend from '../../src/lib/backend/Memory';
+import Datastore from '../../src/lib/Datastore';
+import { genBucketStateKey, genBucketKey } from '../../src/lib/schema';
 import { Logger } from 'werelogs';
 const logger = new Logger('UtapiTest');
 const testBucket = 'foo';
