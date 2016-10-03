@@ -37,6 +37,10 @@ export default function validateTimeRange(timeRange) {
                 return false;
             }
         }
+
+        if (timeRange[0] > timeRange[1]) {
+            return false;
+        }
         return true;
     }
     return false;
