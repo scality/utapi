@@ -35,6 +35,7 @@ function assertMetrics(bucket, props, done) {
             's3:CompleteMultipartUpload': 0,
             's3:AbortMultipartUpload': 0,
             's3:DeleteObject': 0,
+            's3:MultiObjectDelete': 0,
             's3:GetObject': 0,
             's3:GetObjectAcl': 0,
             's3:PutObjectAcl': 0,
@@ -142,6 +143,9 @@ describe('Get Bucket Metrics', () => {
 
     it('should return metrics for delete object', done =>
         testOps('deleteObject', 's3:DeleteObject', done));
+
+    it('should return metrics for multiObjectDelete', done =>
+        testOps('multiObjectDelete', 's3:MultiObjectDelete', done));
 
     it('should return metrics for get object', done =>
         testOps('getObject', 's3:GetObject', done));
