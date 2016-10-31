@@ -2,7 +2,7 @@ import http from 'http';
 import https from 'https';
 import url from 'url';
 
-import { Clustering, https as arsenalHttps } from 'arsenal';
+import { Clustering, https as arsenalHttps, errors, ipCheck } from 'arsenal';
 import { Logger } from 'werelogs';
 
 import config from './Config';
@@ -45,7 +45,24 @@ class UtapiServer {
             .setDatastore(this.datastore)
             .setRequestQuery(query)
             .setRequestPath(path);
-        router.doRoute(utapiRequest, (err, data) => {
+        // temp hack: healthcheck route
+        if (path === '/_/healthcheck' && (req.method === 'GET'
+            || req.method === 'POST')) {
+            utapiRequest.setStatusCode(200);
+            const allowIp = ipCheck.ipMatchCidrList(
+                config.healthChecks.allowFrom, req.socket.remoteAddress);
+            if (!allowIp) {
+                return this.errorResponse(utapiRequest, errors.AccessDenied);
+            }
+            const redisClient = this.datastore.getClient();
+            if (redisClient.status !== 'ready') {
+                return this.errorResponse(utapiRequest,
+                        errors.InternalError.customizeDescription(
+                            'Redis server is not ready'));
+            }
+            return this.response(utapiRequest, {});
+        }
+        return router.doRoute(utapiRequest, (err, data) => {
             if (err) {
                 return this.errorResponse(utapiRequest, err);
             }

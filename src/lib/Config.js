@@ -58,6 +58,20 @@ class Config {
             }
         }
 
+        this.healthChecks = { allowFrom: ['127.0.0.1/8', '::1'] };
+        if (config.healthChecks && config.healthChecks.allowFrom) {
+            assert(Array.isArray(config.healthChecks.allowFrom),
+                'config: invalid healthcheck configuration. allowFrom must ' +
+                'be an array');
+            config.healthChecks.allowFrom.forEach(item => {
+                assert(typeof item === 'string',
+                'config: invalid healthcheck configuration. allowFrom IP ' +
+                'address must be a string');
+            });
+            // augment to the defaults
+            this.healthChecks.allowFrom = this.healthChecks.allowFrom.concat(
+                config.healthChecks.allowFrom);
+        }
         // default to standalone configuration
         this.redis = { host: '127.0.0.1', port: 6379 };
         if (config.redis) {
