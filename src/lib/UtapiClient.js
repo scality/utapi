@@ -453,33 +453,38 @@ export default class UtapiClient {
     }
 
     /**
-    * Updates counter for DeleteObject action on an object of Bucket resource.
+    * Updates counter for DeleteObject or MultiObjectDelete action
     * @param {string} reqUid - Request Unique Identifier
     * @param {string} bucket - bucket name
-    * @param {number} objectSize - size of the object
+    * @param {number} objectSize - size of the object(s)
+    * @param {number} numOfObjects - number of objects deleted
     * @param {callback} [cb] - (optional) callback to call
     * @return {undefined}
     */
-    pushMetricDeleteObject(reqUid, bucket, objectSize, cb) {
+    _genericPushMetricDeleteObject(reqUid, bucket, objectSize,
+        numOfObjects, cb) {
         const callback = cb || this._noop;
         if (this.disableClient) {
             return callback();
         }
+        const bucketAction = numOfObjects === 1 ? 'deleteObject'
+            : 'multiObjectDelete';
         const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
         const timestamp = UtapiClient.getNormalizedTimestamp();
         log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricDeleteObject',
+            method: 'UtapiClient._genericPushMetricDeleteObject',
             bucket, timestamp,
         });
         return this.ds.batch([
             ['decrby', genBucketCounter(bucket, 'storageUtilizedCounter'),
                 objectSize],
-            ['decr', genBucketCounter(bucket, 'numberOfObjectsCounter')],
-            ['incr', genBucketKey(bucket, 'deleteObject', timestamp)],
+            ['decrby', genBucketCounter(bucket, 'numberOfObjectsCounter'),
+                numOfObjects],
+            ['incr', genBucketKey(bucket, bucketAction, timestamp)],
         ], (err, results) => {
             if (err) {
                 log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricDeleteObject',
+                    method: 'UtapiClient._genericPushMetricDeleteObject',
                     error: err,
                 });
                 return callback(errors.InternalError);
@@ -492,7 +497,7 @@ export default class UtapiClient {
             actionCounter = actionCounter < 0 ? 0 : actionCounter;
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricDeleteObject',
+                    method: 'UtapiClient._genericPushMetricDeleteObject',
                     metric: 'storage utilized',
                     error: actionErr,
                 });
@@ -512,7 +517,7 @@ export default class UtapiClient {
             actionCounter = actionCounter < 0 ? 0 : actionCounter;
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricDeleteObject',
+                    method: 'UtapiClient._genericPushMetricDeleteObject',
                     metric: 'num of objects',
                     error: actionErr,
                 });
@@ -526,6 +531,36 @@ export default class UtapiClient {
                     timestamp, actionCounter]);
             return this.ds.batch(cmds, callback);
         });
+    }
+
+
+    /**
+    * Updates counter for DeleteObject action on an object of Bucket resource.
+    * @param {string} reqUid - Request Unique Identifier
+    * @param {string} bucket - bucket name
+    * @param {number} objectSize - size of the object deleted
+    * @param {callback} [cb] - (optional) callback to call
+    * @return {undefined}
+    */
+    pushMetricDeleteObject(reqUid, bucket, objectSize, cb) {
+        this._genericPushMetricDeleteObject(reqUid, bucket, objectSize,
+            1, cb);
+        return undefined;
+    }
+
+    /**
+    * Updates counter for MultiObjectDelete action
+    * @param {string} reqUid - Request Unique Identifier
+    * @param {string} bucket - bucket name
+    * @param {number} objectSize - total size of the objects deleted
+    * @param {number} numOfObjects - number of objects deleted
+    * @param {callback} [cb] - (optional) callback to call
+    * @return {undefined}
+    */
+    pushMetricMultiObjectDelete(reqUid, bucket, objectSize, numOfObjects, cb) {
+        this._genericPushMetricDeleteObject(reqUid, bucket, objectSize,
+            numOfObjects, cb);
+        return undefined;
     }
 
     /**

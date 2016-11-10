@@ -26,6 +26,7 @@ const bucketKeys = {
     abortMultipartUpload: (b, t) =>
         `s3:buckets:${t}:${b}:AbortMultipartUpload`,
     deleteObject: (b, t) => `s3:buckets:${t}:${b}:DeleteObject`,
+    multiObjectDelete: (b, t) => `s3:buckets:${t}:${b}:MultiObjectDelete`,
     uploadPart: (b, t) => `s3:buckets:${t}:${b}:UploadPart`,
     getObject: (b, t) => `s3:buckets:${t}:${b}:GetObject`,
     getObjectAcl: (b, t) => `s3:buckets:${t}:${b}:GetObjectAcl`,

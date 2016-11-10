@@ -135,6 +135,7 @@ export default class Buckets {
                     's3:CompleteMultipartUpload': 0,
                     's3:AbortMultipartUpload': 0,
                     's3:DeleteObject': 0,
+                    's3:MultiObjectDelete': 0,
                     's3:GetObject': 0,
                     's3:GetObjectAcl': 0,
                     's3:PutObjectAcl': 0,
