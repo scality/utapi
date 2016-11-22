@@ -126,6 +126,7 @@ export default class Buckets {
                     's3:GetBucketAcl': 0,
                     's3:CreateBucket': 0,
                     's3:PutBucketAcl': 0,
+                    's3:PutBucketWebsite': 0,
                     's3:PutObject': 0,
                     's3:CopyObject': 0,
                     's3:UploadPart': 0,

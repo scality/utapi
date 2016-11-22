@@ -26,6 +26,7 @@ function assertMetrics(bucket, props, done) {
             's3:GetBucketAcl': 0,
             's3:CreateBucket': 0,
             's3:PutBucketAcl': 0,
+            's3:PutBucketWebsite': 0,
             's3:PutObject': 0,
             's3:CopyObject': 0,
             's3:UploadPart': 0,
@@ -114,6 +115,9 @@ describe('Get Bucket Metrics', () => {
 
     it('should return metrics for put bucket acl', done =>
         testOps('putBucketAcl', 's3:PutBucketAcl', done));
+
+    it('should return metrics for put bucket website', done =>
+        testOps('putBucketWebsite', 's3:PutBucketWebsite', done));
 
     it('should return metrics for put object', done =>
         testOps('putObject', 's3:PutObject', done));

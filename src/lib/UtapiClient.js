@@ -222,6 +222,36 @@ export default class UtapiClient {
     }
 
     /**
+    * Updates counter for PutBucketWebsite action on a Bucket resource.
+    * @param {string} reqUid - Request Unique Identifier
+    * @param {string} bucket - bucket name
+    * @param {callback} [cb] - (optional) callback to call
+    * @return {undefined}
+    */
+    pushMetricPutBucketWebsite(reqUid, bucket, cb) {
+        const callback = cb || this._noop;
+        if (this.disableClient) {
+            return callback();
+        }
+        const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
+        const timestamp = UtapiClient.getNormalizedTimestamp();
+        log.trace('pushing metric', {
+            method: 'UtapiClient.pushMetricPutBucketWebsite',
+            bucket, timestamp });
+        const key = genBucketKey(bucket, 'putBucketWebsite', timestamp);
+        return this.ds.incr(key, err => {
+            if (err) {
+                log.error('error incrementing counter', {
+                    method: 'Buckets.pushMetricPutBucketWebsite',
+                    error: err,
+                });
+                return callback(errors.InternalError);
+            }
+            return callback();
+        });
+    }
+
+    /**
     * Updates counter for UploadPart action on an object in a Bucket resource.
     * @param {string} reqUid - Request Unique Identifier
     * @param {string} bucket - bucket name

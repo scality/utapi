@@ -15,6 +15,7 @@ const bucketKeys = {
     listBucket: (b, t) => `s3:buckets:${t}:${b}:ListBucket`,
     getBucketAcl: (b, t) => `s3:buckets:${t}:${b}:GetBucketAcl`,
     putBucketAcl: (b, t) => `s3:buckets:${t}:${b}:PutBucketAcl`,
+    putBucketWebsite: (b, t) => `s3:buckets:${t}:${b}:PutBucketWebsite`,
     listBucketMultipartUploads: (b, t) =>
         `s3:buckets:${t}:${b}:ListBucketMultipartUploads`,
     listMultipartUploadParts: (b, t) =>
