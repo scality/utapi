@@ -138,4 +138,14 @@ export default class Datastore {
     zremrangebyscore(key, min, max, cb) {
         return this._client.zremrangebyscore(key, min, max, cb);
     }
+
+    /**
+    * publish a message to a channel
+    * @param {string} channel - channel to be published to
+    * @param {string} message - message to be published
+    * @return {undefined}
+    */
+    publish(channel, message) {
+        return this._client.publish(channel, message);
+    }
 }

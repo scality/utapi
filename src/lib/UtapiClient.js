@@ -10,6 +10,7 @@ export default class UtapiClient {
         this.disableClient = true;
         this.log = null;
         this.ds = null;
+        this.notificationChannel = 'utapiBucketMetrics';
         // setup logger
         if (config && config.log) {
             this.log = new Logger('UtapiClient', { level: config.log.level,
@@ -96,6 +97,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -127,6 +129,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -158,6 +161,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -188,6 +192,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -217,6 +222,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -271,7 +277,14 @@ export default class UtapiClient {
                     timestamp, timestamp],
                 ['zadd', genBucketStateKey(bucket, 'storageUtilized'),
                     timestamp, actionCounter],
-            ], callback);
+            ], (err, res) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                this.notifier(reqUid);
+                return callback(null, res);
+            });
         });
     }
 
@@ -302,6 +315,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -352,7 +366,13 @@ export default class UtapiClient {
             return this.ds.batch([
                 ['zremrangebyscore', key, timestamp, timestamp],
                 ['zadd', key, timestamp, actionCounter],
-            ], callback);
+            ], (err, res) => {
+                if (err) {
+                    return callback(err);
+                }
+                this.notifier(reqUid);
+                return callback(null, res);
+            });
         });
     }
 
@@ -385,6 +405,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -417,6 +438,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -448,6 +470,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -529,7 +552,13 @@ export default class UtapiClient {
                     timestamp],
                 ['zadd', genBucketStateKey(bucket, 'numberOfObjects'),
                     timestamp, actionCounter]);
-            return this.ds.batch(cmds, callback);
+            return this.ds.batch(cmds, (err, res) => {
+                if (err) {
+                    return callback(err);
+                }
+                this.notifier(reqUid);
+                return callback(null, res);
+            });
         });
     }
 
@@ -593,6 +622,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -624,6 +654,7 @@ export default class UtapiClient {
                 });
                 return callback(err);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -717,7 +748,13 @@ export default class UtapiClient {
                     timestamp, timestamp],
                 ['zadd', genBucketStateKey(bucket, 'numberOfObjects'),
                     timestamp, actionCounter]);
-            return this.ds.batch(cmds, callback);
+            return this.ds.batch(cmds, (err, res) => {
+                if (err) {
+                    return callback(err);
+                }
+                this.notifier(reqUid);
+                return callback(null, res);
+            });
         });
     }
 
@@ -807,7 +844,13 @@ export default class UtapiClient {
                     timestamp, timestamp],
                 ['zadd', genBucketStateKey(bucket, 'numberOfObjects'),
                     timestamp, actionCounter]);
-            return this.ds.batch(cmds, callback);
+            return this.ds.batch(cmds, (err, res) => {
+                if (err) {
+                    return callback(err);
+                }
+                this.notifier(reqUid);
+                return callback(null, res);
+            });
         });
     }
 
@@ -838,6 +881,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -869,6 +913,7 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
     }
@@ -900,7 +945,18 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
+            this.notifier(reqUid);
             return callback();
         });
+    }
+
+    /**
+    * Notifies reqUid on a given channel
+    * @param {integer} reqUid - Request Uid
+    * @return {this} - current instance
+    */
+    notifier(reqUid) {
+        this.ds.publish(this.notificationChannel, reqUid);
+        return this;
     }
 }
