@@ -14,7 +14,7 @@
   },
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
-    "arsenal": "scality/Arsenal#rel/6.2.1",
+    "arsenal": "scality/Arsenal#rel/6.2.5",
     "async": "^2.0.1",
     "babel-cli": "6.14.0",
     "babel-core": "^6.2.1",
@@ -22,13 +22,13 @@
     "babel-plugin-transform-es2015-modules-commonjs": "^6.2.0",
     "babel-plugin-transform-es2015-parameters": "^6.2.0",
     "ioredis": "^2.3.0",
-    "vaultclient": "scality/vaultclient#rel/6.2.1",
-    "werelogs": "scality/werelogs#rel/6.2.1"
+    "vaultclient": "scality/vaultclient#rel/6.2.5",
+    "werelogs": "scality/werelogs#rel/6.2.5"
   },
   "devDependencies": {
     "eslint": "^2.4.0",
     "eslint-config-airbnb": "^6.0.0",
-    "eslint-config-scality": "scality/Guidelines#rel/6.2.1",
+    "eslint-config-scality": "scality/Guidelines#rel/6.2.5",
     "mocha": "^3.0.2"
   },
   "scripts": {
