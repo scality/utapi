@@ -37,16 +37,23 @@ function getPrefixValues(timestamp) {
 }
 
 // Set mock data of a particular storageUtilized and numberOfObjects
-function setMockData(storageUtilized, numberOfObjects, timestamp, cb) {
+function setMockData(data, timestamp, cb) {
     const prefixValuesArr = getPrefixValues(timestamp);
+    const { storageUtilized, numberOfObjects } = data;
     prefixValuesArr.forEach(type => {
         const { key } = type;
-        memoryBackend.data[`${key}:storageUtilized:counter`] = storageUtilized;
-        memoryBackend.data[`${key}:storageUtilized`] = [[timestamp,
-            storageUtilized]];
-        memoryBackend.data[`${key}:numberOfObjects:counter`] = numberOfObjects;
-        memoryBackend.data[`${key}:numberOfObjects`] = [[timestamp,
-            numberOfObjects]];
+        if (storageUtilized) {
+            memoryBackend.data[`${key}:storageUtilized:counter`] =
+                storageUtilized;
+            memoryBackend.data[`${key}:storageUtilized`] = [[timestamp,
+                storageUtilized]];
+        }
+        if (numberOfObjects) {
+            memoryBackend.data[`${key}:numberOfObjects:counter`] =
+                numberOfObjects;
+            memoryBackend.data[`${key}:numberOfObjects`] = [[timestamp,
+                numberOfObjects]];
+        }
     });
     return cb();
 }
@@ -184,9 +191,26 @@ describe('UtapiClient:: push metrics', () => {
             storageUtilized: '1024',
             incomingBytes: '1024',
         });
-        Object.assign(params, metricTypes,
-            { newByteLength: 1024 });
+        Object.assign(params, metricTypes, {
+            newByteLength: 1024,
+            oldByteLength: null,
+        });
         testMetric('uploadPart', params, expected, done);
+    });
+
+    it('should push metric for uploadPart overwrite', done => {
+        const expected = getObject(timestamp, {
+            action: 'UploadPart',
+            storageUtilized: '1024',
+            incomingBytes: '1024',
+        });
+        Object.assign(params, metricTypes, {
+            newByteLength: 1024,
+            oldByteLength: 2048,
+        });
+        const data = { storageUtilized: '2048' };
+        setMockData(data, timestamp, () =>
+            testMetric('uploadPart', params, expected, done));
     });
 
     it('should push initiateMultipartUpload metrics', done => {
@@ -232,7 +256,11 @@ describe('UtapiClient:: push metrics', () => {
             numberOfObjects: 1,
         });
         // Set mock data of one, 1024 byte object for `deleteObject` to update.
-        setMockData('1024', '1', timestamp, () =>
+        const data = {
+            storageUtilized: '1024',
+            numberOfObjects: '1',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('deleteObject', params, expected, done));
     });
 
@@ -248,7 +276,11 @@ describe('UtapiClient:: push metrics', () => {
         });
         // Set mock data of two, 1024 byte objects for `multiObjectDelete`
         // to update.
-        setMockData('2048', '2', timestamp, () =>
+        const data = {
+            storageUtilized: '2048',
+            numberOfObjects: '2',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('multiObjectDelete', params, expected, done));
     });
 
@@ -294,7 +326,11 @@ describe('UtapiClient:: push metrics', () => {
         });
         // Set mock data of one, 1024 byte object for `putObject` to
         // overwrite. Counter does not increment because it is an overwrite.
-        setMockData('1024', '1', timestamp, () =>
+        const data = {
+            storageUtilized: '1024',
+            numberOfObjects: '1',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('putObject', params, expected, done));
     });
 
@@ -323,7 +359,11 @@ describe('UtapiClient:: push metrics', () => {
         });
         // Set mock data of one, 1024 byte object for `copyObject` to
         // overwrite. Counter does not increment because it is an overwrite.
-        setMockData('1024', '1', timestamp, () =>
+        const data = {
+            storageUtilized: '1024',
+            numberOfObjects: '1',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('copyObject', params, expected, done));
     });
 
