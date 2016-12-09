@@ -122,8 +122,10 @@ export default class Buckets {
                 numberOfObjects: [0, 0],
                 operations: {
                     's3:DeleteBucket': 0,
+                    's3:DeleteBucketWebsite': 0,
                     's3:ListBucket': 0,
                     's3:GetBucketAcl': 0,
+                    's3:GetBucketWebsite': 0,
                     's3:CreateBucket': 0,
                     's3:PutBucketAcl': 0,
                     's3:PutBucketWebsite': 0,

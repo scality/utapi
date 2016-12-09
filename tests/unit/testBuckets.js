@@ -22,8 +22,10 @@ function assertMetrics(bucket, props, done) {
         numberOfObjects: [0, 0],
         operations: {
             's3:DeleteBucket': 0,
+            's3:DeleteBucketWebsite': 0,
             's3:ListBucket': 0,
             's3:GetBucketAcl': 0,
+            's3:GetBucketWebsite': 0,
             's3:CreateBucket': 0,
             's3:PutBucketAcl': 0,
             's3:PutBucketWebsite': 0,
@@ -107,11 +109,17 @@ describe('Get Bucket Metrics', () => {
     it('should return metrics for delete bucket', done =>
         testOps('deleteBucket', 's3:DeleteBucket', done));
 
+    it('should return metrics for delete bucket website', done =>
+        testOps('deleteBucketWebsite', 's3:DeleteBucketWebsite', done));
+
     it('should return metrics for list bucket', done =>
         testOps('listBucket', 's3:ListBucket', done));
 
     it('should return metrics for get bucket acl', done =>
         testOps('getBucketAcl', 's3:GetBucketAcl', done));
+
+    it('should return metrics for get bucket website', done =>
+        testOps('getBucketWebsite', 's3:GetBucketWebsite', done));
 
     it('should return metrics for put bucket acl', done =>
         testOps('putBucketAcl', 's3:PutBucketAcl', done));

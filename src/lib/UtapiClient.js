@@ -132,6 +132,36 @@ export default class UtapiClient {
     }
 
     /**
+    * Updates counter for DeleteBucketWebsite action on a Bucket resource.
+    * @param {string} reqUid - Request Unique Identifier
+    * @param {string} bucket - bucket name
+    * @param {callback} [cb] - (optional) callback to call
+    * @return {undefined}
+    */
+    pushMetricDeleteBucketWebsite(reqUid, bucket, cb) {
+        const callback = cb || this._noop;
+        if (this.disableClient) {
+            return callback();
+        }
+        const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
+        const timestamp = UtapiClient.getNormalizedTimestamp();
+        log.trace('pushing metric', {
+            method: 'UtapiClient.pushMetricDeleteBucketWebsite',
+            bucket, timestamp });
+        const key = genBucketKey(bucket, 'deleteBucketWebsite', timestamp);
+        return this.ds.incr(key, err => {
+            if (err) {
+                log.error('error incrementing counter', {
+                    method: 'Buckets.pushMetricDeleteBucketWebsite',
+                    error: err,
+                });
+                return callback(errors.InternalError);
+            }
+            return callback();
+        });
+    }
+
+    /**
     * Updates counter for ListBucket action on a Bucket resource.
     * @param {string} reqUid - Request Unique Identifier
     * @param {string} bucket - bucket name
@@ -184,6 +214,36 @@ export default class UtapiClient {
             if (err) {
                 log.error('error incrementing counter', {
                     method: 'Buckets.pushMetricGetBucketAcl',
+                    error: err,
+                });
+                return callback(errors.InternalError);
+            }
+            return callback();
+        });
+    }
+
+    /**
+    * Updates counter for GetBucketWebsite action on a Bucket resource.
+    * @param {string} reqUid - Request Unique Identifier
+    * @param {string} bucket - bucket name
+    * @param {callback} [cb] - (optional) callback to call
+    * @return {undefined}
+    */
+    pushMetricGetBucketWebsite(reqUid, bucket, cb) {
+        const callback = cb || this._noop;
+        if (this.disableClient) {
+            return callback();
+        }
+        const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
+        const timestamp = UtapiClient.getNormalizedTimestamp();
+        log.trace('pushing metric', {
+            method: 'UtapiClient.pushMetricGetBucketWebsite',
+            bucket, timestamp });
+        const key = genBucketKey(bucket, 'getBucketWebsite', timestamp);
+        return this.ds.incr(key, err => {
+            if (err) {
+                log.error('error incrementing counter', {
+                    method: 'Buckets.pushMetricGetBucketWebsite',
                     error: err,
                 });
                 return callback(errors.InternalError);
