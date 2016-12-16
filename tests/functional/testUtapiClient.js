@@ -1,21 +1,21 @@
 import assert from 'assert';
 import { mapSeries, series } from 'async';
 import UtapiClient from '../../src/lib/UtapiClient';
-import MemoryBackend from '../../src/lib/backend/Memory';
 import Datastore from '../../src/lib/Datastore';
+import redisClient from '../../src/utils/redisClient';
+import { Logger } from 'werelogs';
 import { getBucketCounters, getMetricFromKey } from '../../src/lib/schema';
-const testBucket = 'foo';
-const memBackend = new MemoryBackend();
+const bucket = 'foo';
 const datastore = new Datastore();
 const utapiClient = new UtapiClient();
 const reqUid = 'foo';
-datastore.setClient(memBackend);
+const redis = redisClient({ host: '127.0.0.1', port: 6379 }, Logger);
+datastore.setClient(redis);
 utapiClient.setDataStore(datastore);
-
 function _assertCounters(bucket, cb) {
-    const counters = getBucketCounters(testBucket);
+    const counters = getBucketCounters(bucket);
     return mapSeries(counters, (item, next) =>
-        memBackend.get(item, (err, res) => {
+        datastore.get(item, (err, res) => {
             if (err) {
                 return next(err);
             }
@@ -27,28 +27,37 @@ function _assertCounters(bucket, cb) {
 }
 
 describe('Counters', () => {
-    afterEach(() => memBackend.flushDb());
+    afterEach(() => redis.flushdb());
 
     it('should set counters to 0 on bucket creation', done => {
-        utapiClient.pushMetricCreateBucket(reqUid, testBucket,
-            () => _assertCounters(testBucket, done));
+        utapiClient.pushMetric('createBucket', reqUid, { bucket },
+            () => _assertCounters(bucket, done));
     });
 
     it('should reset counters on bucket re-creation', done => {
         series([
-            next => utapiClient.pushMetricCreateBucket(reqUid, testBucket,
+            next => utapiClient.pushMetric('createBucket', reqUid, { bucket },
                 next),
-            next => utapiClient.pushMetricListBucket(reqUid, testBucket, next),
-            next => utapiClient.pushMetricPutObject(reqUid, testBucket, 8, 0,
+            next => utapiClient.pushMetric('listBucket', reqUid, { bucket },
                 next),
-            next => utapiClient.pushMetricGetObject(reqUid, testBucket, 8,
+            next => utapiClient.pushMetric('putObject', reqUid, {
+                bucket,
+                newByteLength: 8,
+                oldByteLength: 0,
+            }, next),
+            next => utapiClient.pushMetric('getObject', reqUid, {
+                bucket,
+                newByteLength: 8,
+            }, next),
+            next => utapiClient.pushMetric('deleteObject', reqUid, {
+                bucket,
+                byteLength: 8,
+                numberOfObjects: 1,
+            }, next),
+            next => utapiClient.pushMetric('deleteBucket', reqUid, { bucket },
                 next),
-            next => utapiClient.pushMetricDeleteObject(reqUid, testBucket, 8,
+            next => utapiClient.pushMetric('createBucket', reqUid, { bucket },
                 next),
-            next => utapiClient.pushMetricDeleteBucket(reqUid, testBucket,
-                next),
-            next => utapiClient.pushMetricCreateBucket(reqUid, testBucket,
-                next),
-        ], () => _assertCounters(testBucket, done));
+        ], () => _assertCounters(bucket, done));
     });
 });

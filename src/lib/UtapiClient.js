@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { Logger } from 'werelogs';
 import Datastore from './Datastore';
 import { genBucketKey, genBucketCounter, getBucketCounters, genBucketStateKey }
@@ -11,6 +12,9 @@ const methods = {
     listBucket: '_pushMetricListBucket',
     getBucketAcl: '_pushMetricGetBucketAcl',
     putBucketAcl: '_pushMetricPutBucketAcl',
+    putBucketWebsite: '_pushMetricPutBucketWebsite',
+    getBucketWebsite: '_pushMetricGetBucketWebsite',
+    deleteBucketWebsite: '_pushMetricDeleteBucketWebsite',
     uploadPart: '_pushMetricUploadPart',
     initiateMultipartUpload: '_pushMetricInitiateMultipartUpload',
     completeMultipartUpload: '_pushMetricCompleteMultipartUpload',
@@ -75,17 +79,54 @@ export default class UtapiClient {
     */
     _noop() {}
 
+   /**
+    * Check the types of optional `params` object properties. This enforces
+    * object properties for particular push metric calls and property types.
+    * @param {object} params - params object with metric data
+    * @param {string} params.bucket - bucket name
+    * @param {number} params.byteLength - (optional) size of an object deleted
+    * @param {number} params.newByteLength - (optional) new object size
+    * @param {number|null} params.oldByteLength - (optional) old object size
+    * (for object overwrites). This value can be `null` for a new object,
+    * or >= 0 for an existing object with content-length 0 or greater than 0.
+    * @param {number} params.numberOfObjects - (optional) number of obects
+    * @param {array} properties - properties to assert types for
+    * @return {undefined}
+    */
+    _checkTypes(params, properties) {
+        properties.forEach(prop => {
+            assert(params[prop] !== undefined, 'Push metric call must ' +
+                `include an object with ${prop} property`);
+            if (prop === 'bucket') {
+                assert(typeof params[prop] === 'string', 'bucket property ' +
+                    'must be a string');
+            } else if (prop === 'oldByteLength') {
+                assert(typeof params[prop] === 'number' ||
+                    params[prop] === null, 'oldByteLength  property must be ' +
+                    'an integer or `null`');
+            } else {
+                assert(typeof params[prop] === 'number', `${prop} property ` +
+                    'must be an integer');
+            }
+        });
+        return undefined;
+    }
+
     /**
-    * Generic method exposed by the client to push a metric with some values
-    * params can be expanded to provide metrics for other granularities
+    * Generic method exposed by the client to push a metric with some values.
+    * `params` can be expanded to provide metrics for other granularities
     * (e.g. service, account, user).
     * @param {string} metric - metric to be published
     * @param {string} reqUid - Request Unique Identifier
-    * @param {object} params - params object
+    * @param {object} params - params object with metric data
     * @param {string} params.bucket - bucket name
-    * @param {string} params.newByteLength - new object size
-    * @param {string} params.oldByteLength - old object size (obj. overwrites)
-    * @param {string} params.numberOfObjects - number of obects added/deleted
+    * @param {number} params.byteLength - (optional) size of an object deleted
+    * @param {number} params.newByteLength - (optional) new object size
+    * @param {number|null} params.oldByteLength - (optional) old object size
+    * (for object overwrites). This value can be `null` for a new object,
+    * or >= 0 for an existing object with content-length 0 or greater than 0.
+    * @param {number} params.numberOfObjects - (optional) number of obects
+    * added/deleted
     * @param {callback} [cb] - (optional) callback to call
     * @return {object} this - current instance
     */
@@ -102,15 +143,16 @@ export default class UtapiClient {
 
     /**
     * Updates counter for CreateBucket action on a Bucket resource. Since create
-    * bucket occcurs only once in a bucket's lifetime, counter is  always 1
+    * bucket occcurs only once in a bucket's lifetime, counter is always 1
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricCreateBucket(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricCreateBucket',
@@ -147,13 +189,14 @@ export default class UtapiClient {
     /**
     * Updates counter for DeleteBucket action on a Bucket resource
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricDeleteBucket(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricDeleteBucket',
@@ -174,18 +217,16 @@ export default class UtapiClient {
 
     /**
     * Updates counter for DeleteBucketWebsite action on a Bucket resource.
-    * @param {string} reqUid - Request Unique Identifier
-    * @param {string} bucket - bucket name
-    * @param {callback} [cb] - (optional) callback to call
+    * @param {object} params - params for the metrics
+    * @param {string} params.bucket - bucket name
+    * @param {number} timestamp - normalized timestamp of current time
+    * @param {object} log - Werelogs request logger
+    * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    pushMetricDeleteBucketWebsite(reqUid, bucket, cb) {
-        const callback = cb || this._noop;
-        if (this.disableClient) {
-            return callback();
-        }
-        const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
-        const timestamp = UtapiClient.getNormalizedTimestamp();
+    _pushMetricDeleteBucketWebsite(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
+        const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricDeleteBucketWebsite',
             bucket, timestamp });
@@ -205,13 +246,14 @@ export default class UtapiClient {
     /**
     * Updates counter for ListBucket action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricListBucket(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricListBucket',
@@ -233,13 +275,14 @@ export default class UtapiClient {
     /**
     * Updates counter for GetBucketAcl action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricGetBucketAcl(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', { method: 'UtapiClient.pushMetricGet' +
             'BucketAcl',
@@ -259,18 +302,16 @@ export default class UtapiClient {
 
     /**
     * Updates counter for GetBucketWebsite action on a Bucket resource.
-    * @param {string} reqUid - Request Unique Identifier
-    * @param {string} bucket - bucket name
-    * @param {callback} [cb] - (optional) callback to call
+    * @param {object} params - params for the metrics
+    * @param {string} params.bucket - bucket name
+    * @param {number} timestamp - normalized timestamp of current time
+    * @param {object} log - Werelogs request logger
+    * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    pushMetricGetBucketWebsite(reqUid, bucket, cb) {
-        const callback = cb || this._noop;
-        if (this.disableClient) {
-            return callback();
-        }
-        const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
-        const timestamp = UtapiClient.getNormalizedTimestamp();
+    _pushMetricGetBucketWebsite(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
+        const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricGetBucketWebsite',
             bucket, timestamp });
@@ -290,13 +331,14 @@ export default class UtapiClient {
     /**
     * Updates counter for PutBucketAcl action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricPutBucketAcl(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricPutBucketAcl', bucket, timestamp });
@@ -315,18 +357,16 @@ export default class UtapiClient {
 
     /**
     * Updates counter for PutBucketWebsite action on a Bucket resource.
-    * @param {string} reqUid - Request Unique Identifier
-    * @param {string} bucket - bucket name
-    * @param {callback} [cb] - (optional) callback to call
+    * @param {object} params - params for the metrics
+    * @param {string} params.bucket - bucket name
+    * @param {number} timestamp - normalized timestamp of current time
+    * @param {object} log - Werelogs request logger
+    * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    pushMetricPutBucketWebsite(reqUid, bucket, cb) {
-        const callback = cb || this._noop;
-        if (this.disableClient) {
-            return callback();
-        }
-        const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
-        const timestamp = UtapiClient.getNormalizedTimestamp();
+    _pushMetricPutBucketWebsite(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
+        const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricPutBucketWebsite',
             bucket, timestamp });
@@ -346,7 +386,7 @@ export default class UtapiClient {
     /**
     * Updates counter for UploadPart action on an object in a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} params.newByteLength - size of object in bytes
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
@@ -354,6 +394,7 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _pushMetricUploadPart(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket', 'newByteLength']);
         const { bucket, newByteLength } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricUploadPart', bucket, timestamp });
@@ -397,13 +438,14 @@ export default class UtapiClient {
     /**
     * Updates counter for Initiate Multipart Upload action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricInitiateMultipartUpload(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricInitiateMultipartUpload',
@@ -425,13 +467,14 @@ export default class UtapiClient {
     /**
     * Updates counter for Complete Multipart Upload action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricCompleteMultipartUpload(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricCompleteMultipartUpload',
@@ -472,13 +515,14 @@ export default class UtapiClient {
     /**
     * Updates counter for ListMultipartUploads action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricListBucketMultipartUploads(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricListBucketMultipartUploads',
@@ -502,13 +546,14 @@ export default class UtapiClient {
     /**
     * Updates counter for ListMultipartUploadParts action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricListMultipartUploadParts(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricListMultipartUploadParts',
@@ -531,13 +576,14 @@ export default class UtapiClient {
     /**
     * Updates counter for AbortMultipartUpload action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricAbortMultipartUpload(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricAbortMultipartUpload',
@@ -559,8 +605,8 @@ export default class UtapiClient {
     /**
     * Updates counter for DeleteObject or MultiObjectDelete action
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
-    * @param {number} params.newByteLength - size of the object(s)
+    * @param {string} params.bucket - bucket name
+    * @param {number} params.byteLength - size of the object to delete
     * @param {number} params.numberOfObjects - number of objects deleted
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
@@ -568,7 +614,8 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _genericPushMetricDeleteObject(params, timestamp, log, callback) {
-        const { bucket, newByteLength, numberOfObjects } = params;
+        this._checkTypes(params, ['bucket', 'byteLength', 'numberOfObjects']);
+        const { bucket, byteLength, numberOfObjects } = params;
         const bucketAction = numberOfObjects === 1 ? 'deleteObject'
             : 'multiObjectDelete';
         log.trace('pushing metric', {
@@ -577,7 +624,7 @@ export default class UtapiClient {
         });
         return this.ds.batch([
             ['decrby', genBucketCounter(bucket, 'storageUtilizedCounter'),
-                newByteLength],
+                byteLength],
             ['decrby', genBucketCounter(bucket, 'numberOfObjectsCounter'),
                 numberOfObjects],
             ['incr', genBucketKey(bucket, bucketAction, timestamp)],
@@ -637,9 +684,9 @@ export default class UtapiClient {
     /**
     * Updates counter for DeleteObject action on an object of Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
-    * @param {number} params.newByteLength - size of the object deleted
-    * @param {number} params.objectsCount - number of objects deleted
+    * @param {string} params.bucket - bucket name
+    * @param {number} params.byteLength - size of the object deleted
+    * @param {number} params.numberOfObjects - number of objects deleted
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
@@ -653,9 +700,9 @@ export default class UtapiClient {
     /**
     * Updates counter for MultiObjectDelete action
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
-    * @param {number} params.newByteLength - size of the object deleted
-    * @param {number} params.objectsCount - number of objects deleted
+    * @param {string} params.bucket - bucket name
+    * @param {number} params.byteLength - size of the object deleted
+    * @param {number} params.numberOfObjects - number of objects deleted
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
@@ -669,7 +716,7 @@ export default class UtapiClient {
     /**
     * Updates counter for GetObject action on an object in a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} params.newByteLength - size of object in bytes
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
@@ -677,6 +724,7 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _pushMetricGetObject(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket', 'newByteLength']);
         const { bucket, newByteLength } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricGetObject', bucket, timestamp });
@@ -700,13 +748,14 @@ export default class UtapiClient {
     /**
     * Updates counter for GetObjectAcl action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricGetObjectAcl(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricGetObjectAcl',
@@ -729,16 +778,17 @@ export default class UtapiClient {
     /**
     * Updates counter for PutObject action on an object in a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} params.newByteLength - size of object in bytes
-    * @param {number} params.oldByteLength - previous size of object in bytes
-    * if this action overwrote an existing object
+    * @param {number} params.oldByteLength - previous size of object
+    * in bytes if this action overwrote an existing object
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricPutObject(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket', 'newByteLength', 'oldByteLength']);
         const { bucket, newByteLength, oldByteLength } = params;
         let numberOfObjectsCounter;
         // if previous object size is null then it's a new object in a bucket
@@ -750,11 +800,8 @@ export default class UtapiClient {
             numberOfObjectsCounter = ['get', genBucketCounter(bucket,
                 'numberOfObjectsCounter')];
         }
-        let oldObjSize = parseInt(oldByteLength, 10);
-        oldObjSize = isNaN(oldObjSize) ? 0 : oldObjSize;
-        let newObjSize = parseInt(newByteLength, 10);
-        newObjSize = isNaN(newObjSize) ? 0 : newObjSize;
-        const storageUtilizedDelta = newObjSize - oldObjSize;
+        const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
+        const storageUtilizedDelta = newByteLength - oldObjSize;
         log.trace('pushing metric',
             { method: 'UtapiClient.pushMetricPutObject', bucket, timestamp });
         // update counters
@@ -818,7 +865,7 @@ export default class UtapiClient {
     /**
     * Updates counter for CopyObject action on an object in a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} params.newByteLength - size of object in bytes
     * @param {number} params.oldByteLength - previous size of object in bytes
     * if this action overwrote an existing object
@@ -828,6 +875,7 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _pushMetricCopyObject(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket', 'newByteLength', 'oldByteLength']);
         const { bucket, newByteLength, oldByteLength } = params;
         let numberOfObjectsCounter;
         // if previous object size is null then it's a new object in a bucket
@@ -839,11 +887,8 @@ export default class UtapiClient {
             numberOfObjectsCounter = ['get', genBucketCounter(bucket,
                 'numberOfObjectsCounter')];
         }
-        let oldObjSize = parseInt(oldByteLength, 10);
-        oldObjSize = isNaN(oldObjSize) ? 0 : oldObjSize;
-        let newObjSize = parseInt(newByteLength, 10);
-        newObjSize = isNaN(newObjSize) ? 0 : newObjSize;
-        const storageUtilizedDelta = newObjSize - oldObjSize;
+        const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
+        const storageUtilizedDelta = newByteLength - oldObjSize;
         log.trace('pushing metric',
             { method: 'UtapiClient.pushMetricCopyObject', bucket, timestamp });
         // update counters
@@ -905,13 +950,14 @@ export default class UtapiClient {
     /**
     * Updates counter for PutObjectAcl action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricPutObjectAcl(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricPutObjectAcl',
@@ -933,13 +979,14 @@ export default class UtapiClient {
     /**
     * Updates counter for HeadBucket action on a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricHeadBucket(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricHeadBucket',
@@ -961,13 +1008,14 @@ export default class UtapiClient {
     /**
     * Updates counter for HeadObject action on an object in a Bucket resource.
     * @param {object} params - params for the metrics
-    * @param {object} params.bucket - bucket name
+    * @param {string} params.bucket - bucket name
     * @param {number} timestamp - normalized timestamp of current time
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
     _pushMetricHeadObject(params, timestamp, log, callback) {
+        this._checkTypes(params, ['bucket']);
         const { bucket } = params;
         log.trace('pushing metric', {
             method: 'UtapiClient.pushMetricHeadObject',

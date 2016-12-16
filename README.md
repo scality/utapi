@@ -13,7 +13,7 @@ The module exposes a client, named UtapiClient. Projects can use this client to
 push metrics directly to the underlying datastore(Redis) without the need of an
 extra HTTP request to Utapi.
 
-```
+```js
 import { UtapiClient } from 'utapi';
 
 const config = {
@@ -39,9 +39,8 @@ c.pushMetric('putObject', '3d534b1511e5630e68f0', {
 
 c.pushMetric('multiObjectDelete', '3d534b1511e5630e68f0', {
     bucket: 'demo',
-    newByteLength: 1024,
-    oldByteLength: 256,
-    objectsCount: 999,
+    byteLength: 1024,
+    numberOfObjects: 999,
 });
 ```
 
