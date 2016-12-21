@@ -1,5 +1,7 @@
 # utapi
 
+![Utapi logo](res/utapi-logo.png)
+
 [![Circle CI][badgepub]](https://circleci.com/gh/scality/utapi)
 [![Scality CI][badgepriv]](http://ci.ironmann.io/gh/scality/utapi)
 
