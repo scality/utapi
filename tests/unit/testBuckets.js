@@ -106,6 +106,9 @@ describe('Get Bucket Metrics', () => {
     it('should return metrics for outgoing bytes', done =>
         testOps('outgoingBytes', 'outgoingBytes', done));
 
+    it('should return metrics for create bucket', done =>
+        testOps('createBucket', 's3:CreateBucket', done));
+
     it('should return metrics for delete bucket', done =>
         testOps('deleteBucket', 's3:DeleteBucket', done));
 
