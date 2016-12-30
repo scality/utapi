@@ -1,36 +1,43 @@
 import assert from 'assert';
+import async from 'async';
 import { Logger } from 'werelogs';
 import Datastore from './Datastore';
-import { genBucketKey, genBucketCounter, getBucketCounters, genBucketStateKey }
+import { generateKey, generateCounter, getCounters, generateStateKey }
     from './schema';
 import { errors } from 'arsenal';
 import redisClient from '../utils/redisClient';
 
 const methods = {
     createBucket: '_pushMetricCreateBucket',
-    deleteBucket: '_pushMetricDeleteBucket',
-    listBucket: '_pushMetricListBucket',
-    getBucketAcl: '_pushMetricGetBucketAcl',
-    putBucketAcl: '_pushMetricPutBucketAcl',
-    putBucketWebsite: '_pushMetricPutBucketWebsite',
-    getBucketWebsite: '_pushMetricGetBucketWebsite',
-    deleteBucketWebsite: '_pushMetricDeleteBucketWebsite',
+    deleteBucket: '_genericPushMetric',
+    listBucket: '_genericPushMetric',
+    getBucketAcl: '_genericPushMetric',
+    putBucketAcl: '_genericPushMetric',
+    putBucketWebsite: '_genericPushMetric',
+    getBucketWebsite: '_genericPushMetric',
+    deleteBucketWebsite: '_genericPushMetric',
     uploadPart: '_pushMetricUploadPart',
-    initiateMultipartUpload: '_pushMetricInitiateMultipartUpload',
+    initiateMultipartUpload: '_genericPushMetric',
     completeMultipartUpload: '_pushMetricCompleteMultipartUpload',
     listMultipartUploads: '_pushMetricListBucketMultipartUploads',
-    listMultipartUploadParts: '_pushMetricListMultipartUploadParts',
-    abortMultipartUpload: '_pushMetricAbortMultipartUpload',
-    deleteObject: '_pushMetricDeleteObject',
-    multiObjectDelete: '_pushMetricMultiObjectDelete',
+    listMultipartUploadParts: '_genericPushMetric',
+    abortMultipartUpload: '_genericPushMetric',
+    deleteObject: '_genericPushMetricDeleteObject',
+    multiObjectDelete: '_genericPushMetricDeleteObject',
     getObject: '_pushMetricGetObject',
-    getObjectAcl: '_pushMetricGetObjectAcl',
+    getObjectAcl: '_genericPushMetric',
     putObject: '_pushMetricPutObject',
     copyObject: '_pushMetricCopyObject',
-    putObjectAcl: '_pushMetricPutObjectAcl',
-    headBucket: '_pushMetricHeadBucket',
-    headObject: '_pushMetricHeadObject',
+    putObjectAcl: '_genericPushMetric',
+    headBucket: '_genericPushMetric',
+    headObject: '_genericPushMetric',
 };
+
+const metricObj = {
+    buckets: 'bucket',
+    accounts: 'accountId',
+};
+
 export default class UtapiClient {
     constructor(config) {
         this.disableClient = true;
@@ -49,6 +56,9 @@ export default class UtapiClient {
             this.ds = new Datastore()
                 .setClient(redisClient(config.redis, this.log));
             this.disableClient = false;
+        }
+        if (config && config.metrics) {
+            this.metrics = config.metrics;
         }
     }
 
@@ -80,27 +90,23 @@ export default class UtapiClient {
     _noop() {}
 
    /**
-    * Check the types of optional `params` object properties. This enforces
-    * object properties for particular push metric calls and property types.
+    * Check the types of `params` object properties. This enforces object
+    * properties for particular push metric calls.
     * @param {object} params - params object with metric data
-    * @param {string} params.bucket - bucket name
-    * @param {number} params.byteLength - (optional) size of an object deleted
-    * @param {number} params.newByteLength - (optional) new object size
-    * @param {number|null} params.oldByteLength - (optional) old object size
+    * @param {number} [params.byteLength] - (optional) size of an object deleted
+    * @param {number} [params.newByteLength] - (optional) new object size
+    * @param {number|null} [params.oldByteLength] - (optional) old object size
     * (for object overwrites). This value can be `null` for a new object,
     * or >= 0 for an existing object with content-length 0 or greater than 0.
-    * @param {number} params.numberOfObjects - (optional) number of obects
-    * @param {array} properties - properties to assert types for
+    * @param {number} [params.numberOfObjects] - (optional) number of obects
+    * @param {array} properties - (option) properties to assert types for
     * @return {undefined}
     */
-    _checkTypes(params, properties) {
+    _checkProperties(params, properties = []) {
         properties.forEach(prop => {
-            assert(params[prop] !== undefined, 'Push metric call must ' +
-                `include an object with ${prop} property`);
-            if (prop === 'bucket') {
-                assert(typeof params[prop] === 'string', 'bucket property ' +
-                    'must be a string');
-            } else if (prop === 'oldByteLength') {
+            assert(params[prop] !== undefined, 'Metric object must include ' +
+                `${prop} property`);
+            if (prop === 'oldByteLength') {
                 assert(typeof params[prop] === 'number' ||
                     params[prop] === null, 'oldByteLength  property must be ' +
                     'an integer or `null`');
@@ -109,75 +115,169 @@ export default class UtapiClient {
                     'must be an integer');
             }
         });
-        return undefined;
+    }
+
+
+    /**
+     * Check that the expected properties for metric levels (as defined in
+     * the config) are in the object passed to the client. Otherwise, ensure
+     * that there is at least one metric level to push metrics for.
+     * @param {object} params - params object with metric data
+     * @param {string} [params.bucket] - (optional) bucket name
+     * @param {string} [params.accountId] - (optional) account ID
+     * @return {undefined}
+     */
+    _checkMetricTypes(params) {
+        // Object of metric types and their associated property names
+        if (this.metrics) {
+            this.metrics.forEach(level => {
+                const propName = metricObj[level];
+                assert(typeof params[propName] === 'string' ||
+                    params[propName] === undefined,
+                    `${propName} must be a string`);
+            });
+        } else {
+            assert(Object.keys(metricObj).some(level =>
+                metricObj[level] in params), 'Must include a metric level');
+        }
     }
 
     /**
+     * Utility function to log the metric being pushed.
+     * @param {object} params - params object with metric data
+     * @param {string} method - the name of the method being logged
+     * @param {number} timestamp - normalized timestamp of current time
+     * @param {object} log - Werelogs request logger
+     * @return {undefined}
+     */
+    _logMetric(params, method, timestamp, log) {
+        const logObject = {
+            method: `UtapiClient.${method}`,
+            timestamp,
+        };
+        const metricTypes = ['bucket', 'accountId'];
+        const metricType = metricTypes.find(type => type in params);
+        logObject[metricType] = params[metricType];
+        log.trace('pushing metric', logObject);
+    }
+
+    /**
+     * Creates an array of parameter objects for each metric type. The number
+     * of objects in the array will be the number of metric types included in
+     * the `params` object.
+     * @param {object} params - params object with metric data
+     * @return {object []} arr - array of parameter objects for push metric call
+     */
+    _getParamsArr(params) {
+        this._checkMetricTypes(params);
+        // Only push metric levels defined in the config, otherwise push any
+        // levels that are passed in the object
+        const levels = this.metrics ? this.metrics : Object.keys(metricObj);
+        const props = [];
+        for (let i = 0; i < levels.length; i++) {
+            const prop = metricObj[levels[i]];
+            if (params[prop] !== undefined) {
+                props.push(metricObj[levels[i]]);
+            }
+        }
+        const metricProps = ['byteLength', 'newByteLength', 'oldByteLength',
+            'numberOfObjects'];
+        return props.map(type => {
+            const typeObj = {};
+            typeObj[type] = params[type];
+            // Include properties that are not metric types
+            // (e.g., 'oldByteLength', 'newByteLength', etc.)
+            Object.keys(params).forEach(k => {
+                // Get other properties, but do not include `undefined` ones
+                // or any unrelated properties (those not in `metricProps`).
+                if (props.indexOf(k) < 0 && params[k] !== undefined &&
+                metricProps.indexOf(k) >= 0) {
+                    typeObj[k] = params[k];
+                }
+            });
+            return typeObj;
+        });
+    }
+
+    /**
+    * Callback for methods used to push metrics to Redis
+    * @callback pushMetric callback
+    * @param {object} err - ArsenalError instance
+    */
+
+    /**
     * Generic method exposed by the client to push a metric with some values.
-    * `params` can be expanded to provide metrics for other granularities
-    * (e.g. service, account, user).
+    * `params` can be expanded to provide metrics for metric granularities
+    * (e.g. 'bucket', 'account').
     * @param {string} metric - metric to be published
     * @param {string} reqUid - Request Unique Identifier
     * @param {object} params - params object with metric data
-    * @param {string} params.bucket - bucket name
-    * @param {number} params.byteLength - (optional) size of an object deleted
-    * @param {number} params.newByteLength - (optional) new object size
-    * @param {number|null} params.oldByteLength - (optional) old object size
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account id
+    * @param {number} [params.byteLength] - (optional) size of an object deleted
+    * @param {number} [params.newByteLength] - (optional) new object size
+    * @param {number|null} [params.oldByteLength] - (optional) old object size
     * (for object overwrites). This value can be `null` for a new object,
     * or >= 0 for an existing object with content-length 0 or greater than 0.
-    * @param {number} params.numberOfObjects - (optional) number of obects
+    * @param {number} [params.numberOfObjects] - (optional) number of obects
     * added/deleted
     * @param {callback} [cb] - (optional) callback to call
-    * @return {object} this - current instance
+    * @return {undefined}
     */
     pushMetric(metric, reqUid, params, cb) {
+        assert(methods[metric], `${metric} metric is not handled by Utapi`);
         const callback = cb || this._noop;
         if (this.disableClient) {
             return callback();
         }
         const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
         const timestamp = UtapiClient.getNormalizedTimestamp();
-        this[methods[metric]](params, timestamp, log, callback);
-        return this;
+        const paramsArray = this._getParamsArr(params);
+        // Push metrics for each metric type included in the `params` object.
+        return async.each(paramsArray, (params, callback) => {
+            this[methods[metric]](params, timestamp, metric, log, callback);
+        }, err => callback(err));
     }
 
     /**
-    * Updates counter for CreateBucket action on a Bucket resource. Since create
-    * bucket occcurs only once in a bucket's lifetime, counter is always 1
+    * Updates counter for CreateBucket action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action to push metric for
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricCreateBucket(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricCreateBucket',
-            bucket, timestamp,
-        });
-        // set storage utilized and number of objects  counters to 0,
+    _pushMetricCreateBucket(params, timestamp, action, log, callback) {
+        this._checkProperties(params);
+        this._logMetric(params, '_pushMetricCreateBucket', timestamp, log);
+        // set storage utilized and number of objects counters to 0,
         // indicating the start of the bucket timeline
-        const cmds = getBucketCounters(bucket).map(item => ['set', item, 0]);
+        const cmds = getCounters(params).map(item => ['set', item, 0]);
         cmds.push(
             // remove old timestamp entries
             ['zremrangebyscore',
-                genBucketStateKey(bucket, 'storageUtilized'), timestamp,
+                generateStateKey(params, 'storageUtilized'), timestamp,
                 timestamp],
-            ['zremrangebyscore', genBucketStateKey(bucket, 'numberOfObjects'),
+            ['zremrangebyscore', generateStateKey(params, 'numberOfObjects'),
                 timestamp, timestamp],
             // add new timestamp entries
-            ['set', genBucketKey(bucket, 'createBucket', timestamp), 1],
-            ['zadd', genBucketStateKey(bucket, 'storageUtilized'), timestamp,
-                0],
-            ['zadd', genBucketStateKey(bucket, 'numberOfObjects'), timestamp, 0]
+            ['zadd', generateStateKey(params, 'storageUtilized'), timestamp, 0],
+            ['zadd', generateStateKey(params, 'numberOfObjects'), timestamp, 0]
         );
+        // CreateBucket action occurs only once in a bucket's lifetime, so for
+        // bucket-level metrics, counter is always 1.
+        if ('bucket' in params) {
+            cmds.push(['set', generateKey(params, action, timestamp), 1]);
+        } else {
+            cmds.push(['incr', generateKey(params, action, timestamp)]);
+        }
         return this.ds.batch(cmds, err => {
             if (err) {
                 log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricCreateBucket',
+                    method: 'Buckets._pushMetricCreateBucket',
                     error: err,
                 });
                 return callback(errors.InternalError);
@@ -187,26 +287,24 @@ export default class UtapiClient {
     }
 
     /**
-    * Updates counter for DeleteBucket action on a Bucket resource
+    * Updates counter for the given action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricDeleteBucket(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricDeleteBucket',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'deleteBucket', timestamp);
+    _genericPushMetric(params, timestamp, action, log, callback) {
+        this._checkProperties(params);
+        this._logMetric(params, '_genericPushMetric', timestamp, log);
+        const key = generateKey(params, action, timestamp);
         return this.ds.incr(key, err => {
             if (err) {
                 log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricDeleteBucket',
+                    method: 'UtapiClient._genericPushMetric',
                     error: err,
                 });
                 return callback(errors.InternalError);
@@ -216,199 +314,32 @@ export default class UtapiClient {
     }
 
     /**
-    * Updates counter for DeleteBucketWebsite action on a Bucket resource.
+    * Updates counter for UploadPart action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricDeleteBucketWebsite(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricDeleteBucketWebsite',
-            bucket, timestamp });
-        const key = genBucketKey(bucket, 'deleteBucketWebsite', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricDeleteBucketWebsite',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for ListBucket action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricListBucket(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricListBucket',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'listBucket', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricListBucket',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for GetBucketAcl action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricGetBucketAcl(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', { method: 'UtapiClient.pushMetricGet' +
-            'BucketAcl',
-            bucket, timestamp });
-        const key = genBucketKey(bucket, 'getBucketAcl', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricGetBucketAcl',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for GetBucketWebsite action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricGetBucketWebsite(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricGetBucketWebsite',
-            bucket, timestamp });
-        const key = genBucketKey(bucket, 'getBucketWebsite', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricGetBucketWebsite',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for PutBucketAcl action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricPutBucketAcl(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricPutBucketAcl', bucket, timestamp });
-        const key = genBucketKey(bucket, 'putBucketAcl', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricPutBucketAcl',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for PutBucketWebsite action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricPutBucketWebsite(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricPutBucketWebsite',
-            bucket, timestamp });
-        const key = genBucketKey(bucket, 'putBucketWebsite', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets.pushMetricPutBucketWebsite',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for UploadPart action on an object in a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} params.newByteLength - size of object in bytes
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricUploadPart(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket', 'newByteLength']);
-        const { bucket, newByteLength } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricUploadPart', bucket, timestamp });
+    _pushMetricUploadPart(params, timestamp, action, log, callback) {
+        this._checkProperties(params, ['newByteLength']);
+        const { newByteLength } = params;
+        this._logMetric(params, '_pushMetricUploadPart', timestamp, log);
         // update counters
         return this.ds.batch([
-            ['incrby', genBucketCounter(bucket, 'storageUtilizedCounter'),
+            ['incrby', generateCounter(params, 'storageUtilizedCounter'),
                 newByteLength],
-            ['incrby', genBucketKey(bucket, 'incomingBytes', timestamp),
+            ['incrby', generateKey(params, 'incomingBytes', timestamp),
                 newByteLength],
-            ['incr', genBucketKey(bucket, 'uploadPart', timestamp)],
+            ['incr', generateKey(params, action, timestamp)],
         ], (err, results) => {
             if (err) {
                 log.error('error pushing metric', {
-                    method: 'UtapiClient.pushMetricUploadPart',
+                    method: 'UtapiClient._pushMetricUploadPart',
                     error: err,
                 });
                 return callback(errors.InternalError);
@@ -418,7 +349,7 @@ export default class UtapiClient {
             const actionCounter = results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricUploadPart',
+                    method: 'UtapiClient._pushMetricUploadPart',
                     metric: 'storage utilized',
                     error: actionErr,
                 });
@@ -427,67 +358,37 @@ export default class UtapiClient {
 
             return this.ds.batch([
                 ['zremrangebyscore',
-                    genBucketStateKey(bucket, 'storageUtilized'),
+                    generateStateKey(params, 'storageUtilized'),
                     timestamp, timestamp],
-                ['zadd', genBucketStateKey(bucket, 'storageUtilized'),
+                ['zadd', generateStateKey(params, 'storageUtilized'),
                     timestamp, actionCounter],
             ], callback);
         });
     }
 
     /**
-    * Updates counter for Initiate Multipart Upload action on a Bucket resource.
+    * Updates counter for CompleteMultipartUpload action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricInitiateMultipartUpload(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricInitiateMultipartUpload',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'initiateMultipartUpload', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricInitiateMultipartUpload',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for Complete Multipart Upload action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricCompleteMultipartUpload(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricCompleteMultipartUpload',
-            bucket, timestamp,
-        });
+    _pushMetricCompleteMultipartUpload(params, timestamp, action, log,
+        callback) {
+        this._checkProperties(params);
+        this._logMetric(params, '_pushMetricCompleteMultipartUpload', timestamp,
+            log);
         return this.ds.batch([
-            ['incr', genBucketCounter(bucket, 'numberOfObjectsCounter')],
-            ['incr', genBucketKey(bucket, 'completeMultipartUpload',
-                timestamp)],
+            ['incr', generateCounter(params, 'numberOfObjectsCounter')],
+            ['incr', generateKey(params, action, timestamp)],
         ], (err, results) => {
             if (err) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricCompleteMultipartUpload',
+                    method: 'UtapiClient._pushMetricCompleteMultipartUpload',
                     metric: 'number of objects',
                     error: err,
                 });
@@ -498,13 +399,13 @@ export default class UtapiClient {
             const actionCounter = results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricCompleteMultipartUpload',
+                    method: 'UtapiClient._pushMetricCompleteMultipartUpload',
                     metric: 'number of objects',
                     error: actionErr,
                 });
                 return callback(errors.InternalError);
             }
-            const key = genBucketStateKey(bucket, 'numberOfObjects');
+            const key = generateStateKey(params, 'numberOfObjects');
             return this.ds.batch([
                 ['zremrangebyscore', key, timestamp, timestamp],
                 ['zadd', key, timestamp, actionCounter],
@@ -513,121 +414,46 @@ export default class UtapiClient {
     }
 
     /**
-    * Updates counter for ListMultipartUploads action on a Bucket resource.
+    * Updates counter for listBucketMultipartUploads action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricListBucketMultipartUploads(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricListBucketMultipartUploads',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'listBucketMultipartUploads',
-            timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricListBucketMultipart' +
-                        'Uploads',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for ListMultipartUploadParts action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricListMultipartUploadParts(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricListMultipartUploadParts',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'listMultipartUploadParts', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricListMultipartUpload' +
-                        'Parts',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for AbortMultipartUpload action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricAbortMultipartUpload(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricAbortMultipartUpload',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'abortMultipartUpload', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricAbortMultipartUpload',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
+    _pushMetricListBucketMultipartUploads(params, timestamp, action, log,
+        callback) {
+        return this._genericPushMetric(params, timestamp,
+            'listBucketMultipartUploads', log, callback);
     }
 
     /**
     * Updates counter for DeleteObject or MultiObjectDelete action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} params.byteLength - size of the object to delete
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
+    * @param {number} params.byteLength - size of the object deleted
     * @param {number} params.numberOfObjects - number of objects deleted
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _genericPushMetricDeleteObject(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket', 'byteLength', 'numberOfObjects']);
-        const { bucket, byteLength, numberOfObjects } = params;
-        const bucketAction = numberOfObjects === 1 ? 'deleteObject'
-            : 'multiObjectDelete';
-        log.trace('pushing metric', {
-            method: 'UtapiClient._genericPushMetricDeleteObject',
-            bucket, timestamp,
-        });
+    _genericPushMetricDeleteObject(params, timestamp, action, log, callback) {
+        this._checkProperties(params, ['byteLength', 'numberOfObjects']);
+        const { byteLength, numberOfObjects } = params;
+        this._logMetric(params, '_genericPushMetricDeleteObject', timestamp,
+            log);
         return this.ds.batch([
-            ['decrby', genBucketCounter(bucket, 'storageUtilizedCounter'),
+            ['decrby', generateCounter(params, 'storageUtilizedCounter'),
                 byteLength],
-            ['decrby', genBucketCounter(bucket, 'numberOfObjectsCounter'),
+            ['decrby', generateCounter(params, 'numberOfObjectsCounter'),
                 numberOfObjects],
-            ['incr', genBucketKey(bucket, bucketAction, timestamp)],
+            ['incr', generateKey(params, action, timestamp)],
         ], (err, results) => {
             if (err) {
                 log.error('error incrementing counter', {
@@ -652,10 +478,10 @@ export default class UtapiClient {
             }
             cmds.push(
                 ['zremrangebyscore',
-                    genBucketStateKey(bucket, 'storageUtilized'),
+                    generateStateKey(params, 'storageUtilized'),
                     timestamp, timestamp],
                 ['zadd',
-                    genBucketStateKey(bucket, 'storageUtilized'),
+                    generateStateKey(params, 'storageUtilized'),
                     timestamp, actionCounter]);
 
             // num of objects counter
@@ -672,71 +498,39 @@ export default class UtapiClient {
             }
             cmds.push(
                 ['zremrangebyscore',
-                    genBucketStateKey(bucket, 'numberOfObjects'), timestamp,
+                    generateStateKey(params, 'numberOfObjects'), timestamp,
                     timestamp],
-                ['zadd', genBucketStateKey(bucket, 'numberOfObjects'),
+                ['zadd', generateStateKey(params, 'numberOfObjects'),
                     timestamp, actionCounter]);
             return this.ds.batch(cmds, callback);
         });
     }
 
-
     /**
-    * Updates counter for DeleteObject action on an object of Bucket resource.
+    * Updates counter for GetObject action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} params.byteLength - size of the object deleted
-    * @param {number} params.numberOfObjects - number of objects deleted
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricDeleteObject(params, timestamp, log, callback) {
-        this._genericPushMetricDeleteObject(params, timestamp, log, callback);
-        return undefined;
-    }
-
-    /**
-    * Updates counter for MultiObjectDelete action
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} params.byteLength - size of the object deleted
-    * @param {number} params.numberOfObjects - number of objects deleted
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricMultiObjectDelete(params, timestamp, log, callback) {
-        this._genericPushMetricDeleteObject(params, timestamp, log, callback);
-        return undefined;
-    }
-
-    /**
-    * Updates counter for GetObject action on an object in a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} params.newByteLength - size of object in bytes
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricGetObject(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket', 'newByteLength']);
-        const { bucket, newByteLength } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricGetObject', bucket, timestamp });
+    _pushMetricGetObject(params, timestamp, action, log, callback) {
+        this._checkProperties(params, ['newByteLength']);
+        const { newByteLength } = params;
+        this._logMetric(params, '_pushMetricGetObject', timestamp, log);
         // update counters
         return this.ds.batch([
-            ['incrby', genBucketKey(bucket, 'outgoingBytes', timestamp),
+            ['incrby', generateKey(params, 'outgoingBytes', timestamp),
                 newByteLength],
-            ['incr', genBucketKey(bucket, 'getObject', timestamp)],
+            ['incr', generateKey(params, action, timestamp)],
         ], err => {
             if (err) {
                 log.error('error pushing metric', {
-                    method: 'UtapiClient.pushMetricGetObject',
+                    method: 'UtapiClient._pushMetricGetObject',
                     error: err,
                 });
                 return callback(errors.InternalError);
@@ -745,77 +539,49 @@ export default class UtapiClient {
         });
     }
 
-    /**
-    * Updates counter for GetObjectAcl action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricGetObjectAcl(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricGetObjectAcl',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'getObjectAcl', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricGetObjectAcl',
-                    error: err,
-                });
-                return callback(err);
-            }
-            return callback();
-        });
-    }
-
 
     /**
-    * Updates counter for PutObject action on an object in a Bucket resource.
+    * Updates counter for PutObject action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} params.newByteLength - size of object in bytes
     * @param {number} params.oldByteLength - previous size of object
     * in bytes if this action overwrote an existing object
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricPutObject(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket', 'newByteLength', 'oldByteLength']);
-        const { bucket, newByteLength, oldByteLength } = params;
+    _pushMetricPutObject(params, timestamp, action, log, callback) {
+        this._checkProperties(params, ['newByteLength', 'oldByteLength']);
+        const { newByteLength, oldByteLength } = params;
         let numberOfObjectsCounter;
         // if previous object size is null then it's a new object in a bucket
         // or else it's an old object being overwritten
         if (oldByteLength === null) {
-            numberOfObjectsCounter = ['incr', genBucketCounter(bucket,
+            numberOfObjectsCounter = ['incr', generateCounter(params,
                 'numberOfObjectsCounter')];
         } else {
-            numberOfObjectsCounter = ['get', genBucketCounter(bucket,
+            numberOfObjectsCounter = ['get', generateCounter(params,
                 'numberOfObjectsCounter')];
         }
         const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
         const storageUtilizedDelta = newByteLength - oldObjSize;
-        log.trace('pushing metric',
-            { method: 'UtapiClient.pushMetricPutObject', bucket, timestamp });
+        this._logMetric(params, '_pushMetricPutObject', timestamp, log);
         // update counters
         return this.ds.batch([
-            ['incrby', genBucketCounter(bucket, 'storageUtilizedCounter'),
+            ['incrby', generateCounter(params, 'storageUtilizedCounter'),
                 storageUtilizedDelta],
             numberOfObjectsCounter,
-            ['incrby', genBucketKey(bucket, 'incomingBytes', timestamp),
+            ['incrby', generateKey(params, 'incomingBytes', timestamp),
                 newByteLength],
-            ['incr', genBucketKey(bucket, 'putObject', timestamp)],
+            ['incr', generateKey(params, action, timestamp)],
         ], (err, results) => {
             if (err) {
                 log.error('error pushing metric', {
-                    method: 'UtapiClient.pushMetricPutObject',
+                    method: 'UtapiClient._pushMetricPutObject',
                     error: err,
                 });
                 return callback(errors.InternalError);
@@ -828,7 +594,7 @@ export default class UtapiClient {
             actionCounter = results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricPutObject',
+                    method: 'UtapiClient._pushMetricPutObject',
                     metric: 'storage utilized',
                     error: actionErr,
                 });
@@ -836,9 +602,9 @@ export default class UtapiClient {
             }
             cmds.push(
                 ['zremrangebyscore',
-                    genBucketStateKey(bucket, 'storageUtilized'),
+                    generateStateKey(params, 'storageUtilized'),
                     timestamp, timestamp],
-                ['zadd', genBucketStateKey(bucket, 'storageUtilized'),
+                ['zadd', generateStateKey(params, 'storageUtilized'),
                     timestamp, actionCounter]);
 
             // number of objects counter
@@ -846,7 +612,7 @@ export default class UtapiClient {
             actionCounter = results[1][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricPutObject',
+                    method: 'UtapiClient._pushMetricPutObject',
                     metric: 'number of objects',
                     error: actionErr,
                 });
@@ -854,53 +620,54 @@ export default class UtapiClient {
             }
             cmds.push(
                 ['zremrangebyscore',
-                    genBucketStateKey(bucket, 'numberOfObjects'),
+                    generateStateKey(params, 'numberOfObjects'),
                     timestamp, timestamp],
-                ['zadd', genBucketStateKey(bucket, 'numberOfObjects'),
+                ['zadd', generateStateKey(params, 'numberOfObjects'),
                     timestamp, actionCounter]);
             return this.ds.batch(cmds, callback);
         });
     }
 
     /**
-    * Updates counter for CopyObject action on an object in a Bucket resource.
+    * Updates counter for CopyObject action
     * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
     * @param {number} params.newByteLength - size of object in bytes
     * @param {number} params.oldByteLength - previous size of object in bytes
     * if this action overwrote an existing object
     * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
     * @param {object} log - Werelogs request logger
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricCopyObject(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket', 'newByteLength', 'oldByteLength']);
-        const { bucket, newByteLength, oldByteLength } = params;
+    _pushMetricCopyObject(params, timestamp, action, log, callback) {
+        this._checkProperties(params, ['newByteLength', 'oldByteLength']);
+        const { newByteLength, oldByteLength } = params;
         let numberOfObjectsCounter;
         // if previous object size is null then it's a new object in a bucket
         // or else it's an old object being overwritten
         if (oldByteLength === null) {
-            numberOfObjectsCounter = ['incr', genBucketCounter(bucket,
+            numberOfObjectsCounter = ['incr', generateCounter(params,
                 'numberOfObjectsCounter')];
         } else {
-            numberOfObjectsCounter = ['get', genBucketCounter(bucket,
+            numberOfObjectsCounter = ['get', generateCounter(params,
                 'numberOfObjectsCounter')];
         }
         const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
         const storageUtilizedDelta = newByteLength - oldObjSize;
-        log.trace('pushing metric',
-            { method: 'UtapiClient.pushMetricCopyObject', bucket, timestamp });
+        this._logMetric(params, '_pushMetricCopyObject', timestamp, log);
         // update counters
         return this.ds.batch([
-            ['incrby', genBucketCounter(bucket, 'storageUtilizedCounter'),
+            ['incrby', generateCounter(params, 'storageUtilizedCounter'),
                 storageUtilizedDelta],
             numberOfObjectsCounter,
-            ['incr', genBucketKey(bucket, 'copyObject', timestamp)],
+            ['incr', generateKey(params, action, timestamp)],
         ], (err, results) => {
             if (err) {
                 log.error('error pushing metric', {
-                    method: 'UtapiClient.pushMetricCopyObject',
+                    method: 'UtapiClient._pushMetricCopyObject',
                     error: err,
                 });
                 return callback(errors.InternalError);
@@ -913,7 +680,7 @@ export default class UtapiClient {
             actionCounter = results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricCopyObject',
+                    method: 'UtapiClient._pushMetricCopyObject',
                     metric: 'storage utilized',
                     error: actionErr,
                 });
@@ -921,9 +688,9 @@ export default class UtapiClient {
             }
             cmds.push(
                 ['zremrangebyscore',
-                    genBucketStateKey(bucket, 'storageUtilized'),
+                    generateStateKey(params, 'storageUtilized'),
                     timestamp, timestamp],
-                ['zadd', genBucketStateKey(bucket, 'storageUtilized'),
+                ['zadd', generateStateKey(params, 'storageUtilized'),
                     timestamp, actionCounter]);
 
             // number of objects counter
@@ -931,7 +698,7 @@ export default class UtapiClient {
             actionCounter = results[1][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient.pushMetricCopyObject',
+                    method: 'UtapiClient._pushMetricCopyObject',
                     metric: 'number of objects',
                     error: actionErr,
                 });
@@ -939,98 +706,11 @@ export default class UtapiClient {
             }
             cmds.push(
                 ['zremrangebyscore',
-                    genBucketStateKey(bucket, 'numberOfObjects'),
+                    generateStateKey(params, 'numberOfObjects'),
                     timestamp, timestamp],
-                ['zadd', genBucketStateKey(bucket, 'numberOfObjects'),
+                ['zadd', generateStateKey(params, 'numberOfObjects'),
                     timestamp, actionCounter]);
             return this.ds.batch(cmds, callback);
-        });
-    }
-
-    /**
-    * Updates counter for PutObjectAcl action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricPutObjectAcl(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricPutObjectAcl',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'putObjectAcl', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricPutObjectAcl',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for HeadBucket action on a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricHeadBucket(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricHeadBucket',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'headBucket', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricHeadBucket',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
-    * Updates counter for HeadObject action on an object in a Bucket resource.
-    * @param {object} params - params for the metrics
-    * @param {string} params.bucket - bucket name
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricHeadObject(params, timestamp, log, callback) {
-        this._checkTypes(params, ['bucket']);
-        const { bucket } = params;
-        log.trace('pushing metric', {
-            method: 'UtapiClient.pushMetricHeadObject',
-            bucket, timestamp,
-        });
-        const key = genBucketKey(bucket, 'headObject', timestamp);
-        return this.ds.incr(key, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'UtapiClient.pushMetricHeadObject',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
         });
     }
 }

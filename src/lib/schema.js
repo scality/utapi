@@ -1,110 +1,142 @@
-// bucket schema
-const bucketStateKeys = {
-    storageUtilized: b => `s3:buckets:${b}:storageUtilized`,
-    numberOfObjects: b => `s3:buckets:${b}:numberOfObjects`,
+// metric type schema
+const stateKeys = {
+    storageUtilized: prefix => `${prefix}storageUtilized`,
+    numberOfObjects: prefix => `${prefix}numberOfObjects`,
 };
 
-const bucketCounters = {
-    storageUtilizedCounter: b => `s3:buckets:${b}:storageUtilized:counter`,
-    numberOfObjectsCounter: b => `s3:buckets:${b}:numberOfObjects:counter`,
+const counters = {
+    storageUtilizedCounter: prefix => `${prefix}storageUtilized:counter`,
+    numberOfObjectsCounter: prefix => `${prefix}numberOfObjects:counter`,
 };
 
-const bucketKeys = {
-    createBucket: (b, t) => `s3:buckets:${t}:${b}:CreateBucket`,
-    deleteBucket: (b, t) => `s3:buckets:${t}:${b}:DeleteBucket`,
-    deleteBucketWebsite: (b, t) => `s3:buckets:${t}:${b}:DeleteBucketWebsite`,
-    listBucket: (b, t) => `s3:buckets:${t}:${b}:ListBucket`,
-    getBucketAcl: (b, t) => `s3:buckets:${t}:${b}:GetBucketAcl`,
-    getBucketWebsite: (b, t) => `s3:buckets:${t}:${b}:GetBucketWebsite`,
-    putBucketAcl: (b, t) => `s3:buckets:${t}:${b}:PutBucketAcl`,
-    putBucketWebsite: (b, t) => `s3:buckets:${t}:${b}:PutBucketWebsite`,
-    listBucketMultipartUploads: (b, t) =>
-        `s3:buckets:${t}:${b}:ListBucketMultipartUploads`,
-    listMultipartUploadParts: (b, t) =>
-        `s3:buckets:${t}:${b}:ListMultipartUploadParts`,
-    initiateMultipartUpload: (b, t) =>
-        `s3:buckets:${t}:${b}:InitiateMultipartUpload`,
-    completeMultipartUpload: (b, t) =>
-        `s3:buckets:${t}:${b}:CompleteMultipartUpload`,
-    abortMultipartUpload: (b, t) =>
-        `s3:buckets:${t}:${b}:AbortMultipartUpload`,
-    deleteObject: (b, t) => `s3:buckets:${t}:${b}:DeleteObject`,
-    multiObjectDelete: (b, t) => `s3:buckets:${t}:${b}:MultiObjectDelete`,
-    uploadPart: (b, t) => `s3:buckets:${t}:${b}:UploadPart`,
-    getObject: (b, t) => `s3:buckets:${t}:${b}:GetObject`,
-    getObjectAcl: (b, t) => `s3:buckets:${t}:${b}:GetObjectAcl`,
-    putObject: (b, t) => `s3:buckets:${t}:${b}:PutObject`,
-    copyObject: (b, t) => `s3:buckets:${t}:${b}:CopyObject`,
-    putObjectAcl: (b, t) => `s3:buckets:${t}:${b}:PutObjectAcl`,
-    headBucket: (b, t) => `s3:buckets:${t}:${b}:HeadBucket`,
-    headObject: (b, t) => `s3:buckets:${t}:${b}:HeadObject`,
-    incomingBytes: (b, t) => `s3:buckets:${t}:${b}:incomingBytes`,
-    outgoingBytes: (b, t) => `s3:buckets:${t}:${b}:outgoingBytes`,
+const keys = {
+    createBucket: prefix => `${prefix}CreateBucket`,
+    deleteBucket: prefix => `${prefix}DeleteBucket`,
+    listBucket: prefix => `${prefix}ListBucket`,
+    getBucketAcl: prefix => `${prefix}GetBucketAcl`,
+    putBucketAcl: prefix => `${prefix}PutBucketAcl`,
+    putBucketWebsite: prefix => `${prefix}PutBucketWebsite`,
+    deleteBucketWebsite: prefix => `${prefix}DeleteBucketWebsite`,
+    getBucketWebsite: prefix => `${prefix}GetBucketWebsite`,
+    listBucketMultipartUploads: prefix => `${prefix}ListBucketMultipartUploads`,
+    listMultipartUploadParts: prefix => `${prefix}ListMultipartUploadParts`,
+    initiateMultipartUpload: prefix => `${prefix}InitiateMultipartUpload`,
+    completeMultipartUpload: prefix => `${prefix}CompleteMultipartUpload`,
+    abortMultipartUpload: prefix => `${prefix}AbortMultipartUpload`,
+    deleteObject: prefix => `${prefix}DeleteObject`,
+    multiObjectDelete: prefix => `${prefix}MultiObjectDelete`,
+    uploadPart: prefix => `${prefix}UploadPart`,
+    getObject: prefix => `${prefix}GetObject`,
+    getObjectAcl: prefix => `${prefix}GetObjectAcl`,
+    putObject: prefix => `${prefix}PutObject`,
+    copyObject: prefix => `${prefix}CopyObject`,
+    putObjectAcl: prefix => `${prefix}PutObjectAcl`,
+    headBucket: prefix => `${prefix}HeadBucket`,
+    headObject: prefix => `${prefix}HeadObject`,
+    incomingBytes: prefix => `${prefix}incomingBytes`,
+    outgoingBytes: prefix => `${prefix}outgoingBytes`,
 };
 
 /**
-* Returns the metric key in schema for the bucket
-* @param {string} bucket - bucket name
-* @param {string} metric - metric name
+* Creates the appropriate prefix for schema keys
+* @param {object} params - object with metric type and id as a property
+* @param {number} [timestamp] - (optional) unix timestamp normalized to the
+* nearest 15 min.
+* @return {string} - prefix for the schema key
+*/
+function getSchemaPrefix(params, timestamp) {
+    // Map of possible metric types and their associated prefix level keys
+    const map = {
+        bucket: 'buckets',
+        accountId: 'accounts',
+    };
+    const metricType = Object.keys(params).find(k => k in map);
+    const level = map[metricType];
+    const id = params[metricType];
+    const prefix = timestamp === undefined ? `s3:${level}:${id}:` :
+        `s3:${level}:${timestamp}:${id}:`;
+    return prefix;
+}
+
+/**
+* Returns the metric key for the metric type
+* @param {object} params - object with metric type and id as a property
+* @param {string} metric - metric to generate a key for
 * @param {number} timestamp - unix timestamp normalized to the nearest 15 min.
 * @return {string} - schema key
 */
-export function genBucketKey(bucket, metric, timestamp) {
-    return bucketKeys[metric](bucket, timestamp);
+export function generateKey(params, metric, timestamp) {
+    const prefix = getSchemaPrefix(params, timestamp);
+    return keys[metric](prefix);
 }
 
 /**
-* Returns a list of the counters for a bucket
-* @param {string} bucket - bucket name
+* Returns a list of the counters for a metric type
+* @param {object} params - object with metric type and id as a property
 * @return {string[]} - array of keys for counters
 */
-export function getBucketCounters(bucket) {
-    return Object.keys(bucketCounters).map(
-        item => bucketCounters[item](bucket));
+export function getCounters(params) {
+    const prefix = getSchemaPrefix(params);
+    return Object.keys(counters).map(item => counters[item](prefix));
 }
 
 /**
-* Returns a list of all keys for a bucket
-* @param {string} bucket - bucket name
+* Returns a list of all keys for a metric type
+* @param {object} params - object with metric type and id as a property
 * @param {number} timestamp - unix timestamp normalized to the nearest 15 min.
 * @return {string[]} - list of keys
 */
-export function getBucketKeys(bucket, timestamp) {
-    return Object.keys(bucketKeys)
-        .map(item => bucketKeys[item](bucket, timestamp));
+export function getKeys(params, timestamp) {
+    const prefix = getSchemaPrefix(params, timestamp);
+    return Object.keys(keys).map(item => keys[item](prefix));
 }
 
 /**
 * Returns metric from key
 * @param {string} key - schema key
-* @param {string} bucket - bucket name
-* @return {string} metric - S3 metric
+* @param {string} value - the metric value
+* @param {string} metricType - the metric type
+* @return {string|undefined} metric - S3 metric or `undefined`
 */
-export function getMetricFromKey(key, bucket) {
-    // s3:buckets:1473451689898:demo:putObject
-    return key.slice(25).replace(`${bucket}:`, '');
+export function getMetricFromKey(key, value, metricType) {
+    if (metricType === 'buckets') {
+        // s3:buckets:1473451689898:demo:putObject
+        return key.slice(25).replace(`${value}:`, '');
+    } else if (metricType === 'accounts') {
+        // s3:accounts:1473451689898:demo:putObject
+        return key.slice(26).replace(`${value}:`, '');
+    }
+    return undefined;
 }
 
 /**
-* Returns the keys representing state of the bucket
-* @param {string} bucket - bucket name
+* Returns the keys representing state of the metric type
+* @param {object} params - object with metric type and id as a property
 * @return {string[]} - list of keys
 */
-export function getBucketStateKeys(bucket) {
-    return Object.keys(bucketStateKeys)
-        .map(item => bucketStateKeys[item](bucket));
+export function getStateKeys(params) {
+    const prefix = getSchemaPrefix(params);
+    return Object.keys(stateKeys).map(item => stateKeys[item](prefix));
 }
 
 /**
-* Returns the state metric key in schema for the bucket
-* @param {string} bucket - bucket name
-* @param {string} metric - metric name
+* Returns the state metric key for the metric type
+* @param {object} params - object with metric type and id as a property
+* @param {string} metric - metric to generate a key for
 * @return {string} - schema key
 */
-export function genBucketStateKey(bucket, metric) {
-    return bucketStateKeys[metric](bucket);
+export function generateStateKey(params, metric) {
+    const prefix = getSchemaPrefix(params);
+    return stateKeys[metric](prefix);
 }
 
-export function genBucketCounter(bucket, metric) {
-    return bucketCounters[metric](bucket);
+/**
+* Returns the counter metric key for the metric type
+* @param {object} params - object with metric type and id as a property
+* @param {string} metric - metric to generate a key for
+* @return {string} - schema key
+*/
+export function generateCounter(params, metric) {
+    const prefix = getSchemaPrefix(params);
+    return counters[metric](prefix);
 }
