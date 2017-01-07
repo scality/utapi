@@ -1,6 +1,6 @@
 import async from 'async';
 import { errors } from 'arsenal';
-import { getMetricFromKey, getBucketKeys, genBucketStateKey } from './schema';
+import { getMetricFromKey, getKeys, generateStateKey } from './schema';
 
 /**
 * Provides static methods to get bucket level metrics
@@ -85,10 +85,10 @@ export default class Buckets {
     static getBucketMetrics(bucket, range, datastore, log, cb) {
         const start = range[0];
         const end = range[1] || Date.now();
-
+        const params = { bucket };
         // find nearest neighbors for absolutes
-        const storageUtilizedKey = genBucketStateKey(bucket, 'storageUtilized');
-        const numberOfObjectsKey = genBucketStateKey(bucket, 'numberOfObjects');
+        const storageUtilizedKey = generateStateKey(params, 'storageUtilized');
+        const numberOfObjectsKey = generateStateKey(params, 'numberOfObjects');
         const storageUtilizedStart = ['zrevrangebyscore', storageUtilizedKey,
             start, '-inf', 'LIMIT', '0', '1'];
         const storageUtilizedEnd = ['zrevrangebyscore', storageUtilizedKey, end,
@@ -99,7 +99,7 @@ export default class Buckets {
             '-inf', 'LIMIT', '0', '1'];
         const timestampRange = Buckets.getTimestampRange(start, end);
         const bucketKeys = [].concat.apply([], timestampRange.map(
-            i => getBucketKeys(bucket, i)));
+            i => getKeys(params, i)));
         const cmds = bucketKeys.map(item => ['get', item]);
         cmds.push(storageUtilizedStart, storageUtilizedEnd,
             numberOfObjectsStart, numberOfObjectsEnd);
@@ -189,7 +189,7 @@ export default class Buckets {
                         cmd: key,
                     });
                 } else {
-                    const m = getMetricFromKey(key, bucket);
+                    const m = getMetricFromKey(key, bucket, 'buckets');
                     let count = parseInt(item[1], 10);
                     count = Number.isNaN(count) ? 0 : count;
                     if (m === 'incomingBytes' || m === 'outgoingBytes') {
