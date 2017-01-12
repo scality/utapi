@@ -1,0 +1,32 @@
+{
+    "timeRange": [],
+    "storageUtilized": [0, 0],
+    "incomingBytes": 0,
+    "outgoingBytes": 0,
+    "numberOfObjects": [0, 0],
+    "operations": {
+        "s3:DeleteBucket": 0,
+        "s3:DeleteBucketWebsite": 0,
+        "s3:ListBucket": 0,
+        "s3:GetBucketAcl": 0,
+        "s3:GetBucketWebsite": 0,
+        "s3:CreateBucket": 0,
+        "s3:PutBucketAcl": 0,
+        "s3:PutBucketWebsite": 0,
+        "s3:PutObject": 0,
+        "s3:CopyObject": 0,
+        "s3:UploadPart": 0,
+        "s3:ListBucketMultipartUploads": 0,
+        "s3:ListMultipartUploadParts": 0,
+        "s3:InitiateMultipartUpload": 0,
+        "s3:CompleteMultipartUpload": 0,
+        "s3:AbortMultipartUpload": 0,
+        "s3:DeleteObject": 0,
+        "s3:MultiObjectDelete": 0,
+        "s3:GetObject": 0,
+        "s3:GetObjectAcl": 0,
+        "s3:PutObjectAcl": 0,
+        "s3:HeadBucket": 0,
+        "s3:HeadObject": 0
+    }
+}

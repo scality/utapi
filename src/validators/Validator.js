@@ -1,5 +1,5 @@
 import { errors } from 'arsenal';
-import validateBuckets from './validateBuckets';
+import validateMetric from './validateMetric';
 import validateTimeRange from './validateTimeRange';
 
 const _keys = Symbol();
@@ -10,7 +10,8 @@ const _error = Symbol();
  * Map to link input with check functions
  */
 const keyMap = new Map([
-    ['buckets', validateBuckets],
+    ['buckets', validateMetric],
+    ['accounts', validateMetric],
     ['timeRange', validateTimeRange],
 ]);
 
@@ -19,6 +20,7 @@ const keyMap = new Map([
  */
 const keyError = new Map([
     ['buckets', errors.InvalidParameterValue],
+    ['accounts', errors.InvalidParameterValue],
     ['timeRange', errors.InvalidParameterValue.customizeDescription(
         'Timestamps must be one of the following intervals for any day/hour' +
             ' (mm:ss:SS) - start must be one of [00:00:000, 15:00:000, ' +

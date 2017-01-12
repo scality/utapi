@@ -18,6 +18,9 @@ const metricTypes = {
 function getPrefixValues(timestamp) {
     const arr = [];
     Object.keys(metricTypes).forEach(metric => {
+        if (metricTypes[metric] === undefined) {
+            return;
+        }
         const name = metricTypes[metric];
         let type;
         if (metric === 'bucket') {
