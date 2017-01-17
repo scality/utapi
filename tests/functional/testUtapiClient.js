@@ -16,12 +16,13 @@ const metricTypes = {
 
 // Get the metric object for the given type
 function _getMetricObj(type) {
-    if (type === 'bucket') {
-        return { bucket: metricTypes[type] };
-    } else if (type === 'accountId') {
-        return { accountId: metricTypes[type] };
-    }
-    return undefined;
+    const levels = {
+        bucket: 'buckets',
+        accountId: 'accounts',
+    };
+    const obj = { level: levels[type] };
+    obj[type] = metricTypes[type];
+    return obj;
 }
 
 // Get the metric from the key that is passed

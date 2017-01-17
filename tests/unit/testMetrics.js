@@ -56,6 +56,7 @@ function assertMetrics(schemaKey, metricName, props, done) {
 function getSchemaObject(schemaKey) {
     const schemaObject = {};
     schemaObject[schemaKey] = resourceNames[schemaKey];
+    schemaObject.level = metricLevels[schemaKey];
     return schemaObject;
 }
 
