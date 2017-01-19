@@ -1,5 +1,4 @@
 import assert from 'assert';
-import async from 'async';
 import { Logger } from 'werelogs';
 import Datastore from './Datastore';
 import { generateKey, generateCounter, getCounters, generateStateKey }
@@ -26,8 +25,8 @@ const methods = {
     multiObjectDelete: '_genericPushMetricDeleteObject',
     getObject: '_pushMetricGetObject',
     getObjectAcl: '_genericPushMetric',
-    putObject: '_pushMetricPutObject',
-    copyObject: '_pushMetricCopyObject',
+    putObject: '_genericPushMetricPutObject',
+    copyObject: '_genericPushMetricPutObject',
     putObjectAcl: '_genericPushMetric',
     headBucket: '_genericPushMetric',
     headObject: '_genericPushMetric',
@@ -190,8 +189,8 @@ export default class UtapiClient {
             Object.keys(params).forEach(k => {
                 // Get other properties, but do not include `undefined` ones
                 // or any unrelated properties (those not in `metricProps`).
-                if (props.indexOf(k) < 0 && params[k] !== undefined &&
-                metricProps.indexOf(k) >= 0) {
+                if (props.indexOf(k) < 0 && params[k] !== undefined
+                    && metricProps.indexOf(k) >= 0) {
                     typeObj[k] = params[k];
                 }
             });
@@ -232,11 +231,7 @@ export default class UtapiClient {
         }
         const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
         const timestamp = UtapiClient.getNormalizedTimestamp();
-        const paramsArray = this._getParamsArr(params);
-        // Push metrics for each metric type included in the `params` object.
-        return async.each(paramsArray, (params, callback) => {
-            this[methods[metric]](params, timestamp, metric, log, callback);
-        }, err => callback(err));
+        return this[methods[metric]](params, timestamp, metric, log, callback);
     }
 
     /**
@@ -255,25 +250,28 @@ export default class UtapiClient {
         this._logMetric(params, '_pushMetricCreateBucket', timestamp, log);
         // set storage utilized and number of objects counters to 0,
         // indicating the start of the bucket timeline
-        const cmds = getCounters(params).map(item => ['set', item, 0]);
-        cmds.push(
-            // remove old timestamp entries
-            ['zremrangebyscore',
-                generateStateKey(params, 'storageUtilized'), timestamp,
-                timestamp],
-            ['zremrangebyscore', generateStateKey(params, 'numberOfObjects'),
-                timestamp, timestamp],
-            // add new timestamp entries
-            ['zadd', generateStateKey(params, 'storageUtilized'), timestamp, 0],
-            ['zadd', generateStateKey(params, 'numberOfObjects'), timestamp, 0]
-        );
-        // CreateBucket action occurs only once in a bucket's lifetime, so for
-        // bucket-level metrics, counter is always 1.
-        if ('bucket' in params) {
-            cmds.push(['set', generateKey(params, action, timestamp), 1]);
-        } else {
-            cmds.push(['incr', generateKey(params, action, timestamp)]);
-        }
+        let cmds = [];
+        this._getParamsArr(params).forEach(p => {
+            cmds = cmds.concat(getCounters(p).map(item => ['set', item, 0]));
+            cmds.push(
+                // remove old timestamp entries
+                ['zremrangebyscore',
+                    generateStateKey(p, 'storageUtilized'), timestamp,
+                        timestamp],
+                ['zremrangebyscore', generateStateKey(p, 'numberOfObjects'),
+                    timestamp, timestamp],
+                // add new timestamp entries
+                ['zadd', generateStateKey(p, 'storageUtilized'), timestamp, 0],
+                ['zadd', generateStateKey(p, 'numberOfObjects'), timestamp, 0]
+            );
+            // CreateBucket action occurs only once in a bucket's lifetime, so
+            // for bucket-level metrics, counter is always 1.
+            if ('bucket' in p) {
+                cmds.push(['set', generateKey(p, action, timestamp), 1]);
+            } else {
+                cmds.push(['incr', generateKey(p, action, timestamp)]);
+            }
+        });
         return this.ds.batch(cmds, err => {
             if (err) {
                 log.error('error incrementing counter', {
@@ -300,8 +298,9 @@ export default class UtapiClient {
     _genericPushMetric(params, timestamp, action, log, callback) {
         this._checkProperties(params);
         this._logMetric(params, '_genericPushMetric', timestamp, log);
-        const key = generateKey(params, action, timestamp);
-        return this.ds.incr(key, err => {
+        const cmds = this._getParamsArr(params)
+            .map(p => ['incr', generateKey(p, action, timestamp)]);
+        return this.ds.batch(cmds, err => {
             if (err) {
                 log.error('error incrementing counter', {
                     method: 'UtapiClient._genericPushMetric',
@@ -329,14 +328,19 @@ export default class UtapiClient {
         this._checkProperties(params, ['newByteLength']);
         const { newByteLength } = params;
         this._logMetric(params, '_pushMetricUploadPart', timestamp, log);
+        const cmds = [];
+        const paramsArr = this._getParamsArr(params);
+        paramsArr.forEach(p => {
+            cmds.push(
+                ['incrby', generateCounter(p, 'storageUtilizedCounter'),
+                    newByteLength],
+                ['incrby', generateKey(p, 'incomingBytes', timestamp),
+                    newByteLength],
+                ['incr', generateKey(p, action, timestamp)]
+            );
+        });
         // update counters
-        return this.ds.batch([
-            ['incrby', generateCounter(params, 'storageUtilizedCounter'),
-                newByteLength],
-            ['incrby', generateKey(params, 'incomingBytes', timestamp),
-                newByteLength],
-            ['incr', generateKey(params, action, timestamp)],
-        ], (err, results) => {
+        return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error pushing metric', {
                     method: 'UtapiClient._pushMetricUploadPart',
@@ -344,25 +348,41 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
-            // storage utilized counter
-            const actionErr = results[0][0];
-            const actionCounter = results[0][1];
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._pushMetricUploadPart',
-                    metric: 'storage utilized',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
+            // storage utilized counters
+            let index;
+            let actionErr;
+            let actionCounter;
+            const cmdsLen = cmds.length;
+            const paramsArrLen = paramsArr.length;
+            const cmds2 = [];
+            const noErr = paramsArr.every((p, i) => {
+                // index corresponds to the result from the previous set of
+                // commands. we are trying to extract the storage utlized
+                // counters per metric level here.
+                index = i * (cmdsLen / paramsArrLen);
+                actionErr = results[index][0];
+                actionCounter = results[index][1];
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._pushMetricUploadPart',
+                        metric: 'storage utilized',
+                        error: actionErr,
+                    });
+                    callback(errors.InternalError);
+                    return false;
+                }
+                cmds2.push(
+                    ['zremrangebyscore', generateStateKey(p, 'storageUtilized'),
+                        timestamp, timestamp],
+                    ['zadd', generateStateKey(p, 'storageUtilized'),
+                        timestamp, actionCounter]
+                );
+                return true;
+            });
+            if (noErr) {
+                return this.ds.batch(cmds2, callback);
             }
-
-            return this.ds.batch([
-                ['zremrangebyscore',
-                    generateStateKey(params, 'storageUtilized'),
-                    timestamp, timestamp],
-                ['zadd', generateStateKey(params, 'storageUtilized'),
-                    timestamp, actionCounter],
-            ], callback);
+            return undefined;
         });
     }
 
@@ -382,10 +402,15 @@ export default class UtapiClient {
         this._checkProperties(params);
         this._logMetric(params, '_pushMetricCompleteMultipartUpload', timestamp,
             log);
-        return this.ds.batch([
-            ['incr', generateCounter(params, 'numberOfObjectsCounter')],
-            ['incr', generateKey(params, action, timestamp)],
-        ], (err, results) => {
+        const paramsArr = this._getParamsArr(params);
+        const cmds = [];
+        paramsArr.forEach(p => {
+            cmds.push(
+                ['incr', generateCounter(p, 'numberOfObjectsCounter')],
+                ['incr', generateKey(p, action, timestamp)]
+            );
+        });
+        return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error incrementing counter for push metric', {
                     method: 'UtapiClient._pushMetricCompleteMultipartUpload',
@@ -394,22 +419,36 @@ export default class UtapiClient {
                 });
                 return callback(errors.InternalError);
             }
-            // number of objects counter
-            const actionErr = results[0][0];
-            const actionCounter = results[0][1];
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._pushMetricCompleteMultipartUpload',
-                    metric: 'number of objects',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
+            // number of objects counters
+            let index;
+            let actionErr;
+            let actionCounter;
+            let key;
+            const paramsArrLen = paramsArr.length;
+            const cmds2 = [];
+            const noErr = paramsArr.every((p, i) => {
+                index = i * paramsArrLen;
+                actionErr = results[index][0];
+                actionCounter = results[index][1];
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._pushMetricCompleteMultipart' +
+                            'Upload',
+                        metric: 'number of objects',
+                        error: actionErr,
+                    });
+                    callback(errors.InternalError);
+                    return false;
+                }
+                key = generateStateKey(p, 'numberOfObjects');
+                cmds2.push(['zremrangebyscore', key, timestamp, timestamp],
+                ['zadd', key, timestamp, actionCounter]);
+                return true;
+            });
+            if (noErr) {
+                return this.ds.batch(cmds2, callback);
             }
-            const key = generateStateKey(params, 'numberOfObjects');
-            return this.ds.batch([
-                ['zremrangebyscore', key, timestamp, timestamp],
-                ['zadd', key, timestamp, actionCounter],
-            ], callback);
+            return undefined;
         });
     }
 
@@ -448,13 +487,20 @@ export default class UtapiClient {
         const { byteLength, numberOfObjects } = params;
         this._logMetric(params, '_genericPushMetricDeleteObject', timestamp,
             log);
-        return this.ds.batch([
-            ['decrby', generateCounter(params, 'storageUtilizedCounter'),
-                byteLength],
-            ['decrby', generateCounter(params, 'numberOfObjectsCounter'),
-                numberOfObjects],
-            ['incr', generateKey(params, action, timestamp)],
-        ], (err, results) => {
+        const paramsArr = this._getParamsArr(params);
+        const cmds = [];
+        paramsArr.forEach(p => {
+            cmds.push(
+                ['decrby', generateCounter(p, 'storageUtilizedCounter'),
+                    byteLength],
+                ['decrby', generateCounter(p, 'numberOfObjectsCounter'),
+                    numberOfObjects],
+                ['incr', generateKey(p, action, timestamp)]
+            );
+        });
+        const cmdsLen = cmds.length;
+        const paramsArrLen = paramsArr.length;
+        return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error incrementing counter', {
                     method: 'UtapiClient._genericPushMetricDeleteObject',
@@ -463,46 +509,64 @@ export default class UtapiClient {
                 return callback(errors.InternalError);
             }
 
-            const cmds = [];
-            // storage utilized counter
-            let actionErr = results[0][0];
-            let actionCounter = parseInt(results[0][1], 10);
-            actionCounter = actionCounter < 0 ? 0 : actionCounter;
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._genericPushMetricDeleteObject',
-                    metric: 'storage utilized',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
-            }
-            cmds.push(
-                ['zremrangebyscore',
-                    generateStateKey(params, 'storageUtilized'),
-                    timestamp, timestamp],
-                ['zadd',
-                    generateStateKey(params, 'storageUtilized'),
-                    timestamp, actionCounter]);
+            const cmds2 = [];
+            let actionErr;
+            let actionCounter;
+            let storageIndex;
+            let objectsIndex;
+            const noErr = paramsArr.every((p, i) => {
+                // storage utilized counter
+                storageIndex = i * (cmdsLen / paramsArrLen);
+                actionErr = results[storageIndex][0];
+                actionCounter = parseInt(results[storageIndex][1],
+                    10);
+                actionCounter = actionCounter < 0 ? 0 : actionCounter;
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric',
+                        {
+                            method: 'UtapiClient._genericPushMetricDelete' +
+                            'Object',
+                            metric: 'storage utilized',
+                            error: actionErr,
+                        }
+                    );
+                    callback(errors.InternalError);
+                    return false;
+                }
+                cmds2.push(
+                    ['zremrangebyscore',
+                        generateStateKey(p, 'storageUtilized'),
+                        timestamp, timestamp],
+                    ['zadd',
+                        generateStateKey(p, 'storageUtilized'),
+                        timestamp, actionCounter]);
 
-            // num of objects counter
-            actionErr = results[1][0];
-            actionCounter = parseInt(results[1][1], 10);
-            actionCounter = actionCounter < 0 ? 0 : actionCounter;
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._genericPushMetricDeleteObject',
-                    metric: 'num of objects',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
+                // num of objects counter
+                objectsIndex = i * (cmdsLen / paramsArrLen) + 1;
+                actionErr = results[objectsIndex][0];
+                actionCounter = parseInt(results[objectsIndex][1], 10);
+                actionCounter = actionCounter < 0 ? 0 : actionCounter;
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._genericPushMetricDeleteObject',
+                        metric: 'num of objects',
+                        error: actionErr,
+                    });
+                    callback(errors.InternalError);
+                    return false;
+                }
+                cmds2.push(
+                    ['zremrangebyscore',
+                        generateStateKey(p, 'numberOfObjects'), timestamp,
+                        timestamp],
+                    ['zadd', generateStateKey(p, 'numberOfObjects'),
+                        timestamp, actionCounter]);
+                return true;
+            });
+            if (noErr) {
+                return this.ds.batch(cmds2, callback);
             }
-            cmds.push(
-                ['zremrangebyscore',
-                    generateStateKey(params, 'numberOfObjects'), timestamp,
-                    timestamp],
-                ['zadd', generateStateKey(params, 'numberOfObjects'),
-                    timestamp, actionCounter]);
-            return this.ds.batch(cmds, callback);
+            return undefined;
         });
     }
 
@@ -522,12 +586,17 @@ export default class UtapiClient {
         this._checkProperties(params, ['newByteLength']);
         const { newByteLength } = params;
         this._logMetric(params, '_pushMetricGetObject', timestamp, log);
+        const paramsArr = this._getParamsArr(params);
+        const cmds = [];
+        paramsArr.forEach(p => {
+            cmds.push(
+                ['incrby', generateKey(p, 'outgoingBytes', timestamp),
+                    newByteLength],
+                ['incr', generateKey(p, action, timestamp)]
+            );
+        });
         // update counters
-        return this.ds.batch([
-            ['incrby', generateKey(params, 'outgoingBytes', timestamp),
-                newByteLength],
-            ['incr', generateKey(params, action, timestamp)],
-        ], err => {
+        return this.ds.batch(cmds, err => {
             if (err) {
                 log.error('error pushing metric', {
                     method: 'UtapiClient._pushMetricGetObject',
@@ -541,7 +610,7 @@ export default class UtapiClient {
 
 
     /**
-    * Updates counter for PutObject action
+    * Generic method to push metrics for putObject/copyObject operations
     * @param {object} params - params for the metrics
     * @param {string} [params.bucket] - (optional) bucket name
     * @param {string} [params.accountId] - (optional) account ID
@@ -554,163 +623,94 @@ export default class UtapiClient {
     * @param {callback} callback - callback to call
     * @return {undefined}
     */
-    _pushMetricPutObject(params, timestamp, action, log, callback) {
+    _genericPushMetricPutObject(params, timestamp, action, log, callback) {
         this._checkProperties(params, ['newByteLength', 'oldByteLength']);
+        this._logMetric(params, '_genericPushMetricPutObject', timestamp, log);
         const { newByteLength, oldByteLength } = params;
-        let numberOfObjectsCounter;
-        // if previous object size is null then it's a new object in a bucket
-        // or else it's an old object being overwritten
-        if (oldByteLength === null) {
-            numberOfObjectsCounter = ['incr', generateCounter(params,
-                'numberOfObjectsCounter')];
-        } else {
-            numberOfObjectsCounter = ['get', generateCounter(params,
-                'numberOfObjectsCounter')];
-        }
         const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
         const storageUtilizedDelta = newByteLength - oldObjSize;
-        this._logMetric(params, '_pushMetricPutObject', timestamp, log);
-        // update counters
-        return this.ds.batch([
-            ['incrby', generateCounter(params, 'storageUtilizedCounter'),
-                storageUtilizedDelta],
-            numberOfObjectsCounter,
-            ['incrby', generateKey(params, 'incomingBytes', timestamp),
-                newByteLength],
-            ['incr', generateKey(params, action, timestamp)],
-        ], (err, results) => {
-            if (err) {
-                log.error('error pushing metric', {
-                    method: 'UtapiClient._pushMetricPutObject',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            const cmds = [];
-            let actionErr;
-            let actionCounter;
-            // storage utilized counter
-            actionErr = results[0][0];
-            actionCounter = results[0][1];
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._pushMetricPutObject',
-                    metric: 'storage utilized',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
-            }
+        const cmds = [];
+        // if previous object size is null then it's a new object in a bucket
+        // or else it's an old object being overwritten
+        const redisCmd = oldByteLength === null ? 'incr' : 'get';
+        const paramsArr = this._getParamsArr(params);
+        paramsArr.forEach(p => {
             cmds.push(
-                ['zremrangebyscore',
-                    generateStateKey(params, 'storageUtilized'),
-                    timestamp, timestamp],
-                ['zadd', generateStateKey(params, 'storageUtilized'),
-                    timestamp, actionCounter]);
-
-            // number of objects counter
-            actionErr = results[1][0];
-            actionCounter = results[1][1];
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._pushMetricPutObject',
-                    metric: 'number of objects',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
+                ['incrby', generateCounter(p, 'storageUtilizedCounter'),
+                    storageUtilizedDelta],
+                [redisCmd, generateCounter(p, 'numberOfObjectsCounter')],
+                ['incr', generateKey(p, action, timestamp)]
+            );
+            if (action === 'putObject') {
+                cmds.push(
+                    ['incrby', generateKey(p, 'incomingBytes', timestamp),
+                        newByteLength]
+                );
             }
-            cmds.push(
-                ['zremrangebyscore',
-                    generateStateKey(params, 'numberOfObjects'),
-                    timestamp, timestamp],
-                ['zadd', generateStateKey(params, 'numberOfObjects'),
-                    timestamp, actionCounter]);
-            return this.ds.batch(cmds, callback);
         });
-    }
 
-    /**
-    * Updates counter for CopyObject action
-    * @param {object} params - params for the metrics
-    * @param {string} [params.bucket] - (optional) bucket name
-    * @param {string} [params.accountId] - (optional) account ID
-    * @param {number} params.newByteLength - size of object in bytes
-    * @param {number} params.oldByteLength - previous size of object in bytes
-    * if this action overwrote an existing object
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {string} action - action metric to update
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricCopyObject(params, timestamp, action, log, callback) {
-        this._checkProperties(params, ['newByteLength', 'oldByteLength']);
-        const { newByteLength, oldByteLength } = params;
-        let numberOfObjectsCounter;
-        // if previous object size is null then it's a new object in a bucket
-        // or else it's an old object being overwritten
-        if (oldByteLength === null) {
-            numberOfObjectsCounter = ['incr', generateCounter(params,
-                'numberOfObjectsCounter')];
-        } else {
-            numberOfObjectsCounter = ['get', generateCounter(params,
-                'numberOfObjectsCounter')];
-        }
-        const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
-        const storageUtilizedDelta = newByteLength - oldObjSize;
-        this._logMetric(params, '_pushMetricCopyObject', timestamp, log);
         // update counters
-        return this.ds.batch([
-            ['incrby', generateCounter(params, 'storageUtilizedCounter'),
-                storageUtilizedDelta],
-            numberOfObjectsCounter,
-            ['incr', generateKey(params, action, timestamp)],
-        ], (err, results) => {
+        return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error pushing metric', {
-                    method: 'UtapiClient._pushMetricCopyObject',
+                    method: 'UtapiClient._genericPushMetricPutObject',
                     error: err,
                 });
                 return callback(errors.InternalError);
             }
-            const cmds = [];
+            const cmds2 = [];
             let actionErr;
             let actionCounter;
-            // storage utilized counter
-            actionErr = results[0][0];
-            actionCounter = results[0][1];
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._pushMetricCopyObject',
-                    metric: 'storage utilized',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
-            }
-            cmds.push(
-                ['zremrangebyscore',
-                    generateStateKey(params, 'storageUtilized'),
-                    timestamp, timestamp],
-                ['zadd', generateStateKey(params, 'storageUtilized'),
-                    timestamp, actionCounter]);
+            let storageIndex;
+            let objectsIndex;
+            const cmdsLen = cmds.length;
+            const paramsArrLen = paramsArr.length;
+            const noErr = paramsArr.every((p, i) => {
+                // storage utilized counter
+                storageIndex = (i * (cmdsLen / paramsArrLen));
+                actionErr = results[storageIndex][0];
+                actionCounter = results[storageIndex][1];
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._genericPushMetricPutObject',
+                        metric: 'storage utilized',
+                        error: actionErr,
+                    });
+                    callback(errors.InternalError);
+                    return false;
+                }
+                cmds2.push(
+                    ['zremrangebyscore',
+                        generateStateKey(p, 'storageUtilized'),
+                        timestamp, timestamp],
+                    ['zadd', generateStateKey(p, 'storageUtilized'),
+                        timestamp, actionCounter]);
 
-            // number of objects counter
-            actionErr = results[1][0];
-            actionCounter = results[1][1];
-            if (actionErr) {
-                log.error('error incrementing counter for push metric', {
-                    method: 'UtapiClient._pushMetricCopyObject',
-                    metric: 'number of objects',
-                    error: actionErr,
-                });
-                return callback(errors.InternalError);
+                // number of objects counter
+                objectsIndex = (i * (cmdsLen / paramsArrLen)) + 1;
+                actionErr = results[objectsIndex][0];
+                actionCounter = results[objectsIndex][1];
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._genericPushMetricPutObject',
+                        metric: 'number of objects',
+                        error: actionErr,
+                    });
+                    callback(errors.InternalError);
+                    return false;
+                }
+                cmds2.push(
+                    ['zremrangebyscore',
+                        generateStateKey(p, 'numberOfObjects'),
+                        timestamp, timestamp],
+                    ['zadd', generateStateKey(p, 'numberOfObjects'),
+                        timestamp, actionCounter]);
+                return true;
+            });
+            if (noErr) {
+                return this.ds.batch(cmds2, callback);
             }
-            cmds.push(
-                ['zremrangebyscore',
-                    generateStateKey(params, 'numberOfObjects'),
-                    timestamp, timestamp],
-                ['zadd', generateStateKey(params, 'numberOfObjects'),
-                    timestamp, actionCounter]);
-            return this.ds.batch(cmds, callback);
+            return undefined;
         });
     }
 }
