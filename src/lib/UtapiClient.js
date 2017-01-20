@@ -38,6 +38,7 @@ const methods = {
 const metricObj = {
     buckets: 'bucket',
     accounts: 'accountId',
+    users: 'user',
 };
 
 export default class UtapiClient {
@@ -59,7 +60,7 @@ export default class UtapiClient {
             dump: 'error',
         });
         // By default, we push all resource types
-        this.metrics = ['buckets', 'accounts'];
+        this.metrics = ['buckets', 'accounts', 'users'];
         this.disableClient = true;
 
         if (config) {
@@ -207,10 +208,20 @@ export default class UtapiClient {
      * @return {undefined}
      */
     _logMetric(params, method, timestamp, log) {
-        const { bucket, accountId } = params;
-        const logObject = bucket ? { bucket } : { accountId };
-        logObject.method = `UtapiClient.${method}`;
-        logObject.timestamp = timestamp;
+        const { bucket, accountId, user } = params;
+        const logObject = {
+            method: `UtapiClient.${method}`,
+            timestamp,
+        };
+        if (bucket) {
+            logObject.bucket = bucket;
+        }
+        if (accountId) {
+            logObject.accountId = accountId;
+        }
+        if (user) {
+            logObject.user = user;
+        }
         log.trace('pushing metric', logObject);
     }
 
@@ -227,26 +238,22 @@ export default class UtapiClient {
         const props = [];
         const { byteLength, newByteLength, oldByteLength, numberOfObjects } =
             params;
-        const metricData = {
-            byteLength,
-            newByteLength,
-            oldByteLength,
-            numberOfObjects,
-        };
         // Only push metric levels defined in the config, otherwise push any
         // levels that are passed in the object
-        if (params.bucket && this.metrics.indexOf('buckets') >= 0) {
-            props.push(Object.assign({
-                bucket: params.bucket,
-                level: 'buckets',
-            }, metricData));
-        }
-        if (params.accountId && this.metrics.indexOf('accounts') >= 0) {
-            props.push(Object.assign({
-                accountId: params.accountId,
-                level: 'accounts',
-            }, metricData));
-        }
+        this.metrics.forEach(level => {
+            const prop = metricObj[level];
+            if (params[prop]) {
+                const obj = {
+                    level,
+                    byteLength,
+                    newByteLength,
+                    oldByteLength,
+                    numberOfObjects,
+                };
+                obj[prop] = params[prop];
+                props.push(obj);
+            }
+        });
         return props;
     }
 
@@ -424,6 +431,9 @@ export default class UtapiClient {
                 ['incr', generateKey(p, action, timestamp)]
             );
         });
+        // We track the number of commands needed for each `paramsArr` object to
+        // eventually locate each group in the results from ioredis.
+        const commandsGroupSize = 2;
         return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error incrementing counter for push metric', {
@@ -435,14 +445,14 @@ export default class UtapiClient {
                     callback);
             }
             // number of objects counters
-            let index;
             let actionErr;
             let actionCounter;
             let key;
-            const paramsArrLen = paramsArr.length;
             const cmds2 = [];
             const noErr = paramsArr.every((p, i) => {
-                index = i * paramsArrLen;
+                // We want the first element of every group of two commands
+                // returned from ioredis.
+                const index = i * commandsGroupSize;
                 actionErr = results[index][0];
                 actionCounter = parseInt(results[index][1], 10);
                  // If < 0, record numberOfObjects as though bucket were empty.
