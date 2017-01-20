@@ -28,6 +28,7 @@ function getMetricResponse(schemaKey) {
     const responseKeys = {
         bucket: 'bucketName',
         accountId: 'accountId',
+        user: 'userName',
     };
     response[responseKeys[schemaKey]] = resourceNames[schemaKey];
     return response;

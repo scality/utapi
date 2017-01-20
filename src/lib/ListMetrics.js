@@ -42,6 +42,7 @@ export default class ListMetrics {
         const metricResponseKeys = {
             buckets: 'bucketName',
             accounts: 'accountId',
+            users: 'userName',
         };
         metricResponse[metricResponseKeys[this.metric]] = resource;
         return metricResponse;
