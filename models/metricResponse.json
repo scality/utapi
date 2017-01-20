@@ -12,6 +12,7 @@
         "s3:GetBucketAcl": 0,
         "s3:GetBucketCors": 0,
         "s3:GetBucketWebsite": 0,
+        "s3:GetBucketLocation": 0,
         "s3:CreateBucket": 0,
         "s3:PutBucketAcl": 0,
         "s3:PutBucketCors": 0,

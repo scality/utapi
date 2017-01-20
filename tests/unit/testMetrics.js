@@ -119,6 +119,11 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for get bucket acl`, done =>
             testOps(schemaKey, 'getBucketAcl', 's3:GetBucketAcl', done));
 
+        it(`should return ${metric} level metrics for get bucket location`,
+        done =>
+            testOps(schemaKey, 'getBucketLocation', 's3:GetBucketLocation',
+            done));
+
         it(`should return ${metric} level metrics for put bucket acl`, done =>
             testOps(schemaKey, 'putBucketAcl', 's3:PutBucketAcl', done));
 
