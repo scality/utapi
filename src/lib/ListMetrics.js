@@ -1,7 +1,7 @@
 import async from 'async';
 import { errors } from 'arsenal';
 import { getMetricFromKey, getKeys, generateStateKey } from './schema';
-import metricResponseJSON from '../../models/metricResponse';
+import s3metricResponseJSON from '../../models/s3metricResponse';
 
 /**
 * Provides methods to get metrics of different levels
@@ -11,9 +11,11 @@ export default class ListMetrics {
     /**
      * Assign the metric property to an instance of this class
      * @param {string} metric - The metric type (e.g., 'buckets', 'accounts')
+     * @param {string} component - The service component (e.g., 's3')
      */
-    constructor(metric) {
+    constructor(metric, component) {
         this.metric = metric;
+        this.service = component;
     }
 
     /**
@@ -22,15 +24,17 @@ export default class ListMetrics {
      * @return {object} obj - Object with a key-value pair for a schema method
      */
     _getSchemaObject(resource) {
-        let type;
-        if (this.metric === 'buckets') {
-            type = 'bucket';
-        } else if (this.metric === 'accounts') {
-            type = 'accountId';
-        }
-        const obj = {};
-        obj[type] = resource;
-        obj.level = this.metric;
+        // Include service to generate key for any non-service level metric
+        const obj = {
+            level: this.metric,
+            service: this.service,
+        };
+        const schemaKeys = {
+            buckets: 'bucket',
+            accounts: 'accountId',
+            service: 'service',
+        };
+        obj[schemaKeys[this.metric]] = resource;
         return obj;
     }
 
@@ -38,11 +42,12 @@ export default class ListMetrics {
     _getMetricResponse(resource, start, end) {
         // Use `JSON.parse` to make deep clone because `Object.assign` will
         // copy property values.
-        const metricResponse = JSON.parse(JSON.stringify(metricResponseJSON));
+        const metricResponse = JSON.parse(JSON.stringify(s3metricResponseJSON));
         metricResponse.timeRange = [start, end];
         const metricResponseKeys = {
             buckets: 'bucketName',
             accounts: 'accountId',
+            service: 'serviceName',
         };
         metricResponse[metricResponseKeys[this.metric]] = resource;
         return metricResponse;
@@ -200,13 +205,14 @@ export default class ListMetrics {
                         cmd: key,
                     });
                 } else {
-                    const m = getMetricFromKey(key, resource, this.metric);
+                    const m = getMetricFromKey(key);
                     let count = parseInt(item[1], 10);
                     count = Number.isNaN(count) ? 0 : count;
                     if (m === 'incomingBytes' || m === 'outgoingBytes') {
                         metricResponse[m] += count;
                     } else {
-                        metricResponse.operations[`s3:${m}`] += count;
+                        metricResponse.operations[`${this.service}:${m}`] +=
+                            count;
                     }
                 }
             });

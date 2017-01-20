@@ -52,6 +52,8 @@ export default class UtapiClient {
      * of the local cache datastore
      * @param {array} [config.metrics] - Array defining the metric resource
      * types to push metrics for
+     * @param {array} [config.component] - The component from which the metrics
+     * are being pushed (e.g., 's3')
      */
     constructor(config) {
         this.log = new Logger('UtapiClient', {
@@ -59,7 +61,8 @@ export default class UtapiClient {
             dump: 'error',
         });
         // By default, we push all resource types
-        this.metrics = ['buckets', 'accounts'];
+        this.metrics = ['buckets', 'accounts', 'service'];
+        this.service = 's3';
         this.disableClient = true;
 
         if (config) {
@@ -84,6 +87,11 @@ export default class UtapiClient {
             if (config.localCache) {
                 this.localCache = new Datastore()
                     .setClient(redisClient(config.localCache, this.log));
+            }
+            if (config.component) {
+                // The configuration uses the property `component`, while
+                // internally this is known as a metric level `service`.
+                this.service = config.component;
             }
             this.disableClient = false;
         }
@@ -187,8 +195,6 @@ export default class UtapiClient {
      * @return {undefined}
      */
     _checkMetricTypes(params) {
-        assert(this.metrics.some(level =>
-            metricObj[level] in params), 'Must include a metric level');
         // Object of metric types and their associated property names
         this.metrics.forEach(level => {
             const propName = metricObj[level];
@@ -208,9 +214,13 @@ export default class UtapiClient {
      */
     _logMetric(params, method, timestamp, log) {
         const { bucket, accountId } = params;
-        const logObject = bucket ? { bucket } : { accountId };
-        logObject.method = `UtapiClient.${method}`;
-        logObject.timestamp = timestamp;
+        const logObject = {
+            method: `UtapiClient.${method}`,
+            bucketName: bucket,
+            accountId,
+            service: this.service,
+            timestamp,
+        };
         log.trace('pushing metric', logObject);
     }
 
@@ -227,26 +237,26 @@ export default class UtapiClient {
         const props = [];
         const { byteLength, newByteLength, oldByteLength, numberOfObjects } =
             params;
-        const metricData = {
-            byteLength,
-            newByteLength,
-            oldByteLength,
-            numberOfObjects,
-        };
-        // Only push metric levels defined in the config, otherwise push any
-        // levels that are passed in the object
-        if (params.bucket && this.metrics.indexOf('buckets') >= 0) {
-            props.push(Object.assign({
-                bucket: params.bucket,
-                level: 'buckets',
-            }, metricData));
-        }
-        if (params.accountId && this.metrics.indexOf('accounts') >= 0) {
-            props.push(Object.assign({
-                accountId: params.accountId,
-                level: 'accounts',
-            }, metricData));
-        }
+        // We add a `service` property to any non-service level to be able to
+        // build the appropriate schema key.
+        this.metrics.forEach(level => {
+            const prop = metricObj[level];
+            // There will be no `service` property of the params.
+            if (params[prop] || level === 'service') {
+                const obj = {
+                    level,
+                    service: this.service,
+                    byteLength,
+                    newByteLength,
+                    oldByteLength,
+                    numberOfObjects,
+                };
+                if (level !== 'service') {
+                    obj[prop] = params[prop];
+                }
+                props.push(obj);
+            }
+        });
         return props;
     }
 
@@ -424,6 +434,9 @@ export default class UtapiClient {
                 ['incr', generateKey(p, action, timestamp)]
             );
         });
+        // We track the number of commands needed for each `paramsArr` object to
+        // eventually locate each group in the results from Redis.
+        const commandsGroupSize = 2;
         return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error incrementing counter for push metric', {
@@ -435,14 +448,14 @@ export default class UtapiClient {
                     callback);
             }
             // number of objects counters
-            let index;
             let actionErr;
             let actionCounter;
             let key;
-            const paramsArrLen = paramsArr.length;
             const cmds2 = [];
             const noErr = paramsArr.every((p, i) => {
-                index = i * paramsArrLen;
+                // We want the first element of every group of two commands
+                // returned from Redis.
+                const index = i * commandsGroupSize;
                 actionErr = results[index][0];
                 actionCounter = parseInt(results[index][1], 10);
                  // If < 0, record numberOfObjects as though bucket were empty.
@@ -526,7 +539,7 @@ export default class UtapiClient {
             }
         });
         // We track the number of commands needed for each `paramsArr` object to
-        // eventually locate each group in the results from ioredis.
+        // eventually locate each group in the results from Redis.
         const commandsGroupSize = action !== 'abortMultipartUpload' ? 3 : 2;
         return this.ds.batch(cmds, (err, results) => {
             if (err) {

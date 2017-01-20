@@ -9,15 +9,16 @@ export class BucketsHandler {
     /**
     * List metrics for the given list of buckets
     * @param {UtapiRequest} utapiRequest - UtapiRequest instance
+    * @param {string} service - the service component (e.g., 's3')
     * @param {callback} cb - callback
     * @return {undefined}
     */
-    static listMetrics(utapiRequest, cb) {
+    static listMetrics(utapiRequest, service, cb) {
         const log = utapiRequest.getLog();
         log.debug('handling list metrics request', {
             method: 'BucketsHandler.listMetrics',
         });
-        const Buckets = new ListMetrics('buckets');
+        const Buckets = new ListMetrics('buckets', service);
         return Buckets.getTypesMetrics(utapiRequest, cb);
     }
 }
@@ -31,15 +32,39 @@ export class AccountsHandler {
     /**
     * List metrics for the given list of accounts
     * @param {UtapiRequest} utapiRequest - UtapiRequest instance
+    * @param {string} service - the service component (e.g., 's3')
     * @param {callback} cb - callback
     * @return {undefined}
     */
-    static listMetrics(utapiRequest, cb) {
+    static listMetrics(utapiRequest, service, cb) {
         const log = utapiRequest.getLog();
         log.debug('handling list metrics request', {
             method: 'AccountsHandler.listMetrics',
         });
-        const Accounts = new ListMetrics('accounts');
+        const Accounts = new ListMetrics('accounts', service);
+        return Accounts.getTypesMetrics(utapiRequest, cb);
+    }
+}
+
+/**
+ * @class ServiceHandler
+ * Handles Accounts resource actions
+ */
+
+export class ServiceHandler {
+    /**
+    * List metrics for the given list of accounts
+    * @param {UtapiRequest} utapiRequest - UtapiRequest instance
+    * @param {string} service - the service component (e.g., 's3')
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    static listMetrics(utapiRequest, service, cb) {
+        const log = utapiRequest.getLog();
+        log.debug('handling list metrics request', {
+            method: 'ServiceHandler.listMetrics',
+        });
+        const Accounts = new ListMetrics('service', service);
         return Accounts.getTypesMetrics(utapiRequest, cb);
     }
 }

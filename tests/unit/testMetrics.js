@@ -4,17 +4,19 @@ import Datastore from '../../src/lib/Datastore';
 import ListMetrics from '../../src/lib/ListMetrics';
 import { generateStateKey, generateKey } from '../../src/lib/schema';
 import { Logger } from 'werelogs';
-import metricResponseJSON from '../../models/metricResponse';
+import s3metricResponseJSON from '../../models/s3metricResponse';
 const logger = new Logger('UtapiTest');
 const memBackend = new MemoryBackend();
 const datastore = new Datastore();
 const resourceNames = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    service: 's3',
 };
 const metricLevels = {
     bucket: 'buckets',
     accountId: 'accounts',
+    service: 'service',
 };
 datastore.setClient(memBackend);
 
@@ -22,10 +24,11 @@ datastore.setClient(memBackend);
 function getMetricResponse(schemaKey) {
     // Use `JSON.parse` to make deep clone because `Object.assign` will
     // copy property values.
-    const response = JSON.parse(JSON.stringify(metricResponseJSON));
+    const response = JSON.parse(JSON.stringify(s3metricResponseJSON));
     const responseKeys = {
         bucket: 'bucketName',
         accountId: 'accountId',
+        service: 'serviceName',
     };
     response[responseKeys[schemaKey]] = resourceNames[schemaKey];
     return response;
@@ -36,7 +39,7 @@ function assertMetrics(schemaKey, metricName, props, done) {
     const timeRange = [timestamp, timestamp];
     const expectedRes = getMetricResponse(schemaKey);
     const expectedResProps = props || {};
-    const metricType = new ListMetrics(metricLevels[schemaKey]);
+    const metricType = new ListMetrics(metricLevels[schemaKey], 's3');
     metricType.getMetrics(metricName, timeRange, datastore, logger,
         (err, res) => {
             assert.strictEqual(err, null);
@@ -57,6 +60,8 @@ function getSchemaObject(schemaKey) {
     const schemaObject = {};
     schemaObject[schemaKey] = resourceNames[schemaKey];
     schemaObject.level = metricLevels[schemaKey];
+    // Add the service level to generate key for metric
+    schemaObject.service = 's3';
     return schemaObject;
 }
 
