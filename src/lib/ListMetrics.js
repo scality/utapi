@@ -32,6 +32,7 @@ export default class ListMetrics {
         const schemaKeys = {
             buckets: 'bucket',
             accounts: 'accountId',
+            users: 'userId',
             service: 'service',
         };
         obj[schemaKeys[this.metric]] = resource;
@@ -47,6 +48,7 @@ export default class ListMetrics {
         const metricResponseKeys = {
             buckets: 'bucketName',
             accounts: 'accountId',
+            users: 'userId',
             service: 'serviceName',
         };
         metricResponse[metricResponseKeys[this.metric]] = resource;

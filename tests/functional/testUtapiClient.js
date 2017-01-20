@@ -26,6 +26,7 @@ const reqUid = 'foo';
 const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    userId: 'foo-user',
     service: 's3',
 };
 const putOperations = ['PutObject', 'CopyObject', 'UploadPart',
@@ -36,6 +37,7 @@ function _getMetricObj(type) {
     const levels = {
         bucket: 'buckets',
         accountId: 'accounts',
+        userId: 'users',
         service: 'service',
     };
     const obj = {

@@ -32,6 +32,15 @@ export function validateAccountsListMetrics(dict) {
 }
 
 /**
+ * Function to create a validator for route POST /users?Action=ListMetrics
+ * @param {object} dict - Input fields for route
+ * @return {function} the return value of `getValidator`
+ */
+export function validateUsersListMetrics(dict) {
+    return getValidator('users', dict);
+}
+
+/**
  * Function to create a validator for route POST /service?Action=ListMetrics
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`

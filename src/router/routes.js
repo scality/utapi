@@ -1,7 +1,8 @@
-import { BucketsHandler, AccountsHandler, ServiceHandler } from
+import { BucketsHandler, AccountsHandler, UsersHandler, ServiceHandler } from
     '../handlers/metricsHandlers';
 import { validateBucketsListMetrics, validateAccountsListMetrics,
-    validateServiceListMetrics } from '../validators/listMetrics';
+    validateUsersListMetrics, validateServiceListMetrics } from
+    '../validators/listMetrics';
 import listMetricsResponse from '../responses/listMetrics';
 
 export default [
@@ -20,6 +21,15 @@ export default [
         method: 'POST',
         action: 'ListMetrics',
         resource: 'accounts',
+        responseBuilder: listMetricsResponse,
+        statusCode: 200,
+    },
+    {
+        validator: validateUsersListMetrics,
+        handler: UsersHandler.listMetrics,
+        method: 'POST',
+        action: 'ListMetrics',
+        resource: 'users',
         responseBuilder: listMetricsResponse,
         statusCode: 200,
     },
