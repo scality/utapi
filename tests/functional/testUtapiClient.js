@@ -20,6 +20,7 @@ const utapiClient = new UtapiClient({
         host: '127.0.0.1',
         port: 6379,
     },
+    component: 's3',
 });
 const reqUid = 'foo';
 const metricTypes = {
@@ -35,7 +36,10 @@ function _getMetricObj(type) {
         bucket: 'buckets',
         accountId: 'accounts',
     };
-    const obj = { level: levels[type] };
+    const obj = {
+        level: levels[type],
+        service: 's3',
+    };
     obj[type] = metricTypes[type];
     return obj;
 }

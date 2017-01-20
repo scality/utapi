@@ -85,6 +85,9 @@ export default class UtapiClient {
                 this.localCache = new Datastore()
                     .setClient(redisClient(config.localCache, this.log));
             }
+            if (config.component) {
+                this.component = config.component;
+            }
             this.disableClient = false;
         }
     }
@@ -227,11 +230,14 @@ export default class UtapiClient {
         const props = [];
         const { byteLength, newByteLength, oldByteLength, numberOfObjects } =
             params;
+        // We add a `service` property to any non-service level to be able to
+        // build the appropriate schema key.
         const metricData = {
             byteLength,
             newByteLength,
             oldByteLength,
             numberOfObjects,
+            service: this.component,
         };
         // Only push metric levels defined in the config, otherwise push any
         // levels that are passed in the object
