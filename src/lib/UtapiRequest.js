@@ -81,6 +81,7 @@ export default class UtapiRequest {
             const value = decodeURIComponent(query[x]);
             decodedQuery[key] = value;
         });
+        console.log(decodedQuery)
         this._requestQuery = decodedQuery;
         return this;
     }
