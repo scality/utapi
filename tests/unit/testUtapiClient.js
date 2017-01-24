@@ -146,6 +146,22 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('putBucketAcl', metricTypes, expected, done);
     });
 
+    it('should push putBucketCors metrics', done => {
+        const expected = getObject(timestamp, { action: 'PutBucketCors' });
+        testMetric('putBucketCors', metricTypes, expected, done);
+    });
+
+    it('should push getBucketCors metrics', done => {
+        const expected = getObject(timestamp, { action: 'GetBucketCors' });
+        testMetric('getBucketCors', metricTypes, expected, done);
+    });
+
+    it('should push deleteBucketCors metrics', done => {
+        const expected = getObject(timestamp,
+            { action: 'DeleteBucketCors' });
+        testMetric('deleteBucketCors', metricTypes, expected, done);
+    });
+
     it('should push putBucketWebsite metrics', done => {
         const expected = getObject(timestamp, { action: 'PutBucketWebsite' });
         testMetric('putBucketWebsite', metricTypes, expected, done);
@@ -155,6 +171,7 @@ describe('UtapiClient:: push metrics', () => {
         const expected = getObject(timestamp, { action: 'GetBucketWebsite' });
         testMetric('getBucketWebsite', metricTypes, expected, done);
     });
+
     it('should push deleteBucketWebsite metrics', done => {
         const expected = getObject(timestamp,
             { action: 'DeleteBucketWebsite' });
