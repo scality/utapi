@@ -67,7 +67,7 @@ class UtapiServer {
     requestListener(req, res, router) {
         // disable nagle algorithm
         req.socket.setNoDelay();
-        const { query, path } = url.parse(req.url, true);
+        const { query, path, pathname } = url.parse(req.url, true);
         const utapiRequest = new UtapiRequest()
             .setRequest(req)
             .setLog(this.logger.newRequestLogger())
@@ -79,6 +79,7 @@ class UtapiServer {
         }
         utapiRequest.setRequestQuery(query);
         utapiRequest.setRequestPath(path);
+        utapiRequest.setRequestPathname(pathname);
         // temp hack: healthcheck route
         if (path === '/_/healthcheck' && (req.method === 'GET'
             || req.method === 'POST')) {
