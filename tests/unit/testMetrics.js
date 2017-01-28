@@ -131,9 +131,17 @@ Object.keys(metricLevels).forEach(schemaKey => {
             done => testOps(schemaKey, 'deleteBucketCors',
                 's3:DeleteBucketCors', done));
 
+        it(`should return ${metric} level metrics for get bucket website`,
+            done => testOps(schemaKey, 'getBucketWebsite',
+                's3:GetBucketWebsite', done));
+
         it(`should return ${metric} level metrics for put bucket website`,
             done => testOps(schemaKey, 'putBucketWebsite',
                 's3:PutBucketWebsite', done));
+
+        it(`should return ${metric} level metrics for delete bucket website`,
+            done => testOps(schemaKey, 'deleteBucketWebsite',
+                's3:DeleteBucketWebsite', done));
 
         it(`should return ${metric} level metrics for put object`, done =>
             testOps(schemaKey, 'putObject', 's3:PutObject', done));
