@@ -123,7 +123,7 @@ export default class Datastore {
     * @return {undefined}
     */
     batch(cmds, cb) {
-        return this._client.pipeline(cmds).exec(cb);
+        return this._client.multi(cmds).exec(cb);
     }
 
     /**
