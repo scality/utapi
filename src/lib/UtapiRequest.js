@@ -98,6 +98,18 @@ export default class UtapiRequest {
     }
 
     /**
+     * Set request pathname
+     *
+     * @param {string} pathname - pathname from url.parse
+     * of request.url (pathname minus query)
+     * @return {UtapiRequest} itself
+     */
+    setRequestPathname(pathname) {
+        this._requestPathname = pathname;
+        return this;
+    }
+
+    /**
      * Get http request object
      *
      * @return {object} Http request object
@@ -131,6 +143,15 @@ export default class UtapiRequest {
      */
     getRequestPath() {
         return this._requestPath;
+    }
+
+    /**
+     * Get request pathname
+     *
+     * @return {string} request pathname
+     */
+    getRequestPathname() {
+        return this._requestPathname;
     }
 
     /**
