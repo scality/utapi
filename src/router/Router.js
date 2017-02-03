@@ -217,9 +217,10 @@ class Router {
             utapiRequest.getAction(), 'utapi')
         );
         auth.setHandler(this._vault);
-        const requestPlusPath = utapiRequest.getRequest();
-        requestPlusPath.path = utapiRequest.getRequestPath();
-        return auth.server.doAuth(requestPlusPath, log, (err, authResults) => {
+        const request = utapiRequest.getRequest();
+        request.path = utapiRequest.getRequestPathname();
+        request.query = utapiRequest.getRequestQuery();
+        return auth.server.doAuth(request, log, (err, authResults) => {
             if (err) {
                 return cb(err);
             }
