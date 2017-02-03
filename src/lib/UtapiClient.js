@@ -59,8 +59,15 @@ export default class UtapiClient {
                 .setClient(redisClient(config.redis, this.log));
             this.disableClient = false;
         }
+        // Use metric levels included in the config, or use all metrics.
         if (config && config.metrics) {
+            assert(Array.isArray(config.metrics), '`metrics` property of ' +
+            'Utapi configuration must be an array');
+            assert(config.metrics.length !== 0, '`metrics` property of Utapi ' +
+            'configuration must contain at least one metric');
             this.metrics = config.metrics;
+        } else {
+            this.metrics = ['buckets', 'accounts'];
         }
     }
 
@@ -130,18 +137,15 @@ export default class UtapiClient {
      * @return {undefined}
      */
     _checkMetricTypes(params) {
+        assert(this.metrics.some(level =>
+            metricObj[level] in params), 'Must include a metric level');
         // Object of metric types and their associated property names
-        if (this.metrics) {
-            this.metrics.forEach(level => {
-                const propName = metricObj[level];
-                assert(typeof params[propName] === 'string' ||
-                    params[propName] === undefined,
-                    `${propName} must be a string`);
-            });
-        } else {
-            assert(Object.keys(metricObj).some(level =>
-                metricObj[level] in params), 'Must include a metric level');
-        }
+        this.metrics.forEach(level => {
+            const propName = metricObj[level];
+            assert(typeof params[propName] === 'string' ||
+                params[propName] === undefined,
+                `${propName} must be a string`);
+        });
     }
 
     /**
@@ -153,13 +157,10 @@ export default class UtapiClient {
      * @return {undefined}
      */
     _logMetric(params, method, timestamp, log) {
-        const logObject = {
-            method: `UtapiClient.${method}`,
-            timestamp,
-        };
-        const metricTypes = ['bucket', 'accountId'];
-        const metricType = metricTypes.find(type => type in params);
-        logObject[metricType] = params[metricType];
+        const { bucket, accountId } = params;
+        const logObject = bucket ? { bucket } : { accountId };
+        logObject.method = `UtapiClient.${method}`;
+        logObject.timestamp = timestamp;
         log.trace('pushing metric', logObject);
     }
 
@@ -167,38 +168,36 @@ export default class UtapiClient {
      * Creates an array of parameter objects for each metric type. The number
      * of objects in the array will be the number of metric types included in
      * the `params` object.
-     * @param {object} params - params object with metric data
+     * @param {object} params - params object with all metric data passed to
+     * UtapiClient
      * @return {object []} arr - array of parameter objects for push metric call
      */
     _getParamsArr(params) {
         this._checkMetricTypes(params);
+        const props = [];
+        const { byteLength, newByteLength, oldByteLength, numberOfObjects } =
+            params;
+        const metricData = {
+            byteLength,
+            newByteLength,
+            oldByteLength,
+            numberOfObjects,
+        };
         // Only push metric levels defined in the config, otherwise push any
         // levels that are passed in the object
-        const levels = this.metrics ? this.metrics : Object.keys(metricObj);
-        const props = [];
-        for (let i = 0; i < levels.length; i++) {
-            const prop = metricObj[levels[i]];
-            if (params[prop] !== undefined) {
-                props.push(metricObj[levels[i]]);
-            }
+        if (params.bucket && this.metrics.indexOf('buckets') >= 0) {
+            props.push(Object.assign({
+                bucket: params.bucket,
+                level: 'buckets',
+            }, metricData));
         }
-        const metricProps = ['byteLength', 'newByteLength', 'oldByteLength',
-            'numberOfObjects'];
-        return props.map(type => {
-            const typeObj = {};
-            typeObj[type] = params[type];
-            // Include properties that are not metric types
-            // (e.g., 'oldByteLength', 'newByteLength', etc.)
-            Object.keys(params).forEach(k => {
-                // Get other properties, but do not include `undefined` ones
-                // or any unrelated properties (those not in `metricProps`).
-                if (props.indexOf(k) < 0 && params[k] !== undefined
-                    && metricProps.indexOf(k) >= 0) {
-                    typeObj[k] = params[k];
-                }
-            });
-            return typeObj;
-        });
+        if (params.accountId && this.metrics.indexOf('accounts') >= 0) {
+            props.push(Object.assign({
+                accountId: params.accountId,
+                level: 'accounts',
+            }, metricData));
+        }
+        return props;
     }
 
     /**
