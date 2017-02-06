@@ -226,14 +226,18 @@ export default class UtapiClient {
     * @return {undefined}
     */
     pushMetric(metric, reqUid, params, cb) {
-        assert(methods[metric], `${metric} metric is not handled by Utapi`);
         const callback = cb || this._noop;
         if (this.disableClient) {
             return callback();
         }
         const log = this.log.newRequestLoggerFromSerializedUids(reqUid);
         const timestamp = UtapiClient.getNormalizedTimestamp();
-        return this[methods[metric]](params, timestamp, metric, log, callback);
+        if (this[methods[metric]]) {
+            return this[methods[metric]](params, timestamp, metric, log,
+                callback);
+        }
+        log.debug(`UtapiClient::pushMetric: ${metric} unsupported`);
+        return callback();
     }
 
     /**

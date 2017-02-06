@@ -341,4 +341,10 @@ describe('UtapiClient:: push metrics', () => {
         const expected = getObject(timestamp, { action: 'HeadObject' });
         testMetric('headObject', metricTypes, expected, done);
     });
+
+    // Allows for decoupling of projects that use Utapi
+    it('should allow pushing an unsupported metric', done => {
+        const expected = {};
+        testMetric('unsupportedMetric', metricTypes, expected, done);
+    });
 });
