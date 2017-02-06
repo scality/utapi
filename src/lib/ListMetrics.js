@@ -30,6 +30,7 @@ export default class ListMetrics {
         }
         const obj = {};
         obj[type] = resource;
+        obj.level = this.metric;
         return obj;
     }
 

@@ -199,7 +199,7 @@ describe('Test Memory Backend', () => {
         const valStr = val.toString();
         const valIncr = (val + 1).toString();
         const expectedRes = [[null, valStr], [null, valIncr], [null, valIncr]];
-        mem.pipeline([
+        mem.multi([
             ['set', key, val],
             ['incr', key],
             ['get', key],
