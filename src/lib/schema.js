@@ -15,6 +15,9 @@ const keys = {
     listBucket: prefix => `${prefix}ListBucket`,
     getBucketAcl: prefix => `${prefix}GetBucketAcl`,
     putBucketAcl: prefix => `${prefix}PutBucketAcl`,
+    putBucketCors: prefix => `${prefix}PutBucketCors`,
+    deleteBucketCors: prefix => `${prefix}DeleteBucketCors`,
+    getBucketCors: prefix => `${prefix}GetBucketCors`,
     putBucketWebsite: prefix => `${prefix}PutBucketWebsite`,
     deleteBucketWebsite: prefix => `${prefix}DeleteBucketWebsite`,
     getBucketWebsite: prefix => `${prefix}GetBucketWebsite`,
@@ -45,16 +48,10 @@ const keys = {
 * @return {string} - prefix for the schema key
 */
 function getSchemaPrefix(params, timestamp) {
-    // Map of possible metric types and their associated prefix level keys
-    const map = {
-        bucket: 'buckets',
-        accountId: 'accounts',
-    };
-    const metricType = Object.keys(params).find(k => k in map);
-    const level = map[metricType];
-    const id = params[metricType];
-    const prefix = timestamp === undefined ? `s3:${level}:${id}:` :
-        `s3:${level}:${timestamp}:${id}:`;
+    const { bucket, accountId, level } = params;
+    const id = bucket || accountId;
+    const prefix = timestamp ? `s3:${level}:${timestamp}:${id}:` :
+        `s3:${level}:${id}:`;
     return prefix;
 }
 

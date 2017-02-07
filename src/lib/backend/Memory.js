@@ -12,7 +12,7 @@ class Pipeline {
     * @param {Memory} db - Memory instance
     */
     constructor(cmds, db) {
-        this.cmds = cmds;
+        this.cmds = JSON.parse(JSON.stringify(cmds));
         this.db = db;
     }
 
@@ -306,7 +306,7 @@ export default class Memory {
     * @param {array} cmds - list of commands
     * @return {Pipeline} - Pipeline instance
     */
-    pipeline(cmds) {
+    multi(cmds) {
         return new Pipeline(cmds, this);
     }
 
