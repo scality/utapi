@@ -10,7 +10,7 @@ Service Utilization API for tracking resource usage and metrics reporting
 ## Client
 
 The module exposes a client, named UtapiClient. Projects can use this client to
-push metrics directly to the underlying datastore(Redis) without the need of an
+push metrics directly to the underlying datastore (Redis) without the need of an
 extra HTTP request to Utapi.
 
 ```js
@@ -24,6 +24,8 @@ const config = {
 }
 const c = new UtapiClient(config);
 
+// The second argument to `PushMetric` is a hexadecimal string Request Unique
+// Identifier used for logging.
 c.pushMetric('createBucket', '3d534b1511e5630e68f0', { bucket: 'demo' });
 
 c.pushMetric('putObject', '3d534b1511e5630e68f0', {
