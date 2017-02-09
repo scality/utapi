@@ -255,7 +255,9 @@ export default class UtapiClient {
             }
             // storage utilized counter
             const actionErr = results[0][0];
-            const actionCounter = results[0][1];
+            // If < 0, record storageUtilized as though bucket were empty.
+            const actionCounter = results[0][1] < 0 ? objectSize :
+                results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
                     method: 'UtapiClient.pushMetricUploadPart',
@@ -339,7 +341,8 @@ export default class UtapiClient {
             }
             // number of objects counter
             const actionErr = results[0][0];
-            const actionCounter = results[0][1];
+            // If < 0, record numberOfObjects as though bucket were empty.
+            const actionCounter = results[0][1] < 0 ? 1 : results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
                     method: 'UtapiClient.pushMetricCompleteMultipartUpload',
@@ -494,6 +497,7 @@ export default class UtapiClient {
             // storage utilized counter
             let actionErr = results[0][0];
             let actionCounter = parseInt(results[0][1], 10);
+            // If < 0, record storageUtilized as though bucket were empty.
             actionCounter = actionCounter < 0 ? 0 : actionCounter;
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
@@ -514,6 +518,7 @@ export default class UtapiClient {
             // num of objects counter
             actionErr = results[1][0];
             actionCounter = parseInt(results[1][1], 10);
+            // If < 0, record numberOfObjects as though bucket were empty.
             actionCounter = actionCounter < 0 ? 0 : actionCounter;
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
@@ -684,7 +689,9 @@ export default class UtapiClient {
             let actionCounter;
             // storage utilized counter
             actionErr = results[0][0];
-            actionCounter = results[0][1];
+            // If < 0, record storageUtilized as though bucket were empty.
+            actionCounter = results[0][1] < 0 ? storageUtilizedDelta :
+                results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
                     method: 'UtapiClient.pushMetricPutObject',
@@ -702,7 +709,8 @@ export default class UtapiClient {
 
             // number of objects counter
             actionErr = results[1][0];
-            actionCounter = results[1][1];
+            // If < 0, record numberOfObjects as though bucket were empty.
+            actionCounter = results[1][1] < 0 ? 1 : results[1][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
                     method: 'UtapiClient.pushMetricPutObject',
@@ -771,10 +779,11 @@ export default class UtapiClient {
             }
             const cmds = [];
             let actionErr;
-            let actionCounter;
             // storage utilized counter
             actionErr = results[0][0];
-            actionCounter = results[0][1];
+            // If < 0, record storageUtilized as though bucket were empty.
+            let actionCounter = results[0][1] < 0 ? storageUtilizedDelta :
+                results[0][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
                     method: 'UtapiClient.pushMetricCopyObject',
@@ -792,7 +801,8 @@ export default class UtapiClient {
 
             // number of objects counter
             actionErr = results[1][0];
-            actionCounter = results[1][1];
+            // If < 0, record numberOfObjects as though bucket were empty.
+            actionCounter = results[1][1] < 0 ? 1 : results[1][1];
             if (actionErr) {
                 log.error('error incrementing counter for push metric', {
                     method: 'UtapiClient.pushMetricCopyObject',
