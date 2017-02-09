@@ -72,6 +72,10 @@ function getParams(action) {
             newByteLength: objSize,
             oldByteLength: null,
         });
+    case 'abortMultipartUpload':
+        return Object.assign(resources, {
+            byteLength: objSize,
+        });
     case 'deleteObject':
         return Object.assign(resources, {
             byteLength: objSize,
@@ -79,7 +83,7 @@ function getParams(action) {
         });
     case 'multiObjectDelete':
         return Object.assign(resources, {
-            byteLength: objSize * 2,
+            byteLength: objSize,
             numberOfObjects: 2,
         });
     default:

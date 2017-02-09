@@ -23,7 +23,7 @@ const methods = {
     completeMultipartUpload: '_pushMetricCompleteMultipartUpload',
     listMultipartUploads: '_pushMetricListBucketMultipartUploads',
     listMultipartUploadParts: '_genericPushMetric',
-    abortMultipartUpload: '_genericPushMetric',
+    abortMultipartUpload: '_genericPushMetricDeleteObject',
     deleteObject: '_genericPushMetricDeleteObject',
     multiObjectDelete: '_genericPushMetricDeleteObject',
     getObject: '_pushMetricGetObject',
@@ -488,7 +488,8 @@ export default class UtapiClient {
     }
 
     /**
-    * Updates counter for DeleteObject or MultiObjectDelete action
+    * Updates counter for DeleteObject, MultiObjectDelete, or
+    * AbortMultipartUpload action
     * @param {object} params - params for the metrics
     * @param {string} [params.bucket] - (optional) bucket name
     * @param {string} [params.accountId] - (optional) account ID
@@ -501,23 +502,32 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _genericPushMetricDeleteObject(params, timestamp, action, log, callback) {
-        this._checkProperties(params, ['byteLength', 'numberOfObjects']);
+        const expectedProps = action === 'abortMultipartUpload' ?
+            ['byteLength'] : ['byteLength', 'numberOfObjects'];
+        this._checkProperties(params, expectedProps);
         const { byteLength, numberOfObjects } = params;
         this._logMetric(params, '_genericPushMetricDeleteObject', timestamp,
             log);
         const paramsArr = this._getParamsArr(params);
         const cmds = [];
+        // We push Redis commands to be executed in batch. The type of commands
+        // to push depends on the action.
         paramsArr.forEach(p => {
             cmds.push(
                 ['decrby', generateCounter(p, 'storageUtilizedCounter'),
                     byteLength],
-                ['decrby', generateCounter(p, 'numberOfObjectsCounter'),
-                    numberOfObjects],
                 ['incr', generateKey(p, action, timestamp)]
             );
+            // The 'abortMultipartUpload' action affects only storage utilized,
+            // so number of objects remains unchanged.
+            if (action !== 'abortMultipartUpload') {
+                cmds.push(['decrby', generateCounter(p,
+                    'numberOfObjectsCounter'), numberOfObjects]);
+            }
         });
-        const cmdsLen = cmds.length;
-        const paramsArrLen = paramsArr.length;
+        // We track the number of commands needed for each `paramsArr` object to
+        // eventually locate each group in the results from ioredis.
+        const commandsGroupSize = action !== 'abortMultipartUpload' ? 3 : 2;
         return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error incrementing counter', {
@@ -527,62 +537,72 @@ export default class UtapiClient {
                 return this._pushLocalCache(params, action, timestamp, log,
                     callback);
             }
-
+            // `results` is an array of arrays. `results` elements are the
+            // return values of each command in `cmds` and contains two
+            // elements: the error and the value stored at the key.
             const cmds2 = [];
             let actionErr;
             let actionCounter;
-            let storageIndex;
-            let objectsIndex;
+            // We now need to record Sorted Set keys. To do so, we push commands
+            // to another array, `cmds2`, for a second batch execution.
+            // Also, we check for any error from the previous batch operation.
             const noErr = paramsArr.every((p, i) => {
-                // storage utilized counter
-                storageIndex = i * (cmdsLen / paramsArrLen);
-                actionErr = results[storageIndex][0];
-                actionCounter = parseInt(results[storageIndex][1], 10);
+                // The beginning location of each group of command results.
+                const currentResultsGroup = i * commandsGroupSize;
+                // The storage utilized result is the first element of each
+                // group of metrics.
+                actionErr = results[currentResultsGroup][0];
+                actionCounter = parseInt(results[currentResultsGroup][1], 10);
                 // If < 0, record storageUtilized as though bucket were empty.
-                actionCounter = actionCounter < 0 ? 0 : actionCounter;
-                if (actionErr) {
-                    log.error('error incrementing counter for push metric',
-                        {
-                            method: 'UtapiClient._genericPushMetricDelete' +
-                            'Object',
-                            metric: 'storage utilized',
-                            error: actionErr,
-                        }
-                    );
-                    this._pushLocalCache(params, action, timestamp, log,
-                        callback);
-                    return false;
-                }
-                cmds2.push(
-                    ['zremrangebyscore',
-                        generateStateKey(p, 'storageUtilized'),
-                        timestamp, timestamp],
-                    ['zadd',
-                        generateStateKey(p, 'storageUtilized'),
-                        timestamp, actionCounter]);
-
-                // num of objects counter
-                objectsIndex = i * (cmdsLen / paramsArrLen) + 1;
-                actionErr = results[objectsIndex][0];
-                actionCounter = parseInt(results[objectsIndex][1], 10);
-                // If < 0, record numberOfObjects as though bucket were empty.
                 actionCounter = actionCounter < 0 ? 0 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._genericPushMetricDeleteObject',
-                        metric: 'num of objects',
+                        metric: 'storage utilized',
                         error: actionErr,
                     });
                     this._pushLocalCache(params, action, timestamp, log,
                         callback);
                     return false;
                 }
+                // Sorted Set keys are updated with the value stored at their
+                // respective counter key (i.e., the value of `actionCounter`).
+                cmds2.push(
+                    ['zremrangebyscore', generateStateKey(p, 'storageUtilized'),
+                        timestamp, timestamp],
+                    ['zadd',
+                        generateStateKey(p, 'storageUtilized'), timestamp,
+                        actionCounter]);
+                // The 'abortMultipartUpload' action does not affect number of
+                // objects, so we return here.
+                if (action === 'abortMultipartUpload') {
+                    return true;
+                }
+                // The number of objects counter result is the third element of
+                // each group of commands. Thus we add two.
+                const numberOfObjectsResult = currentResultsGroup + 2;
+                actionErr = results[numberOfObjectsResult][0];
+                actionCounter = parseInt(results[numberOfObjectsResult][1], 10);
+                // If < 0, record numberOfObjects as though bucket were empty.
+                actionCounter = actionCounter < 0 ? 0 : actionCounter;
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._genericPushMetricDeleteObject',
+                        metric: 'storage utilized',
+                        error: actionErr,
+                    });
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
+                    return false;
+                }
+                // Sorted Set keys are updated with the value stored at their
+                // respective counter key (i.e., the value of `actionCounter`).
                 cmds2.push(
                     ['zremrangebyscore',
                         generateStateKey(p, 'numberOfObjects'), timestamp,
                         timestamp],
-                    ['zadd', generateStateKey(p, 'numberOfObjects'),
-                        timestamp, actionCounter]);
+                    ['zadd', generateStateKey(p, 'numberOfObjects'), timestamp,
+                        actionCounter]);
                 return true;
             });
             if (noErr) {
