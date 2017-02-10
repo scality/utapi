@@ -7,6 +7,10 @@
 
 Service Utilization API for tracking resource usage and metrics reporting
 
+## Design
+
+Please refer to the [design](/DESIGN.md) for more information.
+
 ## Client
 
 The module exposes a client, named UtapiClient. Projects can use this client to
