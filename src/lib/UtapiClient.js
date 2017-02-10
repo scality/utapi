@@ -331,15 +331,17 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _pushMetricUploadPart(params, timestamp, action, log, callback) {
-        this._checkProperties(params, ['newByteLength']);
-        const { newByteLength } = params;
+        this._checkProperties(params, ['newByteLength', 'oldByteLength']);
         this._logMetric(params, '_pushMetricUploadPart', timestamp, log);
         const cmds = [];
+        const { newByteLength, oldByteLength } = params;
+        const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
+        const storageUtilizedDelta = newByteLength - oldObjSize;
         const paramsArr = this._getParamsArr(params);
         paramsArr.forEach(p => {
             cmds.push(
                 ['incrby', generateCounter(p, 'storageUtilizedCounter'),
-                    newByteLength],
+                    storageUtilizedDelta],
                 ['incrby', generateKey(p, 'incomingBytes', timestamp),
                     newByteLength],
                 ['incr', generateKey(p, action, timestamp)]
