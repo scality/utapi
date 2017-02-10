@@ -5,10 +5,22 @@ import Datastore from '../../src/lib/Datastore';
 import redisClient from '../../src/utils/redisClient';
 import { Logger } from 'werelogs';
 import { getCounters } from '../../src/lib/schema';
-const datastore = new Datastore();
-const utapiClient = new UtapiClient();
+const redis = redisClient({
+    host: '127.0.0.1',
+    port: 6379,
+}, Logger);
+const datastore = new Datastore().setClient(redis);
+const utapiClient = new UtapiClient({
+    redis: {
+        host: '127.0.0.1',
+        port: 6379,
+    },
+    localCache: {
+        host: '127.0.0.1',
+        port: 6379,
+    },
+});
 const reqUid = 'foo';
-const redis = redisClient({ host: '127.0.0.1', port: 6379 }, Logger);
 const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
@@ -36,8 +48,6 @@ function _getMetricFromKey(key, value, metricObj) {
     return metric.replace(`${value}:`).replace(':counter', '');
 }
 
-datastore.setClient(redis);
-utapiClient.setDataStore(datastore);
 function _assertCounters(metricName, metricObj, cb) {
     const counters = getCounters(metricObj);
     return mapSeries(counters, (item, next) =>

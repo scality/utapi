@@ -127,6 +127,16 @@ export default class Datastore {
     }
 
     /**
+    * execute a pipeline of commands
+    * @param {string[]} cmds - list of commands
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    pipeline(cmds, cb) {
+        return this._client.pipeline(cmds).exec(cb);
+    }
+
+    /**
     * remove elements from the sorted set that fall between the min and max
     * scores
     * @param {string} key - key holding the value
@@ -137,5 +147,48 @@ export default class Datastore {
     */
     zremrangebyscore(key, min, max, cb) {
         return this._client.zremrangebyscore(key, min, max, cb);
+    }
+
+    /**
+    * push a value to the head of the list
+    * @param {string} key - key for the list
+    * @param {string} val - value to be pushed onto the list
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    lpush(key, val, cb) {
+        return this._client.lpush(key, val, cb);
+    }
+
+    /**
+    * remove and return the last element of the list
+    * @param {string} key - key for the list
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    rpop(key, cb) {
+        return this._client.rpop(key, cb);
+    }
+
+    /**
+    * get a range of elements from the list
+    * @param {string} key - key for the list
+    * @param {number} start - start offset in a zero-based index
+    * @param {number} stop - stop offset in a zero-based index
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    lrange(key, start, stop, cb) {
+        return this._client.lrange(key, start, stop, cb);
+    }
+
+    /**
+    * get the length of the list
+    * @param {string} key - key for the list
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    llen(key, cb) {
+        return this._client.llen(key, cb);
     }
 }
