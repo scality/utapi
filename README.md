@@ -28,7 +28,7 @@ const config = {
 }
 const c = new UtapiClient(config);
 
-// The second argument to `PushMetric` is a hexadecimal string Request Unique
+// The second argument to `pushMetric` is a hexadecimal string Request Unique
 // Identifier used for logging.
 c.pushMetric('createBucket', '3d534b1511e5630e68f0', { bucket: 'demo' });
 
@@ -140,11 +140,15 @@ buckets.
 
 There are two options here.
 
-You can generate V4 signature using AWS SDKs. See the following urls for
-reference.
+You can generate V4 signature using AWS SDKs or the node module aws4. See the
+following urls for reference.
 
-http://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
-http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
+* http://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
+* http://docs.aws.amazon.com/general/latest/gr/sigv4-signed-request-examples.html
+* https://github.com/mhart/aws4
+
+You may also view examples making a request with Auth V4 using various languages
+and AWS SDKs [here](/examples).
 
 Alternatively, you can use a nifty command line tool available in Scality's S3.
 
