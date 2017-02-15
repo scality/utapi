@@ -24,6 +24,10 @@ const config = {
     redis: {
         host: '127.0.0.1',
         port: 6379
+    },
+    localCache: {
+        host: '127.0.0.1',
+        port: 6379
     }
 }
 const c = new UtapiClient(config);
@@ -35,6 +39,7 @@ c.pushMetric('createBucket', '3d534b1511e5630e68f0', { bucket: 'demo' });
 c.pushMetric('putObject', '3d534b1511e5630e68f0', {
     bucket: 'demo',
     newByteLength: 1024,
+    oldByteLength: null,
 });
 
 c.pushMetric('putObject', '3d534b1511e5630e68f0', {
@@ -49,6 +54,14 @@ c.pushMetric('multiObjectDelete', '3d534b1511e5630e68f0', {
     numberOfObjects: 999,
 });
 ```
+
+If an error occurs during a `pushMetric` call and the client is unable to record
+metrics in the underlying datastore, metric data is instead stored in a local
+Redis cache. Utapi attempts to push these cached metrics (every five minutes, by
+default) using a component named UtapiReplay. If the `pushMetric` call initiated
+by UtapiReplay fails, the metric is reinserted into the local Redis cache. The
+particularities of this behavior are configurable. For further information, see
+[design](/DESIGN.md).
 
 ## Listing Metrics with Utapi
 
