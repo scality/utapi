@@ -125,11 +125,7 @@ describe('UtapiClient:: push metrics', () => {
     afterEach(() => memoryBackend.flushDb());
 
     it('should push createBucket metrics', done => {
-        const expected = getObject(timestamp, {
-            action: 'CreateBucket',
-            storageUtilized: '0',
-            numberOfObjects: '0',
-        });
+        const expected = getObject(timestamp, { action: 'CreateBucket' });
         testMetric('createBucket', metricTypes, expected, done);
     });
 

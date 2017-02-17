@@ -1,13 +1,13 @@
 import assert from 'assert';
 import { Logger } from 'werelogs';
 import Datastore from './Datastore';
-import { generateKey, generateCounter, getCounters, generateStateKey }
+import { generateKey, generateCounter, generateStateKey }
     from './schema';
 import { errors } from 'arsenal';
 import redisClient from '../utils/redisClient';
 
 const methods = {
-    createBucket: '_pushMetricCreateBucket',
+    createBucket: '_genericPushMetric',
     deleteBucket: '_genericPushMetric',
     listBucket: '_genericPushMetric',
     getBucketAcl: '_genericPushMetric',
@@ -238,56 +238,6 @@ export default class UtapiClient {
         }
         log.debug(`UtapiClient::pushMetric: ${metric} unsupported`);
         return callback();
-    }
-
-    /**
-    * Updates counter for CreateBucket action
-    * @param {object} params - params for the metrics
-    * @param {string} [params.bucket] - (optional) bucket name
-    * @param {string} [params.accountId] - (optional) account ID
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {string} action - action to push metric for
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricCreateBucket(params, timestamp, action, log, callback) {
-        this._checkProperties(params);
-        this._logMetric(params, '_pushMetricCreateBucket', timestamp, log);
-        // set storage utilized and number of objects counters to 0,
-        // indicating the start of the bucket timeline
-        let cmds = [];
-        this._getParamsArr(params).forEach(p => {
-            cmds = cmds.concat(getCounters(p).map(item => ['set', item, 0]));
-            cmds.push(
-                // remove old timestamp entries
-                ['zremrangebyscore',
-                    generateStateKey(p, 'storageUtilized'), timestamp,
-                        timestamp],
-                ['zremrangebyscore', generateStateKey(p, 'numberOfObjects'),
-                    timestamp, timestamp],
-                // add new timestamp entries
-                ['zadd', generateStateKey(p, 'storageUtilized'), timestamp, 0],
-                ['zadd', generateStateKey(p, 'numberOfObjects'), timestamp, 0]
-            );
-            // CreateBucket action occurs only once in a bucket's lifetime, so
-            // for bucket-level metrics, counter is always 1.
-            if ('bucket' in p) {
-                cmds.push(['set', generateKey(p, action, timestamp), 1]);
-            } else {
-                cmds.push(['incr', generateKey(p, action, timestamp)]);
-            }
-        });
-        return this.ds.batch(cmds, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets._pushMetricCreateBucket',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
     }
 
     /**
@@ -697,7 +647,8 @@ export default class UtapiClient {
                 // number of objects counter
                 objectsIndex = (i * (cmdsLen / paramsArrLen)) + 1;
                 actionErr = results[objectsIndex][0];
-                actionCounter = results[objectsIndex][1];
+                actionCounter = parseInt(results[objectsIndex][1], 10);
+                actionCounter = Number.isNaN(actionCounter) ? 1 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._genericPushMetricPutObject',
