@@ -46,7 +46,8 @@ function _assertCounters(metricName, metricObj, cb) {
                 return next(err);
             }
             const metric = _getMetricFromKey(item, metricName, metricObj);
-            assert.equal(res, 0, `${metric} must be 0`);
+            const mNum = metric === 'storageUtilized' ? 8 : 1;
+            assert.strictEqual(parseInt(res, 10), mNum);
             return next();
         }), cb);
 }
@@ -59,13 +60,13 @@ Object.keys(metricTypes).forEach(type => {
     describe(`Counters with ${type} metrics`, () => {
         afterEach(() => redis.flushdb());
 
-        it('should set counters to 0 on bucket creation', done => {
-            utapiClient.pushMetric('createBucket', reqUid, metricObj, () =>
-                _assertCounters(metricTypes[type], metricObj, done));
-        });
-
-        it('should reset counters on bucket re-creation', done => {
+        it('should reconcile counters for out of order operations ', done => {
             series([
+                next => utapiClient.pushMetric('deleteObject', reqUid,
+                    Object.assign(metricObj, {
+                        byteLength: 8,
+                        numberOfObjects: 1,
+                    }), next),
                 next => utapiClient.pushMetric('createBucket', reqUid,
                     metricObj, next),
                 next => utapiClient.pushMetric('listBucket', reqUid, metricObj,
@@ -73,20 +74,18 @@ Object.keys(metricTypes).forEach(type => {
                 next => utapiClient.pushMetric('putObject', reqUid,
                     Object.assign(metricObj, {
                         newByteLength: 8,
-                        oldByteLength: 0,
+                        oldByteLength: null,
+                    }), next),
+                next => utapiClient.pushMetric('putObject', reqUid,
+                    Object.assign(metricObj, {
+                        newByteLength: 8,
+                        oldByteLength: null,
                     }), next),
                 next => utapiClient.pushMetric('getObject', reqUid,
                     Object.assign(metricObj, {
                         newByteLength: 8,
                     }), next),
-                next => utapiClient.pushMetric('deleteObject', reqUid,
-                    Object.assign(metricObj, {
-                        byteLength: 8,
-                        numberOfObjects: 1,
-                    }), next),
                 next => utapiClient.pushMetric('deleteBucket', reqUid,
-                    metricObj, next),
-                next => utapiClient.pushMetric('createBucket', reqUid,
                     metricObj, next),
             ], () => _assertCounters(metricTypes[type], metricObj, done));
         });
