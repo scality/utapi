@@ -13,6 +13,11 @@ const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
 };
+const redisLocal = { host: 'localhost', port: 6379 };
+const config = {
+    redis: redisLocal,
+    localCache: redisLocal,
+};
 
 // Get prefix values to construct the expected Redis schema keys
 function getPrefixValues(timestamp) {
@@ -83,7 +88,7 @@ function getObject(timestamp, data) {
 }
 
 function testMetric(metric, params, expected, cb) {
-    const c = new UtapiClient();
+    const c = new UtapiClient(config);
     c.setDataStore(ds);
     c.pushMetric(metric, REQUID, params, () => {
         assert.deepStrictEqual(memoryBackend.data, expected);
@@ -97,11 +102,11 @@ describe('UtapiClient:: enable/disable client', () => {
         assert.strictEqual(c instanceof UtapiClient, true);
         assert.strictEqual(c.disableClient, true);
         assert.strictEqual(c.log instanceof Logger, true);
-        assert.strictEqual(c.ds, null);
+        assert.strictEqual(c.ds, undefined);
     });
 
     it('should enable client when redis config is provided', () => {
-        const c = new UtapiClient({ redis: { host: 'localhost', port: 6379 } });
+        const c = new UtapiClient(config);
         assert.strictEqual(c instanceof UtapiClient, true);
         assert.strictEqual(c.disableClient, false);
         assert.strictEqual(c.log instanceof Logger, true);

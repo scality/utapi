@@ -41,33 +41,51 @@ const metricObj = {
 };
 
 export default class UtapiClient {
+    /**
+     * Create a UtapiClient
+     * @param {object} [config] - The configuration of UtapiClient
+     * @param {object} [config.log] - Object defining the level and dumplevel of
+     * the log
+     * @param {object} [config.redis] - Object defining the host and port of the
+     * Redis datastore
+     * @param {object} [config.localCache] - Object defining the host and port
+     * of the local cache datastore
+     * @param {array} [config.metrics] - Array defining the metric resource
+     * types to push metrics for
+     */
     constructor(config) {
+        this.log = new Logger('UtapiClient', {
+            level: 'info',
+            dump: 'error',
+        });
+        // By default, we push all resource types
+        this.metrics = ['buckets', 'accounts'];
         this.disableClient = true;
-        this.log = null;
-        this.ds = null;
-        // setup logger
-        if (config && config.log) {
-            this.log = new Logger('UtapiClient', { level: config.log.level,
-                    dump: config.log.dumpLevel });
-        } else {
-            this.log = new Logger('UtapiClient', { level: 'info',
-                dump: 'error' });
-        }
-        // setup datastore
-        if (config && config.redis) {
-            this.ds = new Datastore()
-                .setClient(redisClient(config.redis, this.log));
+
+        if (config) {
+            if (config.log) {
+                this.log = new Logger('UtapiClient', {
+                    level: config.log.level,
+                    dump: config.log.dumpLevel,
+                });
+            }
+            if (config.metrics) {
+                const message = 'invalid property in UtapiClient configuration';
+                assert(Array.isArray(config.metrics), `${message}: metrics ` +
+                    'must be an array');
+                assert(config.metrics.length !== 0, `${message}: metrics ` +
+                    'array cannot be empty');
+                this.metrics = config.metrics;
+            }
+            if (config.redis) {
+                this.ds = new Datastore()
+                    .setClient(redisClient(config.redis, this.log));
+            }
+            if (config.localCache) {
+                this.localCache = new Datastore()
+                    .setClient(redisClient(config.localCache, this.log));
+            }
             this.disableClient = false;
-        }
-        // Use metric levels included in the config, or use all metrics.
-        if (config && config.metrics) {
-            assert(Array.isArray(config.metrics), '`metrics` property of ' +
-            'Utapi configuration must be an array');
-            assert(config.metrics.length !== 0, '`metrics` property of Utapi ' +
-            'configuration must contain at least one metric');
-            this.metrics = config.metrics;
-        } else {
-            this.metrics = ['buckets', 'accounts'];
         }
     }
 
@@ -97,6 +115,38 @@ export default class UtapiClient {
     * Utility function to use when callback is not defined
     */
     _noop() {}
+
+    /**
+    * Attempt to push necessary data to local cache list for UtapiReplay, when
+    * `pushMetric` call has failed
+    * @param {object} params - params object with metric data
+    * @param {string} operation - action of attempted pushMetric call
+    * @param {string} timestamp - timestamp of the original pushMetric call
+    * @param {object} log - Werelogs request logger
+    * @param {callback} cb - callback to call
+    * @return {undefined}
+    */
+    _pushLocalCache(params, operation, timestamp, log, cb) {
+        // 'listMultipartUploads' has a different name in the metric response.
+        const action = operation === 'listBucketMultipartUploads' ?
+            'listMultipartUploads' : operation;
+        const logObject = { method: 'UtapiClient._pushLocalCache', action,
+            params };
+        if (!this.localCache) {
+            log.fatal('failed to push metrics', logObject);
+            return cb(errors.InternalError);
+        }
+        const reqUid = log.getSerializedUids();
+        const value = JSON.stringify({ action, reqUid, params, timestamp });
+        return this.localCache.lpush('s3:utapireplay', value, err => {
+            if (err) {
+                log.error('error inserting data in local cache', logObject);
+                return cb(err);
+            }
+            // Local cache entry succeeded.
+            return cb(errors.InternalError);
+        });
+    }
 
    /**
     * Check the types of `params` object properties. This enforces object
@@ -262,7 +312,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._genericPushMetric',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             return callback();
         });
@@ -304,7 +355,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._pushMetricUploadPart',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             // storage utilized counters
             let index;
@@ -326,7 +378,8 @@ export default class UtapiClient {
                         metric: 'storage utilized',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
@@ -375,7 +428,8 @@ export default class UtapiClient {
                     metric: 'number of objects',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             // number of objects counters
             let index;
@@ -395,7 +449,8 @@ export default class UtapiClient {
                         metric: 'number of objects',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 key = generateStateKey(p, 'numberOfObjects');
@@ -464,7 +519,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._genericPushMetricDeleteObject',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
 
             const cmds2 = [];
@@ -488,7 +544,8 @@ export default class UtapiClient {
                             error: actionErr,
                         }
                     );
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
@@ -510,7 +567,8 @@ export default class UtapiClient {
                         metric: 'num of objects',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
@@ -560,7 +618,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._pushMetricGetObject',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             return callback();
         });
@@ -614,7 +673,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._genericPushMetricPutObject',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             const cmds2 = [];
             let actionErr;
@@ -634,7 +694,8 @@ export default class UtapiClient {
                         metric: 'storage utilized',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
@@ -655,7 +716,8 @@ export default class UtapiClient {
                         metric: 'number of objects',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
