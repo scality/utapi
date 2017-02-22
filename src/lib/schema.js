@@ -74,12 +74,13 @@ export function getBucketKeys(bucket, timestamp) {
 /**
 * Returns metric from key
 * @param {string} key - schema key
-* @param {string} bucket - bucket name
-* @return {string} metric - S3 metric
+* @return {string} metric - Utapi metric
 */
-export function getMetricFromKey(key, bucket) {
-    // s3:buckets:1473451689898:demo:putObject
-    return key.slice(25).replace(`${bucket}:`, '');
+export function getMetricFromKey(key) {
+    const fields = key.split(':');
+    // Identify the location of the metric in the array.
+    const metricLocation = key.includes('counter') ? -2 : -1;
+    return fields[fields.length + metricLocation];
 }
 
 /**
