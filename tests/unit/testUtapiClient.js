@@ -172,6 +172,11 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('getBucketWebsite', metricTypes, expected, done);
     });
 
+    it('should push getBucketLocation metrics', done => {
+        const expected = getObject(timestamp, { action: 'GetBucketLocation' });
+        testMetric('getBucketLocation', metricTypes, expected, done);
+    });
+
     it('should push deleteBucketWebsite metrics', done => {
         const expected = getObject(timestamp,
             { action: 'DeleteBucketWebsite' });

@@ -17,6 +17,7 @@ const methods = {
     deleteBucketCors: '_genericPushMetric',
     putBucketWebsite: '_genericPushMetric',
     getBucketWebsite: '_genericPushMetric',
+    getBucketLocation: '_genericPushMetric',
     deleteBucketWebsite: '_genericPushMetric',
     uploadPart: '_pushMetricUploadPart',
     initiateMultipartUpload: '_genericPushMetric',

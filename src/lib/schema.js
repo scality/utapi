@@ -21,6 +21,7 @@ const keys = {
     putBucketWebsite: prefix => `${prefix}PutBucketWebsite`,
     deleteBucketWebsite: prefix => `${prefix}DeleteBucketWebsite`,
     getBucketWebsite: prefix => `${prefix}GetBucketWebsite`,
+    getBucketLocation: prefix => `${prefix}GetBucketLocation`,
     listBucketMultipartUploads: prefix => `${prefix}ListBucketMultipartUploads`,
     listMultipartUploadParts: prefix => `${prefix}ListMultipartUploadParts`,
     initiateMultipartUpload: prefix => `${prefix}InitiateMultipartUpload`,
