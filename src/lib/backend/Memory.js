@@ -1,4 +1,5 @@
 import assert from 'assert';
+import events from 'events';
 import map from 'async/map';
 
 /**
@@ -50,6 +51,7 @@ class Pipeline {
 export default class Memory {
     constructor() {
         this.data = {};
+        this.channels = new events.EventEmitter();
     }
 
     /**
@@ -308,6 +310,18 @@ export default class Memory {
     */
     pipeline(cmds) {
         return new Pipeline(cmds, this);
+    }
+
+    /**
+    * publish a message to a channel, clients can subsribe to this channel
+    * to receive messages
+    * @param {string} channel - channel to push the message
+    * @param {string} message - message to be pushed to the channel
+    * @return {object} - current instance
+    */
+    publish(channel, message) {
+        this.channels.emit(channel, message);
+        return this;
     }
 
     /**
