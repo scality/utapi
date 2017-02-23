@@ -1,10 +1,11 @@
 import assert from 'assert';
-import { mapSeries, series } from 'async';
+import { map, series } from 'async';
 import UtapiClient from '../../src/lib/UtapiClient';
 import Datastore from '../../src/lib/Datastore';
 import redisClient from '../../src/utils/redisClient';
 import { Logger } from 'werelogs';
-import { getCounters } from '../../src/lib/schema';
+import { getCounters, getMetricFromKey,
+    getStateKeys } from '../../src/lib/schema';
 const redis = redisClient({
     host: '127.0.0.1',
     port: 6379,
@@ -25,6 +26,8 @@ const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
 };
+const putOperations = ['PutObject', 'CopyObject', 'UploadPart',
+    'CompleteMultipartUpload'];
 
 // Get the metric object for the given type
 function _getMetricObj(type) {
@@ -37,29 +40,78 @@ function _getMetricObj(type) {
     return obj;
 }
 
-// Get the metric from the key that is passed
-function _getMetricFromKey(key, value, metricObj) {
-    let metric;
-    if ('bucket' in metricObj) {
-        metric = key.slice(22);
-    } else if ('accountId' in metricObj) {
-        metric = key.slice(24);
-    }
-    return metric.replace(`${value}:`).replace(':counter', '');
-}
-
-function _assertCounters(metricName, metricObj, cb) {
+function _assertCounters(metricObj, valueObj, cb) {
     const counters = getCounters(metricObj);
-    return mapSeries(counters, (item, next) =>
+    return map(counters, (item, cb) =>
         datastore.get(item, (err, res) => {
             if (err) {
-                return next(err);
+                return cb(err);
             }
-            const metric = _getMetricFromKey(item, metricName, metricObj);
-            const mNum = metric === 'storageUtilized' ? 8 : 1;
-            assert.strictEqual(parseInt(res, 10), mNum);
-            return next();
+            const metric = getMetricFromKey(item);
+            assert.strictEqual(parseInt(res, 10), valueObj[metric],
+                `${metric} must be ${valueObj[metric]}`);
+            return cb();
         }), cb);
+}
+
+function _assertStateKeys(metricObj, valueObj, cb) {
+    const stateKeys = getStateKeys(metricObj);
+    return map(stateKeys, (item, cb) =>
+        datastore.zrange(item, 0, -1, (err, res) => {
+            if (err) {
+                return cb(err);
+            }
+            const metric = getMetricFromKey(item);
+            assert.strictEqual(parseInt(res[0], 10), valueObj[metric],
+                `${metric} must be ${valueObj[metric]}`);
+            return cb();
+        }), cb);
+}
+
+// Simulates a scenario in which two objects are deleted prior to any put object
+// operations, resulting in -20 `storageUtilized` value and -2 `numberOfObjects`
+// value. This could occur if the connection to the Redis server is interrupted.
+function _checkMissingOperations(assertKeys, metricObj, operation, valuesObject,
+    cb) {
+    return series([
+        next => utapiClient.pushMetric('createBucket', reqUid, metricObj, next),
+        next => utapiClient.pushMetric('multiObjectDelete', reqUid,
+            Object.assign(metricObj, {
+                byteLength: 20,
+                numberOfObjects: 2,
+            }), next),
+        next => {
+            switch (operation) {
+            case 'PutObject':
+                return utapiClient.pushMetric('putObject', reqUid,
+                    Object.assign(metricObj, {
+                        newByteLength: 9,
+                        oldByteLength: null,
+                    }), next);
+            case 'CopyObject':
+                return utapiClient.pushMetric('copyObject', reqUid,
+                    Object.assign(metricObj, {
+                        newByteLength: 9,
+                        oldByteLength: null,
+                    }), next);
+            case 'UploadPart':
+                return utapiClient.pushMetric('uploadPart', reqUid,
+                    Object.assign(metricObj, {
+                        newByteLength: 9,
+                        oldByteLength: null,
+                    }), next);
+            case 'CompleteMultipartUpload':
+                return utapiClient.pushMetric('uploadPart', reqUid,
+                    Object.assign(metricObj, {
+                        newByteLength: 9,
+                        oldByteLength: null,
+                    }), utapiClient.pushMetric('completeMultipartUpload',
+                        reqUid, metricObj, next));
+            default:
+                return next();
+            }
+        },
+    ], () => assertKeys(metricObj, valuesObject, cb));
 }
 
 Object.keys(metricTypes).forEach(type => {
@@ -97,7 +149,40 @@ Object.keys(metricTypes).forEach(type => {
                     }), next),
                 next => utapiClient.pushMetric('deleteBucket', reqUid,
                     metricObj, next),
-            ], () => _assertCounters(metricTypes[type], metricObj, done));
+            ], () => _assertCounters(metricObj, {
+                storageUtilized: 8,
+                numberOfObjects: 1,
+            }, done));
+        });
+
+        putOperations.forEach(op => {
+            // Calculated based on negative counter values.
+            const counterKeyVals = op === 'UploadPart' ? {
+                storageUtilized: -11,
+                numberOfObjects: -2, // UploadPart does not increment value.
+            } : {
+                storageUtilized: -11,
+                numberOfObjects: -1,
+            };
+            it(`should record correct values if counters are < 0: ${op}`,
+                done => _checkMissingOperations(_assertCounters, metricObj, op,
+                    counterKeyVals, done));
+        });
+    });
+
+    describe(`State keys with ${type} metrics`, () => {
+        putOperations.forEach(op => {
+            // Calculated based on negative counter values.
+            const stateKeyVals = op === 'UploadPart' ? {
+                storageUtilized: 9,
+                numberOfObjects: 0, // UploadPart does not increment value.
+            } : {
+                storageUtilized: 9,
+                numberOfObjects: 1,
+            };
+            it(`should record correct values if counters are < 0: ${op}`,
+                done => _checkMissingOperations(_assertStateKeys, metricObj, op,
+                    stateKeyVals, done));
         });
     });
 });

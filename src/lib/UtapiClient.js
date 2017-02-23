@@ -371,7 +371,10 @@ export default class UtapiClient {
                 // counters per metric level here.
                 index = i * (cmdsLen / paramsArrLen);
                 actionErr = results[index][0];
-                actionCounter = results[index][1];
+                actionCounter = parseInt(results[index][1], 10);
+                // If < 0, record storageUtilized as though bucket were empty.
+                actionCounter = actionCounter < 0 ? storageUtilizedDelta :
+                    actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._pushMetricUploadPart',
@@ -441,7 +444,9 @@ export default class UtapiClient {
             const noErr = paramsArr.every((p, i) => {
                 index = i * paramsArrLen;
                 actionErr = results[index][0];
-                actionCounter = results[index][1];
+                actionCounter = parseInt(results[index][1], 10);
+                 // If < 0, record numberOfObjects as though bucket were empty.
+                actionCounter = actionCounter < 0 ? 1 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._pushMetricCompleteMultipart' +
@@ -532,8 +537,8 @@ export default class UtapiClient {
                 // storage utilized counter
                 storageIndex = i * (cmdsLen / paramsArrLen);
                 actionErr = results[storageIndex][0];
-                actionCounter = parseInt(results[storageIndex][1],
-                    10);
+                actionCounter = parseInt(results[storageIndex][1], 10);
+                // If < 0, record storageUtilized as though bucket were empty.
                 actionCounter = actionCounter < 0 ? 0 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric',
@@ -560,6 +565,7 @@ export default class UtapiClient {
                 objectsIndex = i * (cmdsLen / paramsArrLen) + 1;
                 actionErr = results[objectsIndex][0];
                 actionCounter = parseInt(results[objectsIndex][1], 10);
+                // If < 0, record numberOfObjects as though bucket were empty.
                 actionCounter = actionCounter < 0 ? 0 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
@@ -687,7 +693,10 @@ export default class UtapiClient {
                 // storage utilized counter
                 storageIndex = (i * (cmdsLen / paramsArrLen));
                 actionErr = results[storageIndex][0];
-                actionCounter = results[storageIndex][1];
+                actionCounter = parseInt(results[storageIndex][1], 10);
+                // If < 0, record storageUtilized as though bucket were empty.
+                actionCounter = actionCounter < 0 ? storageUtilizedDelta :
+                    actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._genericPushMetricPutObject',
@@ -709,7 +718,11 @@ export default class UtapiClient {
                 objectsIndex = (i * (cmdsLen / paramsArrLen)) + 1;
                 actionErr = results[objectsIndex][0];
                 actionCounter = parseInt(results[objectsIndex][1], 10);
-                actionCounter = Number.isNaN(actionCounter) ? 1 : actionCounter;
+                // If the key does not exist, actionCounter will be null.
+                // Hence we check that action counter is a number and is > 0. If
+                // true, we record numberOfObjects as though bucket were empty.
+                actionCounter = Number.isNaN(actionCounter) ||
+                    actionCounter < 0 ? 1 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._genericPushMetricPutObject',

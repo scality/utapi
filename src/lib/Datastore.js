@@ -91,6 +91,19 @@ export default class Datastore {
 
     /**
     * get a list of results containing values whose keys fall within the
+    * min and max range
+    * @param {string} key - key holding the value
+    * @param {number} min - integer for start range (inclusive)
+    * @param {number} max - integer for end range (inclusive)
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    zrange(key, min, max, cb) {
+        return this._client.zrange(key, min, max, cb);
+    }
+
+    /**
+    * get a list of results containing values whose keys fall within the
     * min and max scores
     * @param {string} key - key holding the value
     * @param {number} min - integer score for start range (inclusive)
