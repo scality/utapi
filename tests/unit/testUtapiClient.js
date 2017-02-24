@@ -13,6 +13,11 @@ const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
 };
+const redisLocal = { host: 'localhost', port: 6379 };
+const config = {
+    redis: redisLocal,
+    localCache: redisLocal,
+};
 
 // Get prefix values to construct the expected Redis schema keys
 function getPrefixValues(timestamp) {
@@ -37,16 +42,23 @@ function getPrefixValues(timestamp) {
 }
 
 // Set mock data of a particular storageUtilized and numberOfObjects
-function setMockData(storageUtilized, numberOfObjects, timestamp, cb) {
+function setMockData(data, timestamp, cb) {
     const prefixValuesArr = getPrefixValues(timestamp);
+    const { storageUtilized, numberOfObjects } = data;
     prefixValuesArr.forEach(type => {
         const { key } = type;
-        memoryBackend.data[`${key}:storageUtilized:counter`] = storageUtilized;
-        memoryBackend.data[`${key}:storageUtilized`] = [[timestamp,
-            storageUtilized]];
-        memoryBackend.data[`${key}:numberOfObjects:counter`] = numberOfObjects;
-        memoryBackend.data[`${key}:numberOfObjects`] = [[timestamp,
-            numberOfObjects]];
+        if (storageUtilized) {
+            memoryBackend.data[`${key}:storageUtilized:counter`] =
+                storageUtilized;
+            memoryBackend.data[`${key}:storageUtilized`] = [[timestamp,
+                storageUtilized]];
+        }
+        if (numberOfObjects) {
+            memoryBackend.data[`${key}:numberOfObjects:counter`] =
+                numberOfObjects;
+            memoryBackend.data[`${key}:numberOfObjects`] = [[timestamp,
+                numberOfObjects]];
+        }
     });
     return cb();
 }
@@ -76,7 +88,7 @@ function getObject(timestamp, data) {
 }
 
 function testMetric(metric, params, expected, cb) {
-    const c = new UtapiClient();
+    const c = new UtapiClient(config);
     c.setDataStore(ds);
     c.pushMetric(metric, REQUID, params, () => {
         assert.deepStrictEqual(memoryBackend.data, expected);
@@ -90,11 +102,11 @@ describe('UtapiClient:: enable/disable client', () => {
         assert.strictEqual(c instanceof UtapiClient, true);
         assert.strictEqual(c.disableClient, true);
         assert.strictEqual(c.log instanceof Logger, true);
-        assert.strictEqual(c.ds, null);
+        assert.strictEqual(c.ds, undefined);
     });
 
     it('should enable client when redis config is provided', () => {
-        const c = new UtapiClient({ redis: { host: 'localhost', port: 6379 } });
+        const c = new UtapiClient(config);
         assert.strictEqual(c instanceof UtapiClient, true);
         assert.strictEqual(c.disableClient, false);
         assert.strictEqual(c.log instanceof Logger, true);
@@ -118,11 +130,7 @@ describe('UtapiClient:: push metrics', () => {
     afterEach(() => memoryBackend.flushDb());
 
     it('should push createBucket metrics', done => {
-        const expected = getObject(timestamp, {
-            action: 'CreateBucket',
-            storageUtilized: '0',
-            numberOfObjects: '0',
-        });
+        const expected = getObject(timestamp, { action: 'CreateBucket' });
         testMetric('createBucket', metricTypes, expected, done);
     });
 
@@ -189,9 +197,26 @@ describe('UtapiClient:: push metrics', () => {
             storageUtilized: '1024',
             incomingBytes: '1024',
         });
-        Object.assign(params, metricTypes,
-            { newByteLength: 1024 });
+        Object.assign(params, metricTypes, {
+            newByteLength: 1024,
+            oldByteLength: null,
+        });
         testMetric('uploadPart', params, expected, done);
+    });
+
+    it('should push metric for uploadPart overwrite', done => {
+        const expected = getObject(timestamp, {
+            action: 'UploadPart',
+            storageUtilized: '1024',
+            incomingBytes: '1024',
+        });
+        Object.assign(params, metricTypes, {
+            newByteLength: 1024,
+            oldByteLength: 2048,
+        });
+        const data = { storageUtilized: '2048' };
+        setMockData(data, timestamp, () =>
+            testMetric('uploadPart', params, expected, done));
     });
 
     it('should push initiateMultipartUpload metrics', done => {
@@ -221,9 +246,16 @@ describe('UtapiClient:: push metrics', () => {
     });
 
     it('should push abortMultipartUpload metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'AbortMultipartUpload' });
-        testMetric('abortMultipartUpload', metricTypes, expected, done);
+        const expected = getObject(timestamp, {
+            action: 'AbortMultipartUpload',
+            storageUtilized: '0',
+        });
+        Object.assign(params, metricTypes, { byteLength: 1024 });
+        // Set mock data of one, 1024 byte part object for
+        // `AbortMultipartUpload` to update.
+        const data = { storageUtilized: '1024' };
+        setMockData(data, timestamp, () =>
+            testMetric('abortMultipartUpload', params, expected, done));
     });
 
     it('should push deleteObject metrics', done => {
@@ -237,7 +269,11 @@ describe('UtapiClient:: push metrics', () => {
             numberOfObjects: 1,
         });
         // Set mock data of one, 1024 byte object for `deleteObject` to update.
-        setMockData('1024', '1', timestamp, () =>
+        const data = {
+            storageUtilized: '1024',
+            numberOfObjects: '1',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('deleteObject', params, expected, done));
     });
 
@@ -253,7 +289,11 @@ describe('UtapiClient:: push metrics', () => {
         });
         // Set mock data of two, 1024 byte objects for `multiObjectDelete`
         // to update.
-        setMockData('2048', '2', timestamp, () =>
+        const data = {
+            storageUtilized: '2048',
+            numberOfObjects: '2',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('multiObjectDelete', params, expected, done));
     });
 
@@ -299,7 +339,11 @@ describe('UtapiClient:: push metrics', () => {
         });
         // Set mock data of one, 1024 byte object for `putObject` to
         // overwrite. Counter does not increment because it is an overwrite.
-        setMockData('1024', '1', timestamp, () =>
+        const data = {
+            storageUtilized: '1024',
+            numberOfObjects: '1',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('putObject', params, expected, done));
     });
 
@@ -328,7 +372,11 @@ describe('UtapiClient:: push metrics', () => {
         });
         // Set mock data of one, 1024 byte object for `copyObject` to
         // overwrite. Counter does not increment because it is an overwrite.
-        setMockData('1024', '1', timestamp, () =>
+        const data = {
+            storageUtilized: '1024',
+            numberOfObjects: '1',
+        };
+        setMockData(data, timestamp, () =>
             testMetric('copyObject', params, expected, done));
     });
 
