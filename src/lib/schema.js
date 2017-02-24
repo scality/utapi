@@ -91,19 +91,13 @@ export function getKeys(params, timestamp) {
 /**
 * Returns metric from key
 * @param {string} key - schema key
-* @param {string} value - the metric value
-* @param {string} metricType - the metric type
-* @return {string|undefined} metric - S3 metric or `undefined`
+* @return {string} metric - Utapi metric
 */
-export function getMetricFromKey(key, value, metricType) {
-    if (metricType === 'buckets') {
-        // s3:buckets:1473451689898:demo:putObject
-        return key.slice(25).replace(`${value}:`, '');
-    } else if (metricType === 'accounts') {
-        // s3:accounts:1473451689898:demo:putObject
-        return key.slice(26).replace(`${value}:`, '');
-    }
-    return undefined;
+export function getMetricFromKey(key) {
+    const fields = key.split(':');
+    // Identify the location of the metric in the array.
+    const metricLocation = key.includes('counter') ? -2 : -1;
+    return fields[fields.length + metricLocation];
 }
 
 /**
