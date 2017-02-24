@@ -1,13 +1,13 @@
 import assert from 'assert';
 import { Logger } from 'werelogs';
 import Datastore from './Datastore';
-import { generateKey, generateCounter, getCounters, generateStateKey }
+import { generateKey, generateCounter, generateStateKey }
     from './schema';
 import { errors } from 'arsenal';
 import redisClient from '../utils/redisClient';
 
 const methods = {
-    createBucket: '_pushMetricCreateBucket',
+    createBucket: '_genericPushMetric',
     deleteBucket: '_genericPushMetric',
     listBucket: '_genericPushMetric',
     getBucketAcl: '_genericPushMetric',
@@ -24,7 +24,7 @@ const methods = {
     completeMultipartUpload: '_pushMetricCompleteMultipartUpload',
     listMultipartUploads: '_pushMetricListBucketMultipartUploads',
     listMultipartUploadParts: '_genericPushMetric',
-    abortMultipartUpload: '_genericPushMetric',
+    abortMultipartUpload: '_genericPushMetricDeleteObject',
     deleteObject: '_genericPushMetricDeleteObject',
     multiObjectDelete: '_genericPushMetricDeleteObject',
     getObject: '_pushMetricGetObject',
@@ -42,33 +42,51 @@ const metricObj = {
 };
 
 export default class UtapiClient {
+    /**
+     * Create a UtapiClient
+     * @param {object} [config] - The configuration of UtapiClient
+     * @param {object} [config.log] - Object defining the level and dumplevel of
+     * the log
+     * @param {object} [config.redis] - Object defining the host and port of the
+     * Redis datastore
+     * @param {object} [config.localCache] - Object defining the host and port
+     * of the local cache datastore
+     * @param {array} [config.metrics] - Array defining the metric resource
+     * types to push metrics for
+     */
     constructor(config) {
+        this.log = new Logger('UtapiClient', {
+            level: 'info',
+            dump: 'error',
+        });
+        // By default, we push all resource types
+        this.metrics = ['buckets', 'accounts'];
         this.disableClient = true;
-        this.log = null;
-        this.ds = null;
-        // setup logger
-        if (config && config.log) {
-            this.log = new Logger('UtapiClient', { level: config.log.level,
-                    dump: config.log.dumpLevel });
-        } else {
-            this.log = new Logger('UtapiClient', { level: 'info',
-                dump: 'error' });
-        }
-        // setup datastore
-        if (config && config.redis) {
-            this.ds = new Datastore()
-                .setClient(redisClient(config.redis, this.log));
+
+        if (config) {
+            if (config.log) {
+                this.log = new Logger('UtapiClient', {
+                    level: config.log.level,
+                    dump: config.log.dumpLevel,
+                });
+            }
+            if (config.metrics) {
+                const message = 'invalid property in UtapiClient configuration';
+                assert(Array.isArray(config.metrics), `${message}: metrics ` +
+                    'must be an array');
+                assert(config.metrics.length !== 0, `${message}: metrics ` +
+                    'array cannot be empty');
+                this.metrics = config.metrics;
+            }
+            if (config.redis) {
+                this.ds = new Datastore()
+                    .setClient(redisClient(config.redis, this.log));
+            }
+            if (config.localCache) {
+                this.localCache = new Datastore()
+                    .setClient(redisClient(config.localCache, this.log));
+            }
             this.disableClient = false;
-        }
-        // Use metric levels included in the config, or use all metrics.
-        if (config && config.metrics) {
-            assert(Array.isArray(config.metrics), '`metrics` property of ' +
-            'Utapi configuration must be an array');
-            assert(config.metrics.length !== 0, '`metrics` property of Utapi ' +
-            'configuration must contain at least one metric');
-            this.metrics = config.metrics;
-        } else {
-            this.metrics = ['buckets', 'accounts'];
         }
     }
 
@@ -98,6 +116,38 @@ export default class UtapiClient {
     * Utility function to use when callback is not defined
     */
     _noop() {}
+
+    /**
+    * Attempt to push necessary data to local cache list for UtapiReplay, when
+    * `pushMetric` call has failed
+    * @param {object} params - params object with metric data
+    * @param {string} operation - action of attempted pushMetric call
+    * @param {string} timestamp - timestamp of the original pushMetric call
+    * @param {object} log - Werelogs request logger
+    * @param {callback} cb - callback to call
+    * @return {undefined}
+    */
+    _pushLocalCache(params, operation, timestamp, log, cb) {
+        // 'listMultipartUploads' has a different name in the metric response.
+        const action = operation === 'listBucketMultipartUploads' ?
+            'listMultipartUploads' : operation;
+        const logObject = { method: 'UtapiClient._pushLocalCache', action,
+            params };
+        if (!this.localCache) {
+            log.fatal('failed to push metrics', logObject);
+            return cb(errors.InternalError);
+        }
+        const reqUid = log.getSerializedUids();
+        const value = JSON.stringify({ action, reqUid, params, timestamp });
+        return this.localCache.lpush('s3:utapireplay', value, err => {
+            if (err) {
+                log.error('error inserting data in local cache', logObject);
+                return cb(err);
+            }
+            // Local cache entry succeeded.
+            return cb(errors.InternalError);
+        });
+    }
 
    /**
     * Check the types of `params` object properties. This enforces object
@@ -242,56 +292,6 @@ export default class UtapiClient {
     }
 
     /**
-    * Updates counter for CreateBucket action
-    * @param {object} params - params for the metrics
-    * @param {string} [params.bucket] - (optional) bucket name
-    * @param {string} [params.accountId] - (optional) account ID
-    * @param {number} timestamp - normalized timestamp of current time
-    * @param {string} action - action to push metric for
-    * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback to call
-    * @return {undefined}
-    */
-    _pushMetricCreateBucket(params, timestamp, action, log, callback) {
-        this._checkProperties(params);
-        this._logMetric(params, '_pushMetricCreateBucket', timestamp, log);
-        // set storage utilized and number of objects counters to 0,
-        // indicating the start of the bucket timeline
-        let cmds = [];
-        this._getParamsArr(params).forEach(p => {
-            cmds = cmds.concat(getCounters(p).map(item => ['set', item, 0]));
-            cmds.push(
-                // remove old timestamp entries
-                ['zremrangebyscore',
-                    generateStateKey(p, 'storageUtilized'), timestamp,
-                        timestamp],
-                ['zremrangebyscore', generateStateKey(p, 'numberOfObjects'),
-                    timestamp, timestamp],
-                // add new timestamp entries
-                ['zadd', generateStateKey(p, 'storageUtilized'), timestamp, 0],
-                ['zadd', generateStateKey(p, 'numberOfObjects'), timestamp, 0]
-            );
-            // CreateBucket action occurs only once in a bucket's lifetime, so
-            // for bucket-level metrics, counter is always 1.
-            if ('bucket' in p) {
-                cmds.push(['set', generateKey(p, action, timestamp), 1]);
-            } else {
-                cmds.push(['incr', generateKey(p, action, timestamp)]);
-            }
-        });
-        return this.ds.batch(cmds, err => {
-            if (err) {
-                log.error('error incrementing counter', {
-                    method: 'Buckets._pushMetricCreateBucket',
-                    error: err,
-                });
-                return callback(errors.InternalError);
-            }
-            return callback();
-        });
-    }
-
-    /**
     * Updates counter for the given action
     * @param {object} params - params for the metrics
     * @param {string} [params.bucket] - (optional) bucket name
@@ -313,7 +313,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._genericPushMetric',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             return callback();
         });
@@ -332,15 +333,17 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _pushMetricUploadPart(params, timestamp, action, log, callback) {
-        this._checkProperties(params, ['newByteLength']);
-        const { newByteLength } = params;
+        this._checkProperties(params, ['newByteLength', 'oldByteLength']);
         this._logMetric(params, '_pushMetricUploadPart', timestamp, log);
         const cmds = [];
+        const { newByteLength, oldByteLength } = params;
+        const oldObjSize = oldByteLength === null ? 0 : oldByteLength;
+        const storageUtilizedDelta = newByteLength - oldObjSize;
         const paramsArr = this._getParamsArr(params);
         paramsArr.forEach(p => {
             cmds.push(
                 ['incrby', generateCounter(p, 'storageUtilizedCounter'),
-                    newByteLength],
+                    storageUtilizedDelta],
                 ['incrby', generateKey(p, 'incomingBytes', timestamp),
                     newByteLength],
                 ['incr', generateKey(p, action, timestamp)]
@@ -353,7 +356,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._pushMetricUploadPart',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             // storage utilized counters
             let index;
@@ -368,14 +372,18 @@ export default class UtapiClient {
                 // counters per metric level here.
                 index = i * (cmdsLen / paramsArrLen);
                 actionErr = results[index][0];
-                actionCounter = results[index][1];
+                actionCounter = parseInt(results[index][1], 10);
+                // If < 0, record storageUtilized as though bucket were empty.
+                actionCounter = actionCounter < 0 ? storageUtilizedDelta :
+                    actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._pushMetricUploadPart',
                         metric: 'storage utilized',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
@@ -424,7 +432,8 @@ export default class UtapiClient {
                     metric: 'number of objects',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             // number of objects counters
             let index;
@@ -436,7 +445,9 @@ export default class UtapiClient {
             const noErr = paramsArr.every((p, i) => {
                 index = i * paramsArrLen;
                 actionErr = results[index][0];
-                actionCounter = results[index][1];
+                actionCounter = parseInt(results[index][1], 10);
+                 // If < 0, record numberOfObjects as though bucket were empty.
+                actionCounter = actionCounter < 0 ? 1 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._pushMetricCompleteMultipart' +
@@ -444,7 +455,8 @@ export default class UtapiClient {
                         metric: 'number of objects',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 key = generateStateKey(p, 'numberOfObjects');
@@ -477,7 +489,8 @@ export default class UtapiClient {
     }
 
     /**
-    * Updates counter for DeleteObject or MultiObjectDelete action
+    * Updates counter for DeleteObject, MultiObjectDelete, or
+    * AbortMultipartUpload action
     * @param {object} params - params for the metrics
     * @param {string} [params.bucket] - (optional) bucket name
     * @param {string} [params.accountId] - (optional) account ID
@@ -490,84 +503,107 @@ export default class UtapiClient {
     * @return {undefined}
     */
     _genericPushMetricDeleteObject(params, timestamp, action, log, callback) {
-        this._checkProperties(params, ['byteLength', 'numberOfObjects']);
+        const expectedProps = action === 'abortMultipartUpload' ?
+            ['byteLength'] : ['byteLength', 'numberOfObjects'];
+        this._checkProperties(params, expectedProps);
         const { byteLength, numberOfObjects } = params;
         this._logMetric(params, '_genericPushMetricDeleteObject', timestamp,
             log);
         const paramsArr = this._getParamsArr(params);
         const cmds = [];
+        // We push Redis commands to be executed in batch. The type of commands
+        // to push depends on the action.
         paramsArr.forEach(p => {
             cmds.push(
                 ['decrby', generateCounter(p, 'storageUtilizedCounter'),
                     byteLength],
-                ['decrby', generateCounter(p, 'numberOfObjectsCounter'),
-                    numberOfObjects],
                 ['incr', generateKey(p, action, timestamp)]
             );
+            // The 'abortMultipartUpload' action affects only storage utilized,
+            // so number of objects remains unchanged.
+            if (action !== 'abortMultipartUpload') {
+                cmds.push(['decrby', generateCounter(p,
+                    'numberOfObjectsCounter'), numberOfObjects]);
+            }
         });
-        const cmdsLen = cmds.length;
-        const paramsArrLen = paramsArr.length;
+        // We track the number of commands needed for each `paramsArr` object to
+        // eventually locate each group in the results from ioredis.
+        const commandsGroupSize = action !== 'abortMultipartUpload' ? 3 : 2;
         return this.ds.batch(cmds, (err, results) => {
             if (err) {
                 log.error('error incrementing counter', {
                     method: 'UtapiClient._genericPushMetricDeleteObject',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
-
+            // `results` is an array of arrays. `results` elements are the
+            // return values of each command in `cmds` and contains two
+            // elements: the error and the value stored at the key.
             const cmds2 = [];
             let actionErr;
             let actionCounter;
-            let storageIndex;
-            let objectsIndex;
+            // We now need to record Sorted Set keys. To do so, we push commands
+            // to another array, `cmds2`, for a second batch execution.
+            // Also, we check for any error from the previous batch operation.
             const noErr = paramsArr.every((p, i) => {
-                // storage utilized counter
-                storageIndex = i * (cmdsLen / paramsArrLen);
-                actionErr = results[storageIndex][0];
-                actionCounter = parseInt(results[storageIndex][1],
-                    10);
-                actionCounter = actionCounter < 0 ? 0 : actionCounter;
-                if (actionErr) {
-                    log.error('error incrementing counter for push metric',
-                        {
-                            method: 'UtapiClient._genericPushMetricDelete' +
-                            'Object',
-                            metric: 'storage utilized',
-                            error: actionErr,
-                        }
-                    );
-                    callback(errors.InternalError);
-                    return false;
-                }
-                cmds2.push(
-                    ['zremrangebyscore',
-                        generateStateKey(p, 'storageUtilized'),
-                        timestamp, timestamp],
-                    ['zadd',
-                        generateStateKey(p, 'storageUtilized'),
-                        timestamp, actionCounter]);
-
-                // num of objects counter
-                objectsIndex = i * (cmdsLen / paramsArrLen) + 1;
-                actionErr = results[objectsIndex][0];
-                actionCounter = parseInt(results[objectsIndex][1], 10);
+                // The beginning location of each group of command results.
+                const currentResultsGroup = i * commandsGroupSize;
+                // The storage utilized result is the first element of each
+                // group of metrics.
+                actionErr = results[currentResultsGroup][0];
+                actionCounter = parseInt(results[currentResultsGroup][1], 10);
+                // If < 0, record storageUtilized as though bucket were empty.
                 actionCounter = actionCounter < 0 ? 0 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._genericPushMetricDeleteObject',
-                        metric: 'num of objects',
+                        metric: 'storage utilized',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
+                // Sorted Set keys are updated with the value stored at their
+                // respective counter key (i.e., the value of `actionCounter`).
+                cmds2.push(
+                    ['zremrangebyscore', generateStateKey(p, 'storageUtilized'),
+                        timestamp, timestamp],
+                    ['zadd',
+                        generateStateKey(p, 'storageUtilized'), timestamp,
+                        actionCounter]);
+                // The 'abortMultipartUpload' action does not affect number of
+                // objects, so we return here.
+                if (action === 'abortMultipartUpload') {
+                    return true;
+                }
+                // The number of objects counter result is the third element of
+                // each group of commands. Thus we add two.
+                const numberOfObjectsResult = currentResultsGroup + 2;
+                actionErr = results[numberOfObjectsResult][0];
+                actionCounter = parseInt(results[numberOfObjectsResult][1], 10);
+                // If < 0, record numberOfObjects as though bucket were empty.
+                actionCounter = actionCounter < 0 ? 0 : actionCounter;
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._genericPushMetricDeleteObject',
+                        metric: 'storage utilized',
+                        error: actionErr,
+                    });
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
+                    return false;
+                }
+                // Sorted Set keys are updated with the value stored at their
+                // respective counter key (i.e., the value of `actionCounter`).
                 cmds2.push(
                     ['zremrangebyscore',
                         generateStateKey(p, 'numberOfObjects'), timestamp,
                         timestamp],
-                    ['zadd', generateStateKey(p, 'numberOfObjects'),
-                        timestamp, actionCounter]);
+                    ['zadd', generateStateKey(p, 'numberOfObjects'), timestamp,
+                        actionCounter]);
                 return true;
             });
             if (noErr) {
@@ -609,7 +645,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._pushMetricGetObject',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             return callback();
         });
@@ -663,7 +700,8 @@ export default class UtapiClient {
                     method: 'UtapiClient._genericPushMetricPutObject',
                     error: err,
                 });
-                return callback(errors.InternalError);
+                return this._pushLocalCache(params, action, timestamp, log,
+                    callback);
             }
             const cmds2 = [];
             let actionErr;
@@ -676,14 +714,18 @@ export default class UtapiClient {
                 // storage utilized counter
                 storageIndex = (i * (cmdsLen / paramsArrLen));
                 actionErr = results[storageIndex][0];
-                actionCounter = results[storageIndex][1];
+                actionCounter = parseInt(results[storageIndex][1], 10);
+                // If < 0, record storageUtilized as though bucket were empty.
+                actionCounter = actionCounter < 0 ? storageUtilizedDelta :
+                    actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._genericPushMetricPutObject',
                         metric: 'storage utilized',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
@@ -696,14 +738,20 @@ export default class UtapiClient {
                 // number of objects counter
                 objectsIndex = (i * (cmdsLen / paramsArrLen)) + 1;
                 actionErr = results[objectsIndex][0];
-                actionCounter = results[objectsIndex][1];
+                actionCounter = parseInt(results[objectsIndex][1], 10);
+                // If the key does not exist, actionCounter will be null.
+                // Hence we check that action counter is a number and is > 0. If
+                // true, we record numberOfObjects as though bucket were empty.
+                actionCounter = Number.isNaN(actionCounter) ||
+                    actionCounter < 0 ? 1 : actionCounter;
                 if (actionErr) {
                     log.error('error incrementing counter for push metric', {
                         method: 'UtapiClient._genericPushMetricPutObject',
                         metric: 'number of objects',
                         error: actionErr,
                     });
-                    callback(errors.InternalError);
+                    this._pushLocalCache(params, action, timestamp, log,
+                        callback);
                     return false;
                 }
                 cmds2.push(
