@@ -40,9 +40,10 @@ between 06:15:00 and 06:29:59.
 ### Data Storage
 
 Utapi uses Redis as a database for storage of its metrics values. Accordingly,
-it uses two different Redis data types: Sorted Sets and Strings. This document
-describes how these two data types are used by Utapi. For further information on
-data types see the Redis [documentation](https://redis.io/topics/data-types).
+it uses three different Redis data types: Sorted Sets, Strings, and Lists. This
+document describes how these three data types are used by Utapi. For further
+information on data types see the Redis
+[documentation](https://redis.io/topics/data-types).
 
 #### Sorted Sets
 
@@ -59,9 +60,9 @@ values.
 
 #### Strings
 
-The remaining Redis keys recorded by Utapi use a String data type. These include
-metrics for incoming bytes, outgoing bytes, and all S3 operations (e.g.,
-'CreateBucket', 'PutObject', etc.).
+The Redis keys storing metrics for incoming bytes, outgoing bytes, and all S3
+operations (e.g., 'CreateBucket', 'PutObject', etc.) are recorded with a String
+data type.
 
 Moreover, there are also global counters associated with metrics for the number
 of objects and the storage utilized. Such counters are updated during any
@@ -70,9 +71,16 @@ counter for the number of objects increments or decrements, respectively. These
 counters are used internally by Sorted Sets to record the state (the storage
 used and the number of objects) at a particular point in time.
 
+#### Lists
+
+Redis keys storing cached metrics use a List data type, where each List element
+is a string containing information from the original request. This datatype is
+used by a component named UtapiReplay that pushes any metrics stored in the List
+every five minutes, by default.
+
 #### Example
 
-Steps occurring during a 'PutObject' request:
+Steps occurring during a successful 'PutObject' request:
 
 1. If the new object overwrites a pre-existing object, the counter for the
     number of objects remains unchanged. Otherwise it increments by one.
@@ -89,6 +97,10 @@ Steps occurring during a 'PutObject' request:
 
 5. The Sorted Set keys (the storage used and the number of objects) are updated
     to the value of their respective counter.
+
+If a connection to the Redis datastore cannot be made, metrics from the original
+request to Utapi are pushed to a local Redis cache to be retried at a later
+time.
 
 ### Schema Keyspace
 
@@ -125,6 +137,25 @@ the operation):
 
 ```
 s3:buckets:1451635200000:foo-bucket:PutObject
+```
+
+#### Local Redis Cache Key
+
+Metrics of operations pushed by S3 that are unsuccessfully recorded as schema
+keys in the Redis datastore (for example, in the case of a failed connection)
+are stored in a local Redis cache. For example, the key storing cached metrics
+of S3 operations:
+
+```
+s3:utapireplay
+```
+
+The value of the the local Redis cache key is list of JSON strings, where each
+string contains the parameters and timestamp of an unsuccessful `pushMetric`
+call. For example, a string storing metrics for a 'PutObject' operation:
+
+```
+"{\"action\":\"putObject\",\"reqUid\":\"3d534b1511e5630e68f0\",\"params\":{\"bucket\":\"foo-bucket\",\"newByteLength\":1024,\"oldByteLength\":null},\"timestamp\":1451635200000}"
 ```
 
 ### redis-cli
