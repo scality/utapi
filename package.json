@@ -1,6 +1,9 @@
 {
   "name": "utapi",
-  "version": "1.0.0",
+  "engines": {
+      "node": "6.9.5"
+  },
+  "version": "7.0.0",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
@@ -28,6 +31,7 @@
   },
   "devDependencies": {
     "eslint": "^2.4.0",
+    "eslint-plugin-react": "^4.3.0",
     "eslint-config-airbnb": "^6.0.0",
     "eslint-config-scality": "scality/Guidelines",
     "mocha": "^3.0.2"
