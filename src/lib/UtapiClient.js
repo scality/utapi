@@ -86,7 +86,9 @@ export default class UtapiClient {
                     .setClient(redisClient(config.localCache, this.log));
             }
             if (config.component) {
-                this.component = config.component;
+                // The configuration uses the property `component`, while
+                // internally this is known as a metric level `service`.
+                this.service = config.component;
             }
             this.disableClient = false;
         }
@@ -237,7 +239,7 @@ export default class UtapiClient {
             newByteLength,
             oldByteLength,
             numberOfObjects,
-            service: this.component,
+            service: this.service,
         };
         // Only push metric levels defined in the config, otherwise push any
         // levels that are passed in the object
