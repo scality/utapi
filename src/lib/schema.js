@@ -48,10 +48,10 @@ const keys = {
 * @return {string} - prefix for the schema key
 */
 function getSchemaPrefix(params, timestamp) {
-    const { bucket, accountId, level } = params;
+    const { bucket, accountId, level, service } = params;
     const id = bucket || accountId;
-    const prefix = timestamp ? `s3:${level}:${timestamp}:${id}:` :
-        `s3:${level}:${id}:`;
+    const prefix = timestamp ? `${service}:${level}:${timestamp}:${id}:` :
+        `${service}:${level}:${id}:`;
     return prefix;
 }
 

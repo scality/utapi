@@ -17,6 +17,7 @@ const redisLocal = { host: 'localhost', port: 6379 };
 const config = {
     redis: redisLocal,
     localCache: redisLocal,
+    component: 's3',
 };
 
 // Get prefix values to construct the expected Redis schema keys

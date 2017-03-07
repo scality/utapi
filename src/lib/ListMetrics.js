@@ -1,7 +1,7 @@
 import async from 'async';
 import { errors } from 'arsenal';
 import { getMetricFromKey, getKeys, generateStateKey } from './schema';
-import metricResponseJSON from '../../models/metricResponse';
+import s3metricResponseJSON from '../../models/s3metricResponse';
 
 /**
 * Provides methods to get metrics of different levels
@@ -19,18 +19,20 @@ export default class ListMetrics {
     /**
      * Create the metric object to retrieve data from schema methods
      * @param {string} resource - The resource to get metrics for
+     * @param {string} service - the service to get a schema object for
+     * (e.g., 's3')
      * @return {object} obj - Object with a key-value pair for a schema method
      */
-    _getSchemaObject(resource) {
-        let type;
-        if (this.metric === 'buckets') {
-            type = 'bucket';
-        } else if (this.metric === 'accounts') {
-            type = 'accountId';
-        }
+    _getSchemaObject(resource, service) {
         const obj = {};
-        obj[type] = resource;
+        const schemaKeys = {
+            buckets: 'bucket',
+            accounts: 'accountId',
+        };
+        obj[schemaKeys[this.metric]] = resource;
         obj.level = this.metric;
+        // Include service to generate key for metric
+        obj.service = service;
         return obj;
     }
 
@@ -38,12 +40,13 @@ export default class ListMetrics {
     _getMetricResponse(resource, start, end) {
         // Use `JSON.parse` to make deep clone because `Object.assign` will
         // copy property values.
-        const metricResponse = JSON.parse(JSON.stringify(metricResponseJSON));
+        const metricResponse = JSON.parse(JSON.stringify(s3metricResponseJSON));
         metricResponse.timeRange = [start, end];
         const metricResponseKeys = {
             buckets: 'bucketName',
             accounts: 'accountId',
         };
+        // Push the service name onto the operation
         metricResponse[metricResponseKeys[this.metric]] = resource;
         return metricResponse;
     }
@@ -68,8 +71,9 @@ export default class ListMetrics {
         const resources = validator.get(this.metric);
         const timeRange = validator.get('timeRange');
         const datastore = utapiRequest.getDatastore();
+        const service = 's3';
         async.mapLimit(resources, 5, (resource, next) =>
-            this.getMetrics(resource, timeRange, datastore, log,
+            this.getMetrics(resource, service, timeRange, datastore, log,
                 next), cb
         );
     }
@@ -117,6 +121,8 @@ export default class ListMetrics {
     /**
     * Get metrics for a single resource
     * @param {string} resource - the metric resource
+    * @param {string} service - the service to get list metrics for (for
+    * example, 's3')
     * @param {number[]} range - time range with start time and end time as
     * its members in unix epoch timestamp format
     * @param {object} datastore - Datastore instance
@@ -124,10 +130,10 @@ export default class ListMetrics {
     * @param {ListMetrics~getMetricsCb} cb - callback
     * @return {undefined}
     */
-    getMetrics(resource, range, datastore, log, cb) {
+    getMetrics(resource, service, range, datastore, log, cb) {
         const start = range[0];
         const end = range[1] || Date.now();
-        const obj = this._getSchemaObject(resource);
+        const obj = this._getSchemaObject(resource, service);
 
         // find nearest neighbors for absolutes
         const storageUtilizedKey = generateStateKey(obj, 'storageUtilized');
@@ -200,13 +206,14 @@ export default class ListMetrics {
                         cmd: key,
                     });
                 } else {
-                    const m = getMetricFromKey(key, resource, this.metric);
+                    const m = getMetricFromKey(key);
                     let count = parseInt(item[1], 10);
                     count = Number.isNaN(count) ? 0 : count;
                     if (m === 'incomingBytes' || m === 'outgoingBytes') {
                         metricResponse[m] += count;
                     } else {
-                        metricResponse.operations[`s3:${m}`] += count;
+                        metricResponse.operations[`${service}:${m}`] +=
+                            count;
                     }
                 }
             });
