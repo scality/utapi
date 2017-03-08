@@ -12,6 +12,7 @@ const REQUID = 'aaaaaaaaaaaaaaaaaaa';
 const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    user: 'foo-user',
 };
 const redisLocal = { host: 'localhost', port: 6379 };
 const config = {
@@ -21,24 +22,19 @@ const config = {
 
 // Get prefix values to construct the expected Redis schema keys
 function getPrefixValues(timestamp) {
-    const arr = [];
-    Object.keys(metricTypes).forEach(metric => {
-        if (metricTypes[metric] === undefined) {
-            return;
-        }
-        const name = metricTypes[metric];
-        let type;
-        if (metric === 'bucket') {
-            type = 'buckets';
-        } else if (metric === 'accountId') {
-            type = 'accounts';
-        }
-        arr.push({
-            key: `s3:${type}:${name}`,
-            timestampKey: `s3:${type}:${timestamp}:${name}`,
-        });
+    return Object.keys(metricTypes).map(metric => {
+        const metricLevels = {
+            bucket: 'buckets',
+            accountId: 'accounts',
+            user: 'users',
+        };
+        const id = metricTypes[metric];
+        const level = metricLevels[metric];
+        return {
+            key: `s3:${level}:${id}`,
+            timestampKey: `s3:${level}:${timestamp}:${id}`,
+        };
     });
-    return arr;
 }
 
 // Set mock data of a particular storageUtilized and numberOfObjects

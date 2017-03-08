@@ -22,14 +22,13 @@ export default class ListMetrics {
      * @return {object} obj - Object with a key-value pair for a schema method
      */
     _getSchemaObject(resource) {
-        let type;
-        if (this.metric === 'buckets') {
-            type = 'bucket';
-        } else if (this.metric === 'accounts') {
-            type = 'accountId';
-        }
+        const types = {
+            buckets: 'bucket',
+            accounts: 'accountId',
+            users: 'user',
+        };
         const obj = {};
-        obj[type] = resource;
+        obj[types[this.metric]] = resource;
         obj.level = this.metric;
         return obj;
     }
@@ -43,6 +42,7 @@ export default class ListMetrics {
         const metricResponseKeys = {
             buckets: 'bucketName',
             accounts: 'accountId',
+            users: 'userName',
         };
         metricResponse[metricResponseKeys[this.metric]] = resource;
         return metricResponse;
@@ -200,7 +200,7 @@ export default class ListMetrics {
                         cmd: key,
                     });
                 } else {
-                    const m = getMetricFromKey(key, resource, this.metric);
+                    const m = getMetricFromKey(key);
                     let count = parseInt(item[1], 10);
                     count = Number.isNaN(count) ? 0 : count;
                     if (m === 'incomingBytes' || m === 'outgoingBytes') {

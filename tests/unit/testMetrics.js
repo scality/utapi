@@ -11,10 +11,12 @@ const datastore = new Datastore();
 const resourceNames = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    user: 'foo-user',
 };
 const metricLevels = {
     bucket: 'buckets',
     accountId: 'accounts',
+    user: 'users',
 };
 datastore.setClient(memBackend);
 
@@ -26,6 +28,7 @@ function getMetricResponse(schemaKey) {
     const responseKeys = {
         bucket: 'bucketName',
         accountId: 'accountId',
+        user: 'userName',
     };
     response[responseKeys[schemaKey]] = resourceNames[schemaKey];
     return response;

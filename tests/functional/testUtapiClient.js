@@ -25,6 +25,7 @@ const reqUid = 'foo';
 const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    user: 'foo-user',
 };
 const putOperations = ['PutObject', 'CopyObject', 'UploadPart',
     'CompleteMultipartUpload'];
@@ -34,6 +35,7 @@ function _getMetricObj(type) {
     const levels = {
         bucket: 'buckets',
         accountId: 'accounts',
+        user: 'users',
     };
     const obj = { level: levels[type] };
     obj[type] = metricTypes[type];
@@ -171,6 +173,8 @@ Object.keys(metricTypes).forEach(type => {
     });
 
     describe(`State keys with ${type} metrics`, () => {
+        afterEach(() => redis.flushdb());
+
         putOperations.forEach(op => {
             // Calculated based on negative counter values.
             const stateKeyVals = op === 'UploadPart' ? {
