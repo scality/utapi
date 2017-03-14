@@ -30,3 +30,12 @@ export function validateBucketsListMetrics(dict) {
 export function validateAccountsListMetrics(dict) {
     return getValidator('accounts', dict);
 }
+
+/**
+ * Function to create a validator for route POST /service?Action=ListMetrics
+ * @param {object} dict - Input fields for route
+ * @return {function} the return value of `getValidator`
+ */
+export function validateServiceListMetrics(dict) {
+    return getValidator('service', dict);
+}
