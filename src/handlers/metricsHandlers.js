@@ -68,3 +68,26 @@ export class ServiceHandler {
         return Accounts.getTypesMetrics(utapiRequest, cb);
     }
 }
+
+/**
+ * @class UsersHandler
+ * Handles Users resource actions
+ */
+
+export class UsersHandler {
+    /**
+    * List metrics for the given list of users
+    * @param {UtapiRequest} utapiRequest - UtapiRequest instance
+    * @param {string} service - the service component (e.g., 's3')
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    static listMetrics(utapiRequest, service, cb) {
+        const log = utapiRequest.getLog();
+        log.debug('handling list metrics request', {
+            method: 'UsersHandler.listMetrics',
+        });
+        const Users = new ListMetrics('users', service);
+        return Users.getTypesMetrics(utapiRequest, cb);
+    }
+}

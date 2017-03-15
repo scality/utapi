@@ -12,6 +12,7 @@ const REQUID = 'aaaaaaaaaaaaaaaaaaa';
 const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    userId: 'foo-user',
 };
 const redisLocal = { host: 'localhost', port: 6379 };
 const config = {
@@ -30,6 +31,10 @@ function getPrefixValues(timestamp) {
         {
             key: 's3:accounts:foo-account',
             timestampKey: `s3:accounts:${timestamp}:foo-account`,
+        },
+        {
+            key: 's3:users:foo-user',
+            timestampKey: `s3:users:${timestamp}:foo-user`,
         },
         {
             key: 's3:service:s3',

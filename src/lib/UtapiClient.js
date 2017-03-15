@@ -38,6 +38,7 @@ const methods = {
 const metricObj = {
     buckets: 'bucket',
     accounts: 'accountId',
+    users: 'userId',
 };
 
 export default class UtapiClient {
@@ -61,7 +62,7 @@ export default class UtapiClient {
             dump: 'error',
         });
         // By default, we push all resource types
-        this.metrics = ['buckets', 'accounts', 'service'];
+        this.metrics = ['buckets', 'accounts', 'users', 'service'];
         this.service = 's3';
         this.disableClient = true;
 
@@ -213,11 +214,12 @@ export default class UtapiClient {
      * @return {undefined}
      */
     _logMetric(params, method, timestamp, log) {
-        const { bucket, accountId } = params;
+        const { bucket, accountId, userId } = params;
         const logObject = {
             method: `UtapiClient.${method}`,
             bucketName: bucket,
             accountId,
+            userId,
             service: this.service,
             timestamp,
         };

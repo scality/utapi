@@ -60,6 +60,7 @@ function getParams(action) {
     const resources = {
         bucket: 'foo-bucket',
         accountId: 'foo-account',
+        userId: 'foo-user',
     };
     switch (action) {
     case 'getObject':
