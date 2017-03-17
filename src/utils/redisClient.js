@@ -1,14 +1,5 @@
 import Redis from 'ioredis';
 
-function _moduleCheck() {
-    try {
-        require.resolve('hiredis');
-    } catch (e) {
-        return false;
-    }
-    return true;
-}
-
 /**
 * Creates a new Redis client instance
 * @param {object} config - redis configuration
@@ -21,10 +12,6 @@ export default function redisClient(config, log) {
         enableOfflineQueue: false,
         // keep alive 3 seconds
         keepAlive: 3000,
-        // dropBufferSupport option performs better with
-        // hiredis (native redis module) and not with the default
-        // javascript redis parser
-        dropBufferSupport: _moduleCheck(),
     }, config));
     redisClient.on('error', err => log.trace('error with redis client', {
         error: err,
