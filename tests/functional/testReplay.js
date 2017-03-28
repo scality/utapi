@@ -7,22 +7,29 @@ import Datastore from '../../src/lib/Datastore';
 import redisClient from '../../src/utils/redisClient';
 import { getAllResourceTypeKeys } from '../testUtils';
 import safeJsonParse from '../../src/utils/safeJsonParse';
+import config from '../../src/lib/Config';
+
 const localCache = redisClient({
     host: '127.0.0.1',
     port: 6379,
 }, Logger);
 const datastore = new Datastore().setClient(localCache);
+// Set the redis client to a port it cannot connect on (i.e., 1337). This causes
+// UtapiClient to push metrics to the local cache using port 6379 (as is set in
+// the `localCache` config property).
+const redis = redisClient({
+    host: '127.0.0.1',
+    port: 1337,
+}, new Logger('UtapiClient', {
+    level: 'info',
+    dump: 'error',
+}));
 const utapiClient = new UtapiClient({
-    redis: {
-        host: '127.0.0.1',
-        port: 4242, // Set the datastore client to a port it cannot connect on.
-    },
-    localCache: {
-        host: '127.0.0.1',
-        port: 6379, // Set the local cache a port for successful connection.
-    },
+    utapiEnabled: true,
     component: 's3',
 });
+utapiClient.setDataStore(new Datastore().setClient(redis));
+
 const log = new Logger();
 const objSize = 1024;
 // All actions supported by Utapi.
@@ -95,8 +102,9 @@ function getParams(action) {
 }
 
 // Check that a list element has the correct data to make a pushMetric call.
-function checkListElement(action, params, res) {
+function checkListElement(action, metrics, res) {
     const { error, result } = safeJsonParse(res);
+    const params = Object.assign({}, metrics, { service: 's3' });
     assert(!error, 'cannot parse cached element into JSON');
     const { reqUid, timestamp } = result;
     const currTimestamp = UtapiClient.getNormalizedTimestamp();
@@ -212,14 +220,8 @@ describe('Replay', () => {
 
     describe('UtapiReplay', () => {
         // Set redis to correct port so replay successfully pushes metrics.
-        const replay = new UtapiReplay({
-            redis: { host: '127.0.0.1', port: 6379 },
-            replaySchedule: '*/1 * * * * *', // Run replay every second.
-            localCache: {
-                host: '127.0.0.1',
-                port: 6379,
-            },
-        });
+        const replay = new UtapiReplay(Object.assign({}, config,
+            { replaySchedule: '*/1 * * * * *' }));
         replay.start();
 
         after(() => localCache.flushdb());

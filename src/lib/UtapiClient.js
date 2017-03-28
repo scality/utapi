@@ -4,6 +4,7 @@ import Datastore from './Datastore';
 import { generateKey, generateCounter, generateStateKey }
     from './schema';
 import { errors } from 'arsenal';
+import config from './Config';
 import redisClient from '../utils/redisClient';
 
 const methods = {
@@ -45,57 +46,40 @@ const metricObj = {
 export default class UtapiClient {
     /**
      * Create a UtapiClient
-     * @param {object} [config] - The configuration of UtapiClient
-     * @param {object} [config.log] - Object defining the level and dumplevel of
-     * the log
-     * @param {object} [config.redis] - Object defining the host and port of the
-     * Redis datastore
-     * @param {object} [config.localCache] - Object defining the host and port
-     * of the local cache datastore
-     * @param {array} [config.metrics] - Array defining the metric resource
-     * types to push metrics for
-     * @param {array} [config.component] - The component from which the metrics
-     * are being pushed (e.g., 's3')
+     * @param {object} params - Params object of UtapiClient
+     * @param {boolean} params.utapiEnabled - `true` if pushing metrics to a
+     * running Redis server, `false` otherwise
+     * @param {string|boolean} params.component - The name of the component that
+     * is pushing metrics (e.g., 's3'), or `false` if intializing without a
+     * `component` property (for example, with UtapiReplay, during a replay the
+     * service level is included in local cache elements)
      */
-    constructor(config) {
+    constructor(params) {
+        this.enableClient = params.utapiEnabled === true;
+        assert(params.component || params.component === false, 'UtapiClient ' +
+            'requires a component property upon initialization');
+        assert(typeof params.component === 'string' ||
+            params.component === false, 'UtapiClient component property must ' +
+            ' be a string or false');
+        // The configuration uses the property `component`, while internally
+        // this is known as a metric level `service`.
+        this.service = params.component;
         this.log = new Logger('UtapiClient', {
             level: 'info',
             dump: 'error',
         });
-        // By default, we push all resource types
-        this.metrics = ['buckets', 'accounts', 'users', 'service'];
-        this.service = 's3';
-        this.disableClient = true;
-
-        if (config) {
+        if (this.enableClient) {
+            this.metrics = config.metrics;
+            this.ds = new Datastore()
+                .setClient(redisClient(config.redis, this.log));
+            this.localCache = new Datastore()
+                .setClient(redisClient(config.localCache, this.log));
             if (config.log) {
                 this.log = new Logger('UtapiClient', {
-                    level: config.log.level,
+                    level: config.log.logLevel,
                     dump: config.log.dumpLevel,
                 });
             }
-            if (config.metrics) {
-                const message = 'invalid property in UtapiClient configuration';
-                assert(Array.isArray(config.metrics), `${message}: metrics ` +
-                    'must be an array');
-                assert(config.metrics.length !== 0, `${message}: metrics ` +
-                    'array cannot be empty');
-                this.metrics = config.metrics;
-            }
-            if (config.redis) {
-                this.ds = new Datastore()
-                    .setClient(redisClient(config.redis, this.log));
-            }
-            if (config.localCache) {
-                this.localCache = new Datastore()
-                    .setClient(redisClient(config.localCache, this.log));
-            }
-            if (config.component) {
-                // The configuration uses the property `component`, while
-                // internally this is known as a metric level `service`.
-                this.service = config.component;
-            }
-            this.disableClient = false;
         }
     }
 
@@ -117,7 +101,6 @@ export default class UtapiClient {
     */
     setDataStore(ds) {
         this.ds = ds;
-        this.disableClient = false;
         return this;
     }
 
@@ -129,17 +112,18 @@ export default class UtapiClient {
     /**
     * Attempt to push necessary data to local cache list for UtapiReplay, when
     * `pushMetric` call has failed
-    * @param {object} params - params object with metric data
+    * @param {object} metrics - params object with metric data
     * @param {string} operation - action of attempted pushMetric call
     * @param {string} timestamp - timestamp of the original pushMetric call
     * @param {object} log - Werelogs request logger
     * @param {callback} cb - callback to call
     * @return {undefined}
     */
-    _pushLocalCache(params, operation, timestamp, log, cb) {
+    _pushLocalCache(metrics, operation, timestamp, log, cb) {
         // 'listMultipartUploads' has a different name in the metric response.
         const action = operation === 'listBucketMultipartUploads' ?
             'listMultipartUploads' : operation;
+        const params = Object.assign({}, metrics, { service: this.service });
         const logObject = { method: 'UtapiClient._pushLocalCache', action,
             params };
         if (!this.localCache) {
@@ -240,6 +224,10 @@ export default class UtapiClient {
         const props = [];
         const { byteLength, newByteLength, oldByteLength, numberOfObjects } =
             params;
+        // The `service` property may exist in the `params` object in the case
+        // of a replay (since it was stored in the local cache). In this case,
+        // `this.service` will be `false`.
+        const service = this.service || params.service;
         // We add a `service` property to any non-service level to be able to
         // build the appropriate schema key.
         this.metrics.forEach(level => {
@@ -248,7 +236,7 @@ export default class UtapiClient {
             if (params[prop] || level === 'service') {
                 const obj = {
                     level,
-                    service: this.service,
+                    service,
                     byteLength,
                     newByteLength,
                     oldByteLength,
@@ -290,7 +278,7 @@ export default class UtapiClient {
     */
     pushMetric(metric, reqUid, params, cb) {
         const callback = cb || this._noop;
-        if (this.disableClient) {
+        if (!this.enableClient) {
             return callback();
         }
         const log = this.log.newRequestLoggerFromSerializedUids(reqUid);

@@ -1,4 +1,3 @@
-import assert from 'assert';
 import async from 'async';
 import { scheduleJob } from 'node-schedule';
 import UtapiClient from './UtapiClient';
@@ -6,10 +5,6 @@ import Datastore from './Datastore';
 import redisClient from '../utils/redisClient';
 import safeJsonParse from '../utils/safeJsonParse';
 import { Logger } from 'werelogs';
-
-// Every five minutes. Cron-style scheduling used by node-schedule.
-const REPLAY_SCHEDULE = '*/5 * * * *';
-const BATCH_SIZE = 10;
 
 export default class UtapiReplay {
     /**
@@ -27,37 +22,25 @@ export default class UtapiReplay {
      * which the replay job should run
      */
     constructor(config) {
+        this.replaySchedule = config.replaySchedule;
+        this.batchSize = config.batchSize;
+        this.replayLock = false;
         this.log = new Logger('UtapiReplay', {
             level: 'info',
             dump: 'error',
         });
-        this.replaySchedule = REPLAY_SCHEDULE;
-        this.batchSize = BATCH_SIZE;
-        this.replayLock = false;
-        this.disableReplay = true;
-
-        if (config) {
-            if (config.log) {
-                this.log = new Logger('UtapiReplay', {
-                    level: config.log.level,
-                    dump: config.log.dumpLevel,
-                });
-            }
-            const message = 'missing required property in UtapiReplay ' +
-                'configuration';
-            assert(config.redis, `${message}: redis`);
-            assert(config.localCache, `${message}: localCache`);
-            this.utapiClient = new UtapiClient(config);
-            this.localCache = new Datastore()
-                .setClient(redisClient(config.localCache, this.log));
-            if (config.replaySchedule) {
-                this.replaySchedule = config.replaySchedule;
-            }
-            if (config.batchSize) {
-                this.batchSize = config.batchSize;
-            }
-            this.disableReplay = false;
+        if (config.log) {
+            this.log = new Logger('UtapiReplay', {
+                level: config.log.logLevel,
+                dump: config.log.dumpLevel,
+            });
         }
+        this.utapiClient = new UtapiClient({
+            utapiEnabled: true,
+            component: false,
+        });
+        this.localCache = new Datastore()
+            .setClient(redisClient(config.localCache, this.log));
     }
 
     /**

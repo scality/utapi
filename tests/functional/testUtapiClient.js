@@ -12,14 +12,7 @@ const redis = redisClient({
 }, Logger);
 const datastore = new Datastore().setClient(redis);
 const utapiClient = new UtapiClient({
-    redis: {
-        host: '127.0.0.1',
-        port: 6379,
-    },
-    localCache: {
-        host: '127.0.0.1',
-        port: 6379,
-    },
+    utapiEnabled: true,
     component: 's3',
 });
 const reqUid = 'foo';

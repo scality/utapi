@@ -205,14 +205,9 @@ class UtapiServer {
 
 /**
 * Spawns a new server
-* @param {object} [params] - configuration params (optional)
-* @property {object} params.redis - redis configuration
-* @property {number} params.workers - number of workers for Cluster
-* @property {object} params.log - logger configuration
 * @return {undefined}
 */
-export default function spawn(params) {
-    Object.assign(config, params);
+export default function spawn() {
     const { workers, redis, log, port } = config;
 
     const logger = new Logger('Utapi', { level: log.logLevel,
