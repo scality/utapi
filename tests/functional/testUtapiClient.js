@@ -20,11 +20,14 @@ const utapiClient = new UtapiClient({
         host: '127.0.0.1',
         port: 6379,
     },
+    component: 's3',
 });
 const reqUid = 'foo';
 const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    userId: 'foo-user',
+    service: 's3',
 };
 const putOperations = ['PutObject', 'CopyObject', 'UploadPart',
     'CompleteMultipartUpload'];
@@ -34,8 +37,13 @@ function _getMetricObj(type) {
     const levels = {
         bucket: 'buckets',
         accountId: 'accounts',
+        userId: 'users',
+        service: 'service',
     };
-    const obj = { level: levels[type] };
+    const obj = {
+        level: levels[type],
+        service: 's3',
+    };
     obj[type] = metricTypes[type];
     return obj;
 }
@@ -171,6 +179,8 @@ Object.keys(metricTypes).forEach(type => {
     });
 
     describe(`State keys with ${type} metrics`, () => {
+        afterEach(() => redis.flushdb());
+
         putOperations.forEach(op => {
             // Calculated based on negative counter values.
             const stateKeyVals = op === 'UploadPart' ? {

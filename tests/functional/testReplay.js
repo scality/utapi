@@ -21,6 +21,7 @@ const utapiClient = new UtapiClient({
         host: '127.0.0.1',
         port: 6379, // Set the local cache a port for successful connection.
     },
+    component: 's3',
 });
 const log = new Logger();
 const objSize = 1024;
@@ -60,6 +61,7 @@ function getParams(action) {
     const resources = {
         bucket: 'foo-bucket',
         accountId: 'foo-account',
+        userId: 'foo-user',
     };
     switch (action) {
     case 'getObject':
