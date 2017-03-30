@@ -302,6 +302,29 @@ export default class Memory {
     }
 
     /**
+    * Count number of elements from sorted set at key with scores between
+    * min and max (all inclusive)
+    * @param {string} key - data key
+    * @param {string|number} min - min score (number or -inf)
+    * @param {string|number} max - max score (number or +inf)
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    zcount(key, min, max, cb) {
+        assert.strictEqual(typeof key, 'string');
+        assert.strictEqual(typeof min === 'number'
+            || typeof min === 'string', true);
+        assert.strictEqual(typeof max === 'number'
+            || typeof max === 'string', true);
+        process.nextTick(() => {
+            if (!this.data[key]) {
+                return cb(null, 0);
+            }
+            return cb(null, this.data[key].length);
+        });
+    }
+
+    /**
     * Returns a pipeline instance that can execute commmands as a batch
     * @param {array} cmds - list of commands
     * @return {Pipeline} - Pipeline instance
