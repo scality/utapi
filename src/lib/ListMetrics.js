@@ -82,6 +82,31 @@ export default class ListMetrics {
     }
 
     /**
+    * Get metrics starting from the second most recent normalized timestamp
+    * range (e.g., if it is 6:31 when the request is made, then list metrics
+    * starting from 6:15).
+    * @param {utapiRequest} utapiRequest - utapiRequest instance
+    * @param {ListMetrics~bucketsMetricsCb} cb - callback
+    * @return {undefined}
+    */
+    getRecentTypesMetrics(utapiRequest, cb) {
+        const log = utapiRequest.getLog();
+        const validator = utapiRequest.getValidator();
+        const resources = validator.get(this.metric);
+        const end = Date.now();
+        const d = new Date(end);
+        const minutes = d.getMinutes();
+        const start = d.setMinutes((minutes - minutes % 15), 0, 0);
+        const fifteenMinutes = 15 * 60 * 1000; // In milliseconds
+        const timeRange = [start - fifteenMinutes, end];
+        const datastore = utapiRequest.getDatastore();
+        async.mapLimit(resources, 5, (resource, next) =>
+            this.getMetrics(resource, timeRange, datastore, log,
+                next), cb
+        );
+    }
+
+    /**
     * Returns a list of timestamps incremented by 15 min. from start timestamp
     * to end timestamp
     * @param {number} start - start timestamp
