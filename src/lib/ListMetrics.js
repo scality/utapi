@@ -2,6 +2,8 @@ import async from 'async';
 import { errors } from 'arsenal';
 import { getMetricFromKey, getKeys, generateStateKey } from './schema';
 import s3metricResponseJSON from '../../models/s3metricResponse';
+import config from './Config';
+import Vault from './Vault';
 
 /**
 * Provides methods to get metrics of different levels
@@ -16,6 +18,7 @@ export default class ListMetrics {
     constructor(metric, component) {
         this.metric = metric;
         this.service = component;
+        this.vault = new Vault(config);
     }
 
     /**
@@ -75,7 +78,26 @@ export default class ListMetrics {
         const resources = validator.get(this.metric);
         const timeRange = validator.get('timeRange');
         const datastore = utapiRequest.getDatastore();
-        async.mapLimit(resources, 5, (resource, next) =>
+        // map account ids to canonical ids
+        if (this.metric === 'accounts') {
+            return this.vault.getCanonicalIds(resources, log, (err, list) => {
+                if (err) {
+                    return cb(err);
+                }
+                return async.mapLimit(list.message.body, 5,
+                    (item, next) => this.getMetrics(item.canonicalId, timeRange,
+                        datastore, log, (err, res) => {
+                            if (err) {
+                                return next(err);
+                            }
+                            return next(null, Object.assign({}, res,
+                            { accountId: item.accountId }));
+                        }),
+                        cb
+                    );
+            });
+        }
+        return async.mapLimit(resources, 5, (resource, next) =>
             this.getMetrics(resource, timeRange, datastore, log,
                 next), cb
         );
