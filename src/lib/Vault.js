@@ -60,6 +60,21 @@ class Vault {
             });
     }
 
+    /**
+    * Returns canonical Ids for a given list of account Ids
+    * @param {string[]} accountIds - list of account ids
+    * @param {object} log - Werelogs request logger
+    * @param {callback} callback - callback with error and result as params
+    * @return {undefined}
+    */
+    getCanonicalIds(accountIds, log, callback) {
+        log.debug('retrieving canonical ids for account ids', {
+            method: 'Vault.getCanonicalIds',
+        });
+        return this._client.getCanonicalIdsByAccountIds(accountIds,
+            { reqUid: log.getSerializedUids(), logger: log }, callback);
+    }
+
 }
 
 export default Vault;
