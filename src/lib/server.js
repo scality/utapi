@@ -21,9 +21,8 @@ class UtapiServer {
      * @param {number} port - server port
      * @param {Datasore} datastore - DataStore instance
      * @param {Werelogs} logger - Werelogs logger instance
-     * @param {Config} config - Config instance
      */
-    constructor(worker, port, datastore, logger, config) {
+    constructor(worker, port, datastore, logger) {
         this.worker = worker;
         this.port = port;
         this.router = new Router(config);
@@ -215,7 +214,7 @@ export default function spawn() {
     const cluster = new Clustering(workers, logger);
     cluster.start(worker => {
         const datastore = new Datastore().setClient(redisClient(redis, logger));
-        const server = new UtapiServer(worker, port, datastore, logger, config);
+        const server = new UtapiServer(worker, port, datastore, logger);
         server.startup();
     });
 }
