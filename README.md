@@ -21,8 +21,14 @@ extra HTTP request to Utapi.
 import { UtapiClient } from 'utapi';
 
 const config = {
-    utapiEnabled: true,
-    component: 's3',
+    redis: {
+        host: '127.0.0.1',
+        port: 6379
+    },
+    localCache: {
+        host: '127.0.0.1',
+        port: 6379
+    }
 }
 const c = new UtapiClient(config);
 

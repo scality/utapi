@@ -14,8 +14,10 @@ const metricTypes = {
     accountId: 'foo-account',
     userId: 'foo-user',
 };
-const clientParams = {
-    utapiEnabled: true,
+const redisLocal = { host: 'localhost', port: 6379 };
+const config = {
+    redis: redisLocal,
+    localCache: redisLocal,
     component: 's3',
 };
 
@@ -88,7 +90,7 @@ function getObject(timestamp, data) {
 }
 
 function testMetric(metric, params, expected, cb) {
-    const c = new UtapiClient(clientParams);
+    const c = new UtapiClient(config);
     c.setDataStore(ds);
     c.pushMetric(metric, REQUID, params, () => {
         assert.deepStrictEqual(memoryBackend.data, expected);
@@ -97,18 +99,18 @@ function testMetric(metric, params, expected, cb) {
 }
 
 describe('UtapiClient:: enable/disable client', () => {
-    it('should not enable client when `enableClient` is falsy', () => {
-        const c = new UtapiClient({ component: 's3' });
+    it('should disable client when no redis config is provided', () => {
+        const c = new UtapiClient();
         assert.strictEqual(c instanceof UtapiClient, true);
-        assert.strictEqual(c.enableClient, false);
+        assert.strictEqual(c.disableClient, true);
         assert.strictEqual(c.log instanceof Logger, true);
         assert.strictEqual(c.ds, undefined);
     });
 
-    it('should enable client when `enableClient` is `true`', () => {
-        const c = new UtapiClient(clientParams);
+    it('should enable client when redis config is provided', () => {
+        const c = new UtapiClient(config);
         assert.strictEqual(c instanceof UtapiClient, true);
-        assert.strictEqual(c.enableClient, true);
+        assert.strictEqual(c.disableClient, false);
         assert.strictEqual(c.log instanceof Logger, true);
         assert.strictEqual(c.ds instanceof Datastore, true);
     });
