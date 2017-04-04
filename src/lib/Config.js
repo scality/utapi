@@ -76,6 +76,14 @@ class Config {
             this.metrics = config.metrics;
         }
 
+        // Optional: The component Utapi pushes metrics for.
+        this.component = 's3';
+        if (config.component) {
+            assert(typeof config.component === 'string', 'bad config: ' +
+                'component must be a string');
+            this.component = config.component;
+        }
+
         assert(typeof config.localCache === 'object', 'bad config: invalid ' +
             'local cache configuration. localCache must be an object');
         assert(config.localCache.host,
