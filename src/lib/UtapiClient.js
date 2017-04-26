@@ -37,6 +37,9 @@ const methods = {
     deleteObjectTagging: '_genericPushMetric',
     headBucket: '_genericPushMetric',
     headObject: '_genericPushMetric',
+    putBucketVersioning: '_genericPushMetric',
+    getBucketVersioning: '_genericPushMetric',
+    putDeleteMarkerObject: '_pushMetricDeleteMarkerObject',
 };
 
 const metricObj = {
@@ -332,6 +335,72 @@ export default class UtapiClient {
                     callback);
             }
             return callback();
+        });
+    }
+
+    /**
+    * Updates counter for the putDeleteMarkerObject action
+    * @param {object} params - params for the metrics
+    * @param {string} [params.bucket] - (optional) bucket name
+    * @param {string} [params.accountId] - (optional) account ID
+    * @param {string} [params.userId] - (optional) user ID
+    * @param {number} timestamp - normalized timestamp of current time
+    * @param {string} action - action metric to update
+    * @param {object} log - Werelogs request logger
+    * @param {function} cb - callback to call
+    * @return {undefined}
+    */
+    _pushMetricDeleteMarkerObject(params, timestamp, action, log, cb) {
+        this._checkProperties(params);
+        this._logMetric(params, '_pushMetricDeleteMarkerObject', timestamp,
+            log);
+        const cmds = [];
+        const paramsArr = this._getParamsArr(params);
+        paramsArr.forEach(p => cmds.push(
+            ['incr', generateCounter(p, 'numberOfObjectsCounter')],
+            ['incr', generateKey(p, 'deleteObject', timestamp)]));
+        // We track the number of commands needed for each `paramsArr` property
+        // to eventually locate each group in the results from Redis.
+        const commandsGroupSize = 2;
+        return this.ds.batch(cmds, (err, results) => {
+            if (err) {
+                log.error('error pushing metric', {
+                    method: 'UtapiClient._pushMetricDeleteMarkerObject',
+                    error: err,
+                });
+                return this._pushLocalCache(params, action, timestamp, log, cb);
+            }
+            const cmds2 = [];
+            const noErr = paramsArr.every((p, i) => {
+                // We want the first element of every group of two commands
+                // returned from Redis. This contains the value of the
+                // numberOfObjectsCounter after it has been incremented.
+                const index = i * commandsGroupSize;
+                const actionErr = results[index][0];
+                if (actionErr) {
+                    log.error('error incrementing counter for push metric', {
+                        method: 'UtapiClient._pushMetricDeleteMarkerObject',
+                        metric: 'number of objects',
+                        error: actionErr,
+                    });
+                    this._pushLocalCache(params, action, timestamp, log, cb);
+                    return false;
+                }
+                let actionCounter = parseInt(results[index][1], 10);
+                // If < 0 or NaN, record numberOfObjects as though bucket were
+                // empty.
+                actionCounter = Number.isNaN(actionCounter) ||
+                    actionCounter < 0 ? 1 : actionCounter;
+                const key = generateStateKey(p, 'numberOfObjects');
+                cmds2.push(
+                    ['zremrangebyscore', key, timestamp, timestamp],
+                    ['zadd', key, timestamp, actionCounter]);
+                return true;
+            });
+            if (noErr) {
+                return this.ds.batch(cmds2, cb);
+            }
+            return undefined;
         });
     }
 

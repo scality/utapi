@@ -57,6 +57,9 @@ const actions = [
     'deleteObjectTagging',
     'headBucket',
     'headObject',
+    'putBucketVersioning',
+    'getBucketVersioning',
+    'putDeleteMarkerObject',
 ];
 
 // Get the proper params object for a pushMetric call for the given action.
@@ -179,7 +182,9 @@ function popAllMetrics(cb) {
     });
 }
 
-// Checks that all schema keys are stored with the correct values.
+// Checks that all schema keys are stored with the correct values. Note that the
+// putDeleteMarkerObject method increments both the number of objects and
+// deleteObject metric
 function checkAllMetrics(cb) {
     const keys = getAllResourceTypeKeys();
     return async.each(keys, (key, next) =>
@@ -192,9 +197,12 @@ function checkAllMetrics(cb) {
                 expected = objSize * 2; // putObject and uploadPart.
             } else if (key.includes('outgoingBytes')) {
                 expected = objSize; // getObject.
-            } else if (key.includes('storageUtilized') ||
-                key.includes('numberOfObjects')) {
+            } else if (key.includes('storageUtilized')) {
                 expected = 0; // After PUT and DELETE operations, should be 0.
+            } else if (key.includes('numberOfObjects')) {
+                expected = 1; // After PUT and DELETE operations, should be 1.
+            } else if (key.endsWith('DeleteObject')) {
+                expected = 2; // After DELETE operations, should be 2.
             }
             assert.strictEqual(parseInt(res, 10), expected, 'incorrect value ' +
                 `of key: ${key}`);
