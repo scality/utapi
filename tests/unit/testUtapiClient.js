@@ -387,6 +387,11 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('putObjectAcl', metricTypes, expected, done);
     });
 
+    it('should push putObjectTagging metrics', done => {
+        const expected = getObject(timestamp, { action: 'PutObjectTagging' });
+        testMetric('putObjectTagging', metricTypes, expected, done);
+    });
+
     it('should push headBucket metrics', done => {
         const expected = getObject(timestamp, { action: 'HeadBucket' });
         testMetric('headBucket', metricTypes, expected, done);

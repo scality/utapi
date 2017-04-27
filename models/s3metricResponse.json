@@ -30,6 +30,7 @@
         "s3:GetObject": 0,
         "s3:GetObjectAcl": 0,
         "s3:PutObjectAcl": 0,
+        "s3:PutObjectTagging": 0,
         "s3:HeadBucket": 0,
         "s3:HeadObject": 0
     }

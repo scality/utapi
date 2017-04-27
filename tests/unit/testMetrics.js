@@ -202,6 +202,10 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for put object acl`, done =>
             testOps(schemaKey, 'putObjectAcl', 's3:PutObjectAcl', done));
 
+        it(`should return ${metric} level metrics for put object tagging`,
+          done => testOps(schemaKey, 'putObjectTagging', 's3:PutObjectTagging',
+          done));
+
         it(`should return ${metric} level metrics for head bucket`, done =>
             testOps(schemaKey, 'headBucket', 's3:HeadBucket', done));
 
