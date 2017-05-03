@@ -52,6 +52,7 @@ const actions = [
     'putObject',
     'copyObject',
     'putObjectAcl',
+    'putObjectTagging',
     'headBucket',
     'headObject',
 ];
