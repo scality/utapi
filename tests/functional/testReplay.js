@@ -49,6 +49,7 @@ const actions = [
     'multiObjectDelete',
     'getObject',
     'getObjectAcl',
+    'getObjectTagging',
     'putObject',
     'copyObject',
     'putObjectAcl',

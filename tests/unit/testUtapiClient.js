@@ -314,6 +314,12 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('getObjectAcl', metricTypes, expected, done);
     });
 
+    it('should push getObjectTagging metrics', done => {
+        const expected = getObject(timestamp,
+            { action: 'GetObjectTagging' });
+        testMetric('getObjectTagging', metricTypes, expected, done);
+    });
+
     it('should push putObject metrics', done => {
         const expected = getObject(timestamp, {
             action: 'PutObject',
