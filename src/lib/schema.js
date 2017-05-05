@@ -32,6 +32,7 @@ const keys = {
     uploadPart: prefix => `${prefix}UploadPart`,
     getObject: prefix => `${prefix}GetObject`,
     getObjectAcl: prefix => `${prefix}GetObjectAcl`,
+    getObjectTagging: prefix => `${prefix}GetObjectTagging`,
     putObject: prefix => `${prefix}PutObject`,
     copyObject: prefix => `${prefix}CopyObject`,
     putObjectAcl: prefix => `${prefix}PutObjectAcl`,

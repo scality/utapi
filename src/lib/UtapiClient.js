@@ -29,6 +29,7 @@ const methods = {
     multiObjectDelete: '_genericPushMetricDeleteObject',
     getObject: '_pushMetricGetObject',
     getObjectAcl: '_genericPushMetric',
+    getObjectTagging: '_genericPushMetric',
     putObject: '_genericPushMetricPutObject',
     copyObject: '_genericPushMetricPutObject',
     putObjectAcl: '_genericPushMetric',

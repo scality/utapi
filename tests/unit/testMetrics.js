@@ -199,6 +199,10 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for get object acl`, done =>
             testOps(schemaKey, 'getObjectAcl', 's3:GetObjectAcl', done));
 
+        it(`should return ${metric} level metrics for get object tagging`,
+            done => testOps(schemaKey, 'getObjectTagging',
+            's3:GetObjectTagging', done));
+
         it(`should return ${metric} level metrics for put object acl`, done =>
             testOps(schemaKey, 'putObjectAcl', 's3:PutObjectAcl', done));
 
