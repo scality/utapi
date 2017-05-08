@@ -54,6 +54,7 @@ const actions = [
     'copyObject',
     'putObjectAcl',
     'putObjectTagging',
+    'deleteObjectTagging',
     'headBucket',
     'headObject',
 ];

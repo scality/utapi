@@ -34,6 +34,7 @@ const methods = {
     copyObject: '_genericPushMetricPutObject',
     putObjectAcl: '_genericPushMetric',
     putObjectTagging: '_genericPushMetric',
+    deleteObjectTagging: '_genericPushMetric',
     headBucket: '_genericPushMetric',
     headObject: '_genericPushMetric',
 };

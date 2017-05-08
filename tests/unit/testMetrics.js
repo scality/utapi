@@ -210,6 +210,10 @@ Object.keys(metricLevels).forEach(schemaKey => {
           done => testOps(schemaKey, 'putObjectTagging', 's3:PutObjectTagging',
           done));
 
+        it(`should return ${metric} level metrics for delete object tagging`,
+          done => testOps(schemaKey, 'deleteObjectTagging',
+          's3:DeleteObjectTagging', done));
+
         it(`should return ${metric} level metrics for head bucket`, done =>
             testOps(schemaKey, 'headBucket', 's3:HeadBucket', done));
 
