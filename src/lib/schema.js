@@ -37,6 +37,7 @@ const keys = {
     copyObject: prefix => `${prefix}CopyObject`,
     putObjectAcl: prefix => `${prefix}PutObjectAcl`,
     putObjectTagging: prefix => `${prefix}PutObjectTagging`,
+    deleteObjectTagging: prefix => `${prefix}DeleteObjectTagging`,
     headBucket: prefix => `${prefix}HeadBucket`,
     headObject: prefix => `${prefix}HeadObject`,
     incomingBytes: prefix => `${prefix}incomingBytes`,

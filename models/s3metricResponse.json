@@ -8,6 +8,7 @@
         "s3:DeleteBucket": 0,
         "s3:DeleteBucketCors": 0,
         "s3:DeleteBucketWebsite": 0,
+        "s3:DeleteObjectTagging": 0,
         "s3:ListBucket": 0,
         "s3:GetBucketAcl": 0,
         "s3:GetBucketCors": 0,

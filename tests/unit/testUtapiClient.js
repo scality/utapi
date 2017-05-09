@@ -398,6 +398,12 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('putObjectTagging', metricTypes, expected, done);
     });
 
+    it('should push deleteObjectTagging metrics', done => {
+        const expected = getObject(timestamp, { action:
+          'DeleteObjectTagging' });
+        testMetric('deleteObjectTagging', metricTypes, expected, done);
+    });
+
     it('should push headBucket metrics', done => {
         const expected = getObject(timestamp, { action: 'HeadBucket' });
         testMetric('headBucket', metricTypes, expected, done);
