@@ -227,5 +227,9 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for get bucket versioning`,
             done => testOps(schemaKey, 'getBucketVersioning',
             's3:GetBucketVersioning', done));
+
+        it(`should return ${metric} level metrics for put bucket replication`,
+            done => testOps(schemaKey, 'putBucketReplication',
+            's3:PutBucketReplication', done));
     });
 });
