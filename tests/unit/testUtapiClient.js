@@ -414,6 +414,29 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('headObject', metricTypes, expected, done);
     });
 
+    it('should push putBucketVersioning metrics', done => {
+        const expected = getObject(timestamp, {
+            action: 'PutBucketVersioning',
+        });
+        testMetric('putBucketVersioning', metricTypes, expected, done);
+    });
+
+    it('should push getBucketVersioning metrics', done => {
+        const expected = getObject(timestamp, {
+            action: 'GetBucketVersioning',
+        });
+        testMetric('getBucketVersioning', metricTypes, expected, done);
+    });
+
+    // Putting a delete marker increments deleteObject and numberOfObjects
+    it('should push putDeleteMarkerObject metrics', done => {
+        const expected = getObject(timestamp, {
+            action: 'DeleteObject',
+            numberOfObjects: '1',
+        });
+        testMetric('putDeleteMarkerObject', metricTypes, expected, done);
+    });
+
     // Allows for decoupling of projects that use Utapi
     it('should allow pushing an unsupported metric', done => {
         const expected = {};
