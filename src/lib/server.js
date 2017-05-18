@@ -21,9 +21,8 @@ class UtapiServer {
      * @param {number} port - server port
      * @param {Datasore} datastore - DataStore instance
      * @param {Werelogs} logger - Werelogs logger instance
-     * @param {Config} config - Config instance
      */
-    constructor(worker, port, datastore, logger, config) {
+    constructor(worker, port, datastore, logger) {
         this.worker = worker;
         this.port = port;
         this.router = new Router(config);
@@ -205,14 +204,9 @@ class UtapiServer {
 
 /**
 * Spawns a new server
-* @param {object} [params] - configuration params (optional)
-* @property {object} params.redis - redis configuration
-* @property {number} params.workers - number of workers for Cluster
-* @property {object} params.log - logger configuration
 * @return {undefined}
 */
-export default function spawn(params) {
-    Object.assign(config, params);
+export default function spawn() {
     const { workers, redis, log, port } = config;
 
     const logger = new Logger('Utapi', { level: log.logLevel,
@@ -220,7 +214,7 @@ export default function spawn(params) {
     const cluster = new Clustering(workers, logger);
     cluster.start(worker => {
         const datastore = new Datastore().setClient(redisClient(redis, logger));
-        const server = new UtapiServer(worker, port, datastore, logger, config);
+        const server = new UtapiServer(worker, port, datastore, logger);
         server.startup();
     });
 }

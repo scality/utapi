@@ -1,6 +1,6 @@
 {
     "port": 8100,
-    "workers": 10,
+    "workers": 5,
     "healthChecks": {
         "allowFrom": ["127.0.0.1/8", "::1"]
     },
@@ -9,6 +9,10 @@
         "dumpLevel": "error"
     },
     "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
+    },
+    "localCache": {
         "host": "127.0.0.1",
         "port": 6379
     },

@@ -7,10 +7,6 @@ import redisClient from '../utils/redisClient';
 import safeJsonParse from '../utils/safeJsonParse';
 import { Logger } from 'werelogs';
 
-// Every five minutes. Cron-style scheduling used by node-schedule.
-const REPLAY_SCHEDULE = '*/5 * * * *';
-const BATCH_SIZE = 10;
-
 export default class UtapiReplay {
     /**
      * Create a UtapiReplay
@@ -31,15 +27,15 @@ export default class UtapiReplay {
             level: 'info',
             dump: 'error',
         });
-        this.replaySchedule = REPLAY_SCHEDULE;
-        this.batchSize = BATCH_SIZE;
+        this.replaySchedule = config.replaySchedule;
+        this.batchSize = config.batchSize;
         this.replayLock = false;
         this.disableReplay = true;
 
         if (config) {
             if (config.log) {
                 this.log = new Logger('UtapiReplay', {
-                    level: config.log.level,
+                    level: config.log.logLevel,
                     dump: config.log.dumpLevel,
                 });
             }

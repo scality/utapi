@@ -76,7 +76,7 @@ export default class UtapiClient {
         if (config) {
             if (config.log) {
                 this.log = new Logger('UtapiClient', {
-                    level: config.log.level,
+                    level: config.log.logLevel,
                     dump: config.log.dumpLevel,
                 });
             }

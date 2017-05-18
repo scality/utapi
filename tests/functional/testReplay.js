@@ -4,6 +4,7 @@ import { Logger } from 'werelogs';
 import UtapiReplay from '../../src/lib/UtapiReplay';
 import UtapiClient from '../../src/lib/UtapiClient';
 import Datastore from '../../src/lib/Datastore';
+import config from '../../src/lib/Config';
 import redisClient from '../../src/utils/redisClient';
 import { getAllResourceTypeKeys } from '../testUtils';
 import safeJsonParse from '../../src/utils/safeJsonParse';
@@ -223,14 +224,8 @@ describe('Replay', () => {
 
     describe('UtapiReplay', () => {
         // Set redis to correct port so replay successfully pushes metrics.
-        const replay = new UtapiReplay({
-            redis: { host: '127.0.0.1', port: 6379 },
-            replaySchedule: '*/1 * * * * *', // Run replay every second.
-            localCache: {
-                host: '127.0.0.1',
-                port: 6379,
-            },
-        });
+        const replay = new UtapiReplay(Object.assign({}, config,
+            { replaySchedule: '*/1 * * * * *' }));
         replay.start();
 
         after(() => localCache.flushdb());

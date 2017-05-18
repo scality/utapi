@@ -163,28 +163,16 @@ following urls for reference.
 You may also view examples making a request with Auth V4 using various languages
 and AWS SDKs [here](/examples).
 
-Alternatively, you can use a nifty command line tool available in Scality's S3.
-
-You can git clone S3 repo from here https://github.com/scality/S3.git and follow
-the instructions in README to install the dependencies.
-
-If you have S3 running inside a docker container you can docker exec into the S3
-container as
+Alternatively, you can use a nifty command line tool available in Utapi.
 
 ```
-docker exec -it <container id> bash
+node bin/list_metrics
 ```
 
-and then run the command
+It will generate the following output, listing available options.
 
 ```
-node bin/list_bucket_metrics
-```
-
-It will generate the following output listing available options.
-
-```
-Usage: list_bucket_metrics [options]
+Usage: list_metrics [options]
 
   Options:
 
@@ -192,9 +180,17 @@ Usage: list_bucket_metrics [options]
     -V, --version                 output the version number
     -a, --access-key <accessKey>  Access key id
     -k, --secret-key <secretKey>  Secret access key
-    -b, --buckets <buckets>       Name of bucket(s)with a comma separator if
+    -m, --metric <metric>         Metric type
+    --buckets <buckets>           Name of bucket(s) with a comma separator if
                                   more than one
+    --accounts <accounts>         Account ID(s) with a comma separator if more
+                                  than one
+    --users <users>               User ID(s) with a comma separator if more than
+                                  one
+    --service <service>           Name of service
     -s, --start <start>           Start of time range
+    -r, --recent                  List metrics including the previous and
+                                  current 15 minute interval
     -e --end <end>                End of time range
     -h, --host <host>             Host of the server
     -p, --port <port>             Port of the server
@@ -206,15 +202,15 @@ A typical call to list metrics for a bucket `demo` to Utapi in a https enabled
 deployment would be
 
 ```
-node bin/list_bucket_metrics -a myAccessKey -k mySecretKey -b demo -s
-1476231300000 -h 127.0.0.1 -p 8100 --ssl
+node bin/list_metrics.js -a <accessKey> -k <secretKey> -m buckets --buckets demo
+-s 1454313600000 -e 1456819199999 --host 127.0.0.1 -p 8100 --ssl
 ```
 
 Both start and end times are time expressed as UNIX epoch timestamps **expressed
 in milliseconds**.
 
 Keep in mind, since Utapi metrics are normalized to the nearest 15 min.
-interval, so start time and end time need to be in specific format as follows.
+interval, start time and end time need to be in a specific format as follows.
 
 #### Start time
 
@@ -222,13 +218,13 @@ Start time needs to be normalized to the nearest 15 minute interval with seconds
 and milliseconds set to 0. So valid start timestamps would look something like
 `09:00:00:000`, `09:15:00:000`, `09:30:00:000` and `09:45:00:000`.
 
-For example
+For example:
 
 Date: Tue Oct 11 2016 17:35:25 GMT-0700 (PDT)
 
 Unix timestamp (milliseconds): 1476232525320
 
-Here's a typical JS method to get start timestamp
+Here's a typical JS method to get a start timestamp
 
 ```javascript
 function getStartTimestamp(t) {
