@@ -13,6 +13,7 @@ const methods = {
     getBucketAcl: '_genericPushMetric',
     putBucketAcl: '_genericPushMetric',
     putBucketCors: '_genericPushMetric',
+    putBucketTagging: '_genericPushMetric',
     getBucketCors: '_genericPushMetric',
     deleteBucketCors: '_genericPushMetric',
     putBucketWebsite: '_genericPushMetric',

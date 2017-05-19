@@ -33,6 +33,7 @@ const actions = [
     'getBucketAcl',
     'putBucketAcl',
     'putBucketCors',
+    'putBucketTagging',
     'getBucketCors',
     'deleteBucketCors',
     'putBucketWebsite',

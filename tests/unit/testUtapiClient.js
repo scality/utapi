@@ -161,6 +161,11 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('putBucketCors', metricTypes, expected, done);
     });
 
+    it('should push putBucketTagging metrics', done => {
+        const expected = getObject(timestamp, { action: 'PutBucketTagging' });
+        testMetric('putBucketTagging', metricTypes, expected, done);
+    });
+
     it('should push getBucketCors metrics', done => {
         const expected = getObject(timestamp, { action: 'GetBucketCors' });
         testMetric('getBucketCors', metricTypes, expected, done);

@@ -16,6 +16,7 @@ const keys = {
     getBucketAcl: prefix => `${prefix}GetBucketAcl`,
     putBucketAcl: prefix => `${prefix}PutBucketAcl`,
     putBucketCors: prefix => `${prefix}PutBucketCors`,
+    putBucketTagging: prefix => `${prefix}PutBucketTagging`,
     deleteBucketCors: prefix => `${prefix}DeleteBucketCors`,
     getBucketCors: prefix => `${prefix}GetBucketCors`,
     putBucketWebsite: prefix => `${prefix}PutBucketWebsite`,
