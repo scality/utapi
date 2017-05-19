@@ -9,6 +9,8 @@ import { Logger } from 'werelogs';
 
 // Every five minutes. Cron-style scheduling used by node-schedule.
 const REPLAY_SCHEDULE = '*/5 * * * *';
+// Fifteen minutes. The time to live for a replay lock.
+const TTL = 60 * 15;
 const BATCH_SIZE = 10;
 
 export default class UtapiReplay {
@@ -33,7 +35,6 @@ export default class UtapiReplay {
         });
         this.replaySchedule = REPLAY_SCHEDULE;
         this.batchSize = BATCH_SIZE;
-        this.replayLock = false;
         this.disableReplay = true;
 
         if (config) {
@@ -61,14 +62,20 @@ export default class UtapiReplay {
     }
 
     /**
-     * Sets the replay lock.
-     * @param {boolean} isLocked - The value to set `this.replayLock`.
-     * @param {callback} cb - Callback to call.
-     * @return {UtapiReplay} this - UtapiReplay instance.
+     * Set the replay lock key.
+     * @return {undefined}
      */
-    _setReplayLock(isLocked) {
-        this.replayLock = isLocked;
-        return this;
+    _setLock() {
+        return this.localCache.setExpire('s3:utapireplay:lock', 'true', TTL);
+    }
+
+   /**
+    * Delete the replay lock key. If there is an error during this command, do
+    * not handle it as the lock will expire after the value of `TTL`.
+    * @return {undefined}
+    */
+    _removeLock() {
+        return this.localCache.del('s3:utapireplay:lock');
     }
 
     /**
@@ -147,10 +154,10 @@ export default class UtapiReplay {
                     error: err,
                 });
                 this.log.info(`replay job completed: ${err}`);
-                return this._setReplayLock(false);
+                return this._removeLock();
             }
             this.log.info(`replay job completed: pushed ${listLen} metrics`);
-            return this._setReplayLock(false);
+            return this._removeLock();
         });
     }
 
@@ -166,13 +173,13 @@ export default class UtapiReplay {
                     method: 'UtapiReplay._getCachedMetrics',
                     error: err.stack || err,
                 });
-                return this._setReplayLock(false);
+                return this._removeLock();
             }
             if (res > 0) {
                 return this._getCachedMetrics(res);
             }
             this.log.info('replay job completed: no cached metrics found');
-            return this._setReplayLock(false);
+            return this._removeLock();
         });
     }
 
@@ -185,14 +192,15 @@ export default class UtapiReplay {
             this.log.info('disabled utapi replay scheduler');
             return this;
         }
-        const replay = scheduleJob(this.replaySchedule, () => {
-            // Ensure no elements are still being pushed by a prior replay.
-            if (!this.replayLock) {
-                this._setReplayLock(true);
-                return this._checkLocalCache();
-            }
-            return undefined;
-        });
+        const replay = scheduleJob(this.replaySchedule, () =>
+            this._setLock()
+                .then(res => {
+                    // If `res` is not `null`, there is no pre-existing lock.
+                    if (res) {
+                        return this._checkLocalCache();
+                    }
+                    return undefined;
+                }));
         replay.on('scheduled', date =>
             this.log.info(`replay job started: ${date}`));
         this.log.info('enabled utapi replay scheduler', {

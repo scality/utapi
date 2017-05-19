@@ -37,6 +37,27 @@ export default class Datastore {
     }
 
     /**
+    * Set the replay lock key (if it does not already exist) with an expiration
+    * @param {string} key - key to set with an expiration
+    * @param {string} value - value containing the data
+    * @param {string} ttl - time after which the key expires
+    * @return {undefined}
+    */
+    setExpire(key, value, ttl) {
+        // This method is a Promise because no callback is given.
+        return this._client.set(key, value, 'EX', ttl, 'NX');
+    }
+
+    /**
+    * delete a key
+    * @param {string} key - key to delete
+    * @return {undefined}
+    */
+    del(key) {
+        return this._client.del(key);
+    }
+
+    /**
     * get value from a key
     * @param {string} key - key holding the value
     * @param {callback} cb - callback
