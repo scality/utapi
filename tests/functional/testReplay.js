@@ -222,6 +222,7 @@ describe('Replay', () => {
     });
 
     describe('UtapiReplay', () => {
+        const TTL = 60 * 15; // fifteen minutes
         // Set redis to correct port so replay successfully pushes metrics.
         const replay = new UtapiReplay({
             redis: { host: '127.0.0.1', port: 6379 },
@@ -231,25 +232,30 @@ describe('Replay', () => {
                 port: 6379,
             },
         });
-        replay.start();
+        // Set the replay lock before the replay job for the first test.
+        before(() => datastore.setExpire('s3:utapireplay:lock', 'true', TTL)
+            .then(() => replay.start()));
+        beforeEach(done => pushAllMetrics(done));
+        afterEach(() => localCache.flushdb());
 
-        after(() => localCache.flushdb());
+        it('should not push any cached metrics when replay lock is set',
+            function callback(done) {
+                this.timeout(5000);
+                // Give time to ensure a replay job has time to complete.
+                return setTimeout(() =>
+                    checkListLength(actions.length, done), 3000);
+            });
 
         it('should record all metrics from the local cache as schema keys',
             function callback(done) {
                 this.timeout(5000);
-                return pushAllMetrics(err => {
+                // Give time to ensure a replay job has time to complete.
+                return setTimeout(() => checkAllMetrics(err => {
                     if (err) {
                         return done(err);
                     }
-                    // Give time to ensure list elements are pushed by replay.
-                    return setTimeout(() => checkAllMetrics(err => {
-                        if (err) {
-                            return done(err);
-                        }
-                        return checkListLength(0, done);
-                    }), 3000);
-                });
+                    return checkListLength(0, done);
+                }), 3000);
             });
     });
 });
