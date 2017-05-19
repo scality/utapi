@@ -77,7 +77,7 @@ function testOps(schemaKey, keyIndex, metricindex, done) {
     if (keyIndex === 'storageUtilized' || keyIndex === 'numberOfObjects') {
         key = generateStateKey(schemaObject, keyIndex);
         val = 1024;
-        props[metricindex] = [val, val];
+        props[metricindex] = [0, val];
         memBackend.zadd(key, timestamp, val, () =>
             assertMetrics(schemaKey, schemaObject[schemaKey], props, done));
     } else if (keyIndex === 'incomingBytes' || keyIndex === 'outgoingBytes') {

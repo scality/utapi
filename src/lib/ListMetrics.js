@@ -194,12 +194,17 @@ export default class ListMetrics {
             start, '-inf', 'LIMIT', '0', '1'];
         const numberOfObjectsEnd = ['zrevrangebyscore', numberOfObjectsKey, end,
             '-inf', 'LIMIT', '0', '1'];
+        const storageUtilizedCount = ['zcount', storageUtilizedKey, '-inf',
+            '+inf'];
+        const numberOfObjectsCount = ['zcount', numberOfObjectsKey, '-inf',
+            '+inf'];
         const timestampRange = this._getTimestampRange(start, end);
         const metricKeys = [].concat.apply([], timestampRange.map(
             i => getKeys(obj, i)));
         const cmds = metricKeys.map(item => ['get', item]);
         cmds.push(storageUtilizedStart, storageUtilizedEnd,
-            numberOfObjectsStart, numberOfObjectsEnd);
+            numberOfObjectsStart, numberOfObjectsEnd, storageUtilizedCount,
+            numberOfObjectsCount);
 
         datastore.batch(cmds, (err, res) => {
             if (err) {
@@ -213,8 +218,26 @@ export default class ListMetrics {
             const metricResponse = this._getMetricResponse(resource, start,
                 end);
             // last 4 are results of storageUtilized, numberOfObjects,
-            const absolutes = res.slice(-4);
-            const deltas = res.slice(0, res.length - 4);
+            const storageCountArr = res.slice(-2, -1)[0];
+            if (storageCountArr[0]) {
+                log.trace('command in a batch failed to execute', {
+                    error: storageCountArr[0],
+                    method: 'ListMetrics.getMetrics',
+                });
+            }
+            const storageUtilizedItemCount = parseInt(storageCountArr[1], 10)
+                || 0;
+            const numObjectsCountArr = res.slice(-1)[0];
+            if (numObjectsCountArr[0]) {
+                log.trace('command in a batch failed to execute', {
+                    error: numObjectsCountArr[0],
+                    method: 'ListMetrics.getMetrics',
+                });
+            }
+            const numberOfObjectsItemCount = parseInt(numObjectsCountArr[1], 10)
+                || 0;
+            const absolutes = res.slice(-6, -2);
+            const deltas = res.slice(0, res.length - 6);
             absolutes.forEach((item, index) => {
                 if (item[0]) {
                     // log error and continue
@@ -236,6 +259,24 @@ export default class ListMetrics {
                     }
                 }
             });
+
+            // fix for metrics with insufficient data points where having only
+            // one data point for storage or number of objects would result in
+            // arrays like [1024, 1024], [1, 1] ...
+            const storageUtilArr = metricResponse.storageUtilized;
+            const insufficientstorageDatapoint =
+                storageUtilArr[0] === storageUtilArr[1] &&
+                    storageUtilizedItemCount === 1;
+            if (insufficientstorageDatapoint) {
+                metricResponse.storageUtilized[0] = 0;
+            }
+
+            const numObjectsArr = metricResponse.numberOfObjects;
+            const numObjectsDatapoint = numObjectsArr[0] === numObjectsArr[1] &&
+                numberOfObjectsItemCount === 1;
+            if (numObjectsDatapoint) {
+                metricResponse.numberOfObjects[0] = 0;
+            }
 
             /**
             * Batch result is of the format
