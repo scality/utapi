@@ -61,6 +61,7 @@ const actions = [
     'getBucketVersioning',
     'putDeleteMarkerObject',
     'putBucketReplication',
+    'getBucketReplication',
 ];
 
 // Get the proper params object for a pushMetric call for the given action.

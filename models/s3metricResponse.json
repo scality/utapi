@@ -37,6 +37,7 @@
         "s3:HeadObject": 0,
         "s3:PutBucketVersioning": 0,
         "s3:GetBucketVersioning": 0,
-        "s3:PutBucketReplication": 0
+        "s3:PutBucketReplication": 0,
+        "s3:GetBucketReplication": 0
     }
 }

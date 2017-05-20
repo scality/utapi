@@ -444,6 +444,13 @@ describe('UtapiClient:: push metrics', () => {
         testMetric('putBucketReplication', metricTypes, expected, done);
     });
 
+    it('should push getBucketReplication metrics', done => {
+        const expected = getObject(timestamp, {
+            action: 'GetBucketReplication',
+        });
+        testMetric('getBucketReplication', metricTypes, expected, done);
+    });
+
     // Allows for decoupling of projects that use Utapi
     it('should allow pushing an unsupported metric', done => {
         const expected = {};
