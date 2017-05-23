@@ -19,11 +19,6 @@
   "dependencies": {
     "arsenal": "scality/Arsenal",
     "async": "^2.0.1",
-    "babel-cli": "6.14.0",
-    "babel-core": "^6.2.1",
-    "babel-plugin-transform-es2015-destructuring": "^6.1.18",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.2.0",
-    "babel-plugin-transform-es2015-parameters": "^6.2.0",
     "ioredis": "^2.3.0",
     "node-schedule": "1.2.0",
     "vaultclient": "scality/vaultclient",
@@ -37,12 +32,11 @@
     "mocha": "^3.0.2"
   },
   "scripts": {
-    "postinstall": "babel --ignore node_modules src/ --out-dir dist",
-    "ft_test": "mocha --compilers js:babel-core/register --recursive tests/functional",
+    "ft_test": "mocha --recursive tests/functional",
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
     "start": "node index.js",
-    "test": "mocha --compilers js:babel-core/register --recursive tests/unit"
+    "test": "mocha --recursive tests/unit"
   },
   "private": true
 }

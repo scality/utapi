@@ -1,10 +1,10 @@
-import assert from 'assert';
-import MemoryBackend from '../../src/lib/backend/Memory';
-import Datastore from '../../src/lib/Datastore';
-import ListMetrics from '../../src/lib/ListMetrics';
-import { generateStateKey, generateKey } from '../../src/lib/schema';
-import { Logger } from 'werelogs';
-import s3metricResponseJSON from '../../models/s3metricResponse';
+const assert = require('assert');
+const MemoryBackend = require('../../lib/backend/Memory');
+const Datastore = require('../../lib/Datastore');
+const ListMetrics = require('../../lib/ListMetrics');
+const { generateStateKey, generateKey } = require('../../lib/schema');
+const { Logger } = require('werelogs');
+const s3metricResponseJSON = require('../../models/s3metricResponse');
 const logger = new Logger('UtapiTest');
 const memBackend = new MemoryBackend();
 const datastore = new Datastore();

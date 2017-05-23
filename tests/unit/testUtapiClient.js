@@ -1,9 +1,9 @@
-import assert from 'assert';
-import { Logger } from 'werelogs';
-import Datastore from '../../src/lib/Datastore';
-import MemoryBackend from '../../src/lib/backend/Memory';
-import UtapiClient from '../../src/lib/UtapiClient';
-import { getNormalizedTimestamp } from '../testUtils';
+const assert = require('assert');
+const { Logger } = require('werelogs');
+const Datastore = require('../../lib/Datastore');
+const MemoryBackend = require('../../lib/backend/Memory');
+const UtapiClient = require('../../lib/UtapiClient');
+const { getNormalizedTimestamp } = require('../testUtils');
 
 const memoryBackend = new MemoryBackend();
 const ds = new Datastore();

@@ -1,12 +1,12 @@
-import assert from 'assert';
-import async from 'async';
-import { Logger } from 'werelogs';
-import UtapiReplay from '../../src/lib/UtapiReplay';
-import UtapiClient from '../../src/lib/UtapiClient';
-import Datastore from '../../src/lib/Datastore';
-import redisClient from '../../src/utils/redisClient';
-import { getAllResourceTypeKeys } from '../testUtils';
-import safeJsonParse from '../../src/utils/safeJsonParse';
+const assert = require('assert');
+const async = require('async');
+const { Logger } = require('werelogs');
+const UtapiReplay = require('../../lib/UtapiReplay');
+const UtapiClient = require('../../lib/UtapiClient');
+const Datastore = require('../../lib/Datastore');
+const redisClient = require('../../utils/redisClient');
+const { getAllResourceTypeKeys } = require('../testUtils');
+const safeJsonParse = require('../../utils/safeJsonParse');
 const localCache = redisClient({
     host: '127.0.0.1',
     port: 6379,

@@ -1,5 +1,5 @@
-import assert from 'assert';
-import MemoryBackend from '../../src/lib/backend/Memory';
+const assert = require('assert');
+const MemoryBackend = require('../../lib/backend/Memory');
 
 
 describe('Test Memory Backend', () => {

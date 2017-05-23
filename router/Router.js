@@ -1,8 +1,8 @@
-import assert from 'assert';
-import url from 'url';
-import { auth, errors, policies } from 'arsenal';
-import safeJsonParse from '../utils/safeJsonParse';
-import Vault from '../lib/Vault';
+const assert = require('assert');
+const url = require('url');
+const { auth, errors, policies } = require('arsenal');
+const safeJsonParse = require('../utils/safeJsonParse');
+const Vault = require('../lib/Vault');
 
 class Router {
 

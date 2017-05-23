@@ -1,11 +1,11 @@
-import assert from 'assert';
-import { map, series } from 'async';
-import UtapiClient from '../../src/lib/UtapiClient';
-import Datastore from '../../src/lib/Datastore';
-import redisClient from '../../src/utils/redisClient';
-import { Logger } from 'werelogs';
-import { getCounters, getMetricFromKey,
-    getStateKeys } from '../../src/lib/schema';
+const assert = require('assert');
+const { map, series } = require('async');
+const UtapiClient = require('../../lib/UtapiClient');
+const Datastore = require('../../lib/Datastore');
+const redisClient = require('../../utils/redisClient');
+const { Logger } = require('werelogs');
+const { getCounters, getMetricFromKey,
+    getStateKeys } = require('../../lib/schema');
 const redis = redisClient({
     host: '127.0.0.1',
     port: 6379,
