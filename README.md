@@ -102,11 +102,29 @@ Server is running.
                 "Sid": "utapiMetrics",
                 "Action": [ "utapi:ListMetrics" ],
                 "Effect": "Allow",
-                "Resource": "arn:scality:utapi:::buckets/*"
+                "Resource": [
+                    "arn:scality:utapi:::buckets/*",
+                    "arn:scality:utapi:::accounts/*",
+                    "arn:scality:utapi:::users/*",
+                    "arn:scality:utapi:::service/*",
+                ]
             }
         ]
     }
     EOF
+    ```
+
+    The above policy allows users to access all metrics tracked by Utapi.
+
+    Limiting access to certain metric levels can be achieved by omitting a
+    metric level. For example, redefining the `Resource` property of the policy
+    to the example below would deny the user access to metric levels aside from
+    'buckets'.
+
+    ```json
+    "Resource": [
+        "arn:scality:utapi:::buckets/*",
+    ]
     ```
 
     The user can also be restricted to only some buckets
