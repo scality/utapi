@@ -1,4 +1,4 @@
-import Validator from './Validator';
+const Validator = require('./Validator');
 
 /**
  * Get the validator for a particular metric type
@@ -22,7 +22,7 @@ function getValidator(metricType, dict, isRecentListing) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateBucketsListMetrics(dict) {
+function validateBucketsListMetrics(dict) {
     return getValidator('buckets', dict);
 }
 
@@ -32,7 +32,7 @@ export function validateBucketsListMetrics(dict) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateBucketsListRecentMetrics(dict) {
+function validateBucketsListRecentMetrics(dict) {
     return getValidator('buckets', dict, true);
 }
 
@@ -41,7 +41,7 @@ export function validateBucketsListRecentMetrics(dict) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateAccountsListMetrics(dict) {
+function validateAccountsListMetrics(dict) {
     return getValidator('accounts', dict);
 }
 
@@ -51,7 +51,7 @@ export function validateAccountsListMetrics(dict) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateAccountsListRecentMetrics(dict) {
+function validateAccountsListRecentMetrics(dict) {
     return getValidator('accounts', dict, true);
 }
 
@@ -60,7 +60,7 @@ export function validateAccountsListRecentMetrics(dict) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateUsersListMetrics(dict) {
+function validateUsersListMetrics(dict) {
     return getValidator('users', dict);
 }
 
@@ -70,7 +70,7 @@ export function validateUsersListMetrics(dict) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateUsersListRecentMetrics(dict) {
+function validateUsersListRecentMetrics(dict) {
     return getValidator('users', dict, true);
 }
 
@@ -79,7 +79,7 @@ export function validateUsersListRecentMetrics(dict) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateServiceListMetrics(dict) {
+function validateServiceListMetrics(dict) {
     return getValidator('service', dict);
 }
 
@@ -89,6 +89,17 @@ export function validateServiceListMetrics(dict) {
  * @param {object} dict - Input fields for route
  * @return {function} the return value of `getValidator`
  */
-export function validateServiceListRecentMetrics(dict) {
+function validateServiceListRecentMetrics(dict) {
     return getValidator('service', dict, true);
 }
+
+module.exports = {
+    validateBucketsListMetrics,
+    validateBucketsListRecentMetrics,
+    validateAccountsListMetrics,
+    validateAccountsListRecentMetrics,
+    validateUsersListMetrics,
+    validateUsersListRecentMetrics,
+    validateServiceListMetrics,
+    validateServiceListRecentMetrics,
+};

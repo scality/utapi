@@ -9,7 +9,7 @@
 * @param {string} jsonStr - stringified json
 * @return {Response} - response object
 */
-export default function safeJsonParse(jsonStr) {
+function safeJsonParse(jsonStr) {
     let result = null;
     try {
         result = JSON.parse(jsonStr);
@@ -18,3 +18,5 @@ export default function safeJsonParse(jsonStr) {
     }
     return { error: null, result };
 }
+
+module.exports = safeJsonParse;

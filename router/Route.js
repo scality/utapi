@@ -1,7 +1,7 @@
 /**
  * This class is used to retain information about a route
  */
-export default class Route {
+class Route {
 
     /**
      * Constructor
@@ -78,3 +78,5 @@ export default class Route {
         return this._properties.resource;
     }
 }
+
+module.exports = Route;

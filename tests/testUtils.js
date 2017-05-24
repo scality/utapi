@@ -1,4 +1,4 @@
-import { getKeys, getCounters } from '../src/lib/schema';
+const { getKeys, getCounters } = require('../lib/schema');
 
 const resouceTypes = ['buckets', 'accounts', 'service'];
 const propertyNames = {
@@ -10,7 +10,7 @@ const resources = {
     accounts: 'foo-account',
 };
 
-export function getNormalizedTimestamp() {
+function getNormalizedTimestamp() {
     const d = new Date();
     const minutes = d.getMinutes();
     return d.setMinutes((minutes - minutes % 15), 0, 0);
@@ -26,7 +26,7 @@ function _getResourceTypeObject(resourceType) {
 }
 
 // Get all keys for each resource type from the schema.
-export function getAllResourceTypeKeys() {
+function getAllResourceTypeKeys() {
     const timestamp = getNormalizedTimestamp(Date.now());
     const allResourceTypeKeys = resouceTypes.map(resourceType => {
         const obj = _getResourceTypeObject(resourceType);
@@ -37,3 +37,8 @@ export function getAllResourceTypeKeys() {
     // Concatenate each array of resourceType keys into one single array.
     return [].concat.apply([], allResourceTypeKeys);
 }
+
+module.exports = {
+    getAllResourceTypeKeys,
+    getNormalizedTimestamp,
+};

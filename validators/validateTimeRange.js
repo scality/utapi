@@ -3,7 +3,7 @@
 * @param {number[]} timeRange - array of bucket names
 * @return {boolean} - validation result
 */
-export default function validateTimeRange(timeRange) {
+function validateTimeRange(timeRange) {
     if (Array.isArray(timeRange) && timeRange.length > 0 && timeRange.length < 3
         && timeRange.every(item => typeof item === 'number')) {
         // check for start time
@@ -45,3 +45,5 @@ export default function validateTimeRange(timeRange) {
     }
     return false;
 }
+
+module.exports = validateTimeRange;

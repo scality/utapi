@@ -1,6 +1,6 @@
-import { errors } from 'arsenal';
-import validateMetric from './validateMetric';
-import validateTimeRange from './validateTimeRange';
+const { errors } = require('arsenal');
+const validateMetric = require('./validateMetric');
+const validateTimeRange = require('./validateTimeRange');
 
 const _keys = Symbol();
 const _dict = Symbol();
@@ -39,7 +39,7 @@ const keyError = new Map([
  *
  * @class Validator
  */
-export default class Validator {
+class Validator {
 
     /**
      * Constructor
@@ -139,3 +139,5 @@ export default class Validator {
     }
 
 }
+
+module.exports = Validator;

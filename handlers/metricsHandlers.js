@@ -1,4 +1,4 @@
-import ListMetrics from '../lib/ListMetrics';
+const ListMetrics = require('../lib/ListMetrics');
 
 function listRecentMetrics(utapiRequest, metric, service, cb) {
     const log = utapiRequest.getLog();
@@ -14,7 +14,7 @@ function listRecentMetrics(utapiRequest, metric, service, cb) {
  * Handles Buckets resource actions
  */
 
-export class BucketsHandler {
+class BucketsHandler {
     /**
     * List metrics for the given list of buckets
     * @param {UtapiRequest} utapiRequest - UtapiRequest instance
@@ -49,7 +49,7 @@ export class BucketsHandler {
  * Handles Accounts resource actions
  */
 
-export class AccountsHandler {
+class AccountsHandler {
     /**
     * List metrics for the given list of accounts
     * @param {UtapiRequest} utapiRequest - UtapiRequest instance
@@ -84,7 +84,7 @@ export class AccountsHandler {
  * Handles Services resource actions
  */
 
-export class ServiceHandler {
+class ServiceHandler {
     /**
     * List metrics for the given list of services
     * @param {UtapiRequest} utapiRequest - UtapiRequest instance
@@ -119,7 +119,7 @@ export class ServiceHandler {
  * Handles Users resource actions
  */
 
-export class UsersHandler {
+class UsersHandler {
     /**
     * List metrics for the given list of users
     * @param {UtapiRequest} utapiRequest - UtapiRequest instance
@@ -148,3 +148,10 @@ export class UsersHandler {
         return listRecentMetrics(utapiRequest, 'users', service, cb);
     }
 }
+
+module.exports = {
+    BucketsHandler,
+    AccountsHandler,
+    ServiceHandler,
+    UsersHandler,
+};
