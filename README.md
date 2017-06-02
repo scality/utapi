@@ -178,13 +178,13 @@ docker exec -it <container id> bash
 and then run the command
 
 ```
-node bin/list_bucket_metrics
+node bin/list_metrics
 ```
 
 It will generate the following output listing available options.
 
 ```
-Usage: list_bucket_metrics [options]
+Usage: list_metrics [options]
 
   Options:
 
@@ -192,9 +192,17 @@ Usage: list_bucket_metrics [options]
     -V, --version                 output the version number
     -a, --access-key <accessKey>  Access key id
     -k, --secret-key <secretKey>  Secret access key
-    -b, --buckets <buckets>       Name of bucket(s)with a comma separator if
+    -m, --metric <metric>         Metric type
+    --buckets <buckets>           Name of bucket(s) with a comma separator if
                                   more than one
+    --accounts <accounts>         Account ID(s) with a comma separator if more
+                                  than one
+    --users <users>               User ID(s) with a comma separator if more than
+                                  one
+    --service <service>           Name of service
     -s, --start <start>           Start of time range
+    -r, --recent                  List metrics including the previous and
+                                  current 15 minute interval
     -e --end <end>                End of time range
     -h, --host <host>             Host of the server
     -p, --port <port>             Port of the server
@@ -206,8 +214,8 @@ A typical call to list metrics for a bucket `demo` to Utapi in a https enabled
 deployment would be
 
 ```
-node bin/list_bucket_metrics -a myAccessKey -k mySecretKey -b demo -s
-1476231300000 -h 127.0.0.1 -p 8100 --ssl
+node bin/list_metrics --metric buckets --buckets demo --start 1476231300000
+--end 1476233099999 -a myAccessKey -k mySecretKey -h 127.0.0.1 -p 8100 --ssl
 ```
 
 Both start and end times are time expressed as UNIX epoch timestamps **expressed
@@ -236,7 +244,7 @@ function getStartTimestamp(t) {
     const minutes = time.getMinutes();
     const timestamp = time.setMinutes((minutes - minutes % 15), 0, 0);
     return timestamp;
-},
+}
 ```
 
 This would format the start time timestamp to `1476231300000`
