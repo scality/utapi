@@ -89,7 +89,7 @@ Server is running.
     aws iam --endpoint-url <endpoint> create-access-key --user-name utapiuser
     ```
 
-3. Create a managed IAM policy
+3. Define a managed IAM policy
 
     sample utapi policy
 
@@ -102,16 +102,69 @@ Server is running.
                 "Sid": "utapiMetrics",
                 "Action": [ "utapi:ListMetrics" ],
                 "Effect": "Allow",
-                "Resource": "arn:scality:utapi:::buckets/*"
+                "Resource": [
+                    "arn:scality:utapi::012345678901:buckets/*",
+                    "arn:scality:utapi::012345678901:accounts/*",
+                    "arn:scality:utapi::012345678901:users/*",
+                ]
             }
         ]
     }
     EOF
     ```
 
-    The user can also be restricted to only some buckets
-    (foo bucket for example) by changing the `Resource` property to
-    `"Resource": "arn:scality:utapi:::buckets/foo"`
+    In the above sample, the `Resource` property includes a series of Amazon
+    Resource Names (ARNs) used to define which resources the policy applies to.
+    Thus the sample policy applies to a user with an account ID '012345678901',
+    and grants access to metrics at the levels 'buckets', 'accounts', and
+    'users'.
+
+    The account ID of the ARN can also be omitted, allowing any account to
+    access metrics for those resources. As an example, we can extend the above
+    sample policy to allow any account to access metrics at the level 'service':
+
+    ```json
+    ...
+    "Resource": [
+        "arn:scality:utapi::012345678901:buckets/*",
+        "arn:scality:utapi::012345678901:accounts/*",
+        "arn:scality:utapi::012345678901:users/*",
+        "arn:scality:utapi:::service/*",
+    ]
+    ...
+    ```
+
+    The omission of a metric level denies a user access to all resources at that
+    level. For example, we can allow access to metrics only at the level
+    'buckets':
+
+    ```json
+    ...
+    "Resource": ["arn:scality:utapi::012345678901:buckets/*"]
+    ...
+    ```
+
+    Further, access may be limited to specific resources within a metric level.
+    For example, we can allow access to metrics only for a bucket  'foo':
+
+    ```json
+    ...
+    "Resource": ["arn:scality:utapi::012345678901:buckets/foo"]
+    ...
+    ```
+
+    Or allow access to metrics for the bucket 'foo' for any user:
+
+    ```json
+    ...
+    "Resource": ["arn:scality:utapi:::buckets/foo"]
+    ...
+    ```
+
+4. Create a managed IAM policy
+
+    Once your IAM policy is defined, create the policy using the following
+    command.
 
     ```
     aws iam --endpoint-url <endpoint> create-policy --policy-name utapipolicy \
@@ -139,7 +192,7 @@ Server is running.
     The arn property of the response, which we call `<policy arn>`, will be used
     in the next step to attach the policy to the user.
 
-4. Attach user to the managed policy
+5. Attach user to the managed policy
 
     ```
     aws --endpoint-url <endpoint> iam  attach-user-policy --user-name utapiuser
