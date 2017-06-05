@@ -4,6 +4,8 @@ const Datastore = require('../../lib/Datastore');
 const MemoryBackend = require('../../lib/backend/Memory');
 const UtapiClient = require('../../lib/UtapiClient');
 const { getNormalizedTimestamp } = require('../testUtils');
+const { genericOperations, getS3Operation } =
+    require('../../utils/S3operations');
 
 const memoryBackend = new MemoryBackend();
 const ds = new Datastore();
@@ -131,66 +133,13 @@ describe('UtapiClient:: push metrics', () => {
 
     afterEach(() => memoryBackend.flushDb());
 
-    it('should push createBucket metrics', done => {
-        const expected = getObject(timestamp, { action: 'CreateBucket' });
-        testMetric('createBucket', metricTypes, expected, done);
-    });
+    genericOperations.forEach(metric => {
+        const expected = getObject(timestamp, {
+            action: getS3Operation(metric),
+        });
 
-    it('should push deleteBucket metrics', done => {
-        const expected = getObject(timestamp, { action: 'DeleteBucket' });
-        testMetric('deleteBucket', metricTypes, expected, done);
-    });
-
-    it('should push listBucket metrics', done => {
-        const expected = getObject(timestamp, { action: 'ListBucket' });
-        testMetric('listBucket', metricTypes, expected, done);
-    });
-
-    it('should push getBucketAcl metrics', done => {
-        const expected = getObject(timestamp, { action: 'GetBucketAcl' });
-        testMetric('getBucketAcl', metricTypes, expected, done);
-    });
-
-    it('should push putBucketAcl metrics', done => {
-        const expected = getObject(timestamp, { action: 'PutBucketAcl' });
-        testMetric('putBucketAcl', metricTypes, expected, done);
-    });
-
-    it('should push putBucketCors metrics', done => {
-        const expected = getObject(timestamp, { action: 'PutBucketCors' });
-        testMetric('putBucketCors', metricTypes, expected, done);
-    });
-
-    it('should push getBucketCors metrics', done => {
-        const expected = getObject(timestamp, { action: 'GetBucketCors' });
-        testMetric('getBucketCors', metricTypes, expected, done);
-    });
-
-    it('should push deleteBucketCors metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'DeleteBucketCors' });
-        testMetric('deleteBucketCors', metricTypes, expected, done);
-    });
-
-    it('should push putBucketWebsite metrics', done => {
-        const expected = getObject(timestamp, { action: 'PutBucketWebsite' });
-        testMetric('putBucketWebsite', metricTypes, expected, done);
-    });
-
-    it('should push getBucketWebsite metrics', done => {
-        const expected = getObject(timestamp, { action: 'GetBucketWebsite' });
-        testMetric('getBucketWebsite', metricTypes, expected, done);
-    });
-
-    it('should push getBucketLocation metrics', done => {
-        const expected = getObject(timestamp, { action: 'GetBucketLocation' });
-        testMetric('getBucketLocation', metricTypes, expected, done);
-    });
-
-    it('should push deleteBucketWebsite metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'DeleteBucketWebsite' });
-        testMetric('deleteBucketWebsite', metricTypes, expected, done);
+        it(`should push ${metric} metrics`, done =>
+            testMetric(metric, metricTypes, expected, done));
     });
 
     it('should push uploadPart metrics', done => {
@@ -221,12 +170,6 @@ describe('UtapiClient:: push metrics', () => {
             testMetric('uploadPart', params, expected, done));
     });
 
-    it('should push initiateMultipartUpload metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'InitiateMultipartUpload' });
-        testMetric('initiateMultipartUpload', metricTypes, expected, done);
-    });
-
     it('should push completeMultipartUpload metrics', done => {
         const expected = getObject(timestamp, {
             action: 'CompleteMultipartUpload',
@@ -239,12 +182,6 @@ describe('UtapiClient:: push metrics', () => {
         const expected = getObject(timestamp,
             { action: 'ListBucketMultipartUploads' });
         testMetric('listMultipartUploads', metricTypes, expected, done);
-    });
-
-    it('should push listMultipartUploadParts metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'ListMultipartUploadParts' });
-        testMetric('listMultipartUploadParts', metricTypes, expected, done);
     });
 
     it('should push abortMultipartUpload metrics', done => {
@@ -306,18 +243,6 @@ describe('UtapiClient:: push metrics', () => {
         });
         Object.assign(params, metricTypes, { newByteLength: 1024 });
         testMetric('getObject', params, expected, done);
-    });
-
-    it('should push getObjectAcl metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'GetObjectAcl' });
-        testMetric('getObjectAcl', metricTypes, expected, done);
-    });
-
-    it('should push getObjectTagging metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'GetObjectTagging' });
-        testMetric('getObjectTagging', metricTypes, expected, done);
     });
 
     it('should push putObject metrics', done => {
@@ -388,46 +313,6 @@ describe('UtapiClient:: push metrics', () => {
             testMetric('copyObject', params, expected, done));
     });
 
-    it('should push putObjectAcl metrics', done => {
-        const expected = getObject(timestamp, { action: 'PutObjectAcl' });
-        testMetric('putObjectAcl', metricTypes, expected, done);
-    });
-
-    it('should push putObjectTagging metrics', done => {
-        const expected = getObject(timestamp, { action: 'PutObjectTagging' });
-        testMetric('putObjectTagging', metricTypes, expected, done);
-    });
-
-    it('should push deleteObjectTagging metrics', done => {
-        const expected = getObject(timestamp, { action:
-          'DeleteObjectTagging' });
-        testMetric('deleteObjectTagging', metricTypes, expected, done);
-    });
-
-    it('should push headBucket metrics', done => {
-        const expected = getObject(timestamp, { action: 'HeadBucket' });
-        testMetric('headBucket', metricTypes, expected, done);
-    });
-
-    it('should push headObject metrics', done => {
-        const expected = getObject(timestamp, { action: 'HeadObject' });
-        testMetric('headObject', metricTypes, expected, done);
-    });
-
-    it('should push putBucketVersioning metrics', done => {
-        const expected = getObject(timestamp, {
-            action: 'PutBucketVersioning',
-        });
-        testMetric('putBucketVersioning', metricTypes, expected, done);
-    });
-
-    it('should push getBucketVersioning metrics', done => {
-        const expected = getObject(timestamp, {
-            action: 'GetBucketVersioning',
-        });
-        testMetric('getBucketVersioning', metricTypes, expected, done);
-    });
-
     // Putting a delete marker increments deleteObject and numberOfObjects
     it('should push putDeleteMarkerObject metrics', done => {
         const expected = getObject(timestamp, {
@@ -435,13 +320,6 @@ describe('UtapiClient:: push metrics', () => {
             numberOfObjects: '1',
         });
         testMetric('putDeleteMarkerObject', metricTypes, expected, done);
-    });
-
-    it('should push putBucketReplication metrics', done => {
-        const expected = getObject(timestamp, {
-            action: 'PutBucketReplication',
-        });
-        testMetric('putBucketReplication', metricTypes, expected, done);
     });
 
     // Allows for decoupling of projects that use Utapi

@@ -5,6 +5,8 @@ const ListMetrics = require('../../lib/ListMetrics');
 const { generateStateKey, generateKey } = require('../../lib/schema');
 const { Logger } = require('werelogs');
 const s3metricResponseJSON = require('../../models/s3metricResponse');
+const { genericOperations, getS3Operation } =
+    require('../../utils/S3operations');
 const logger = new Logger('UtapiTest');
 const memBackend = new MemoryBackend();
 const datastore = new Datastore();
@@ -118,45 +120,6 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for outgoing bytes`, done =>
             testOps(schemaKey, 'outgoingBytes', 'outgoingBytes', done));
 
-        it(`should return ${metric} level metrics for delete bucket`, done =>
-            testOps(schemaKey, 'deleteBucket', 's3:DeleteBucket', done));
-
-        it(`should return ${metric} level metrics for list bucket`, done =>
-            testOps(schemaKey, 'listBucket', 's3:ListBucket', done));
-
-        it(`should return ${metric} level metrics for get bucket acl`, done =>
-            testOps(schemaKey, 'getBucketAcl', 's3:GetBucketAcl', done));
-
-        it(`should return ${metric} level metrics for get bucket location`,
-        done =>
-            testOps(schemaKey, 'getBucketLocation', 's3:GetBucketLocation',
-            done));
-
-        it(`should return ${metric} level metrics for put bucket acl`, done =>
-            testOps(schemaKey, 'putBucketAcl', 's3:PutBucketAcl', done));
-
-        it(`should return ${metric} level metrics for get bucket cors`, done =>
-            testOps(schemaKey, 'getBucketCors', 's3:GetBucketCors', done));
-
-        it(`should return ${metric} level metrics for put bucket cors`, done =>
-            testOps(schemaKey, 'putBucketCors', 's3:PutBucketCors', done));
-
-        it(`should return ${metric} level metrics for delete bucket cors`,
-            done => testOps(schemaKey, 'deleteBucketCors',
-                's3:DeleteBucketCors', done));
-
-        it(`should return ${metric} level metrics for get bucket website`,
-            done => testOps(schemaKey, 'getBucketWebsite',
-                's3:GetBucketWebsite', done));
-
-        it(`should return ${metric} level metrics for put bucket website`,
-            done => testOps(schemaKey, 'putBucketWebsite',
-                's3:PutBucketWebsite', done));
-
-        it(`should return ${metric} level metrics for delete bucket website`,
-            done => testOps(schemaKey, 'deleteBucketWebsite',
-                's3:DeleteBucketWebsite', done));
-
         it(`should return ${metric} level metrics for put object`, done =>
             testOps(schemaKey, 'putObject', 's3:PutObject', done));
 
@@ -169,14 +132,6 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for list bucket multipart ` +
             'uploads', done => testOps(schemaKey, 'listBucketMultipartUploads',
                 's3:ListBucketMultipartUploads', done));
-
-        it(`should return ${metric} level metrics for list multipart upload ` +
-            'parts', done => testOps(schemaKey, 'listMultipartUploadParts',
-                's3:ListMultipartUploadParts', done));
-
-        it(`should return ${metric} level metrics for initiate multipart ` +
-            'upload', done => testOps(schemaKey, 'initiateMultipartUpload',
-                's3:InitiateMultipartUpload', done));
 
         it(`should return ${metric} level metrics for complete multipart ` +
             'upload', done => testOps(schemaKey, 'completeMultipartUpload',
@@ -196,40 +151,10 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for get object`, done =>
             testOps(schemaKey, 'getObject', 's3:GetObject', done));
 
-        it(`should return ${metric} level metrics for get object acl`, done =>
-            testOps(schemaKey, 'getObjectAcl', 's3:GetObjectAcl', done));
-
-        it(`should return ${metric} level metrics for get object tagging`,
-            done => testOps(schemaKey, 'getObjectTagging',
-            's3:GetObjectTagging', done));
-
-        it(`should return ${metric} level metrics for put object acl`, done =>
-            testOps(schemaKey, 'putObjectAcl', 's3:PutObjectAcl', done));
-
-        it(`should return ${metric} level metrics for put object tagging`,
-          done => testOps(schemaKey, 'putObjectTagging', 's3:PutObjectTagging',
-          done));
-
-        it(`should return ${metric} level metrics for delete object tagging`,
-          done => testOps(schemaKey, 'deleteObjectTagging',
-          's3:DeleteObjectTagging', done));
-
-        it(`should return ${metric} level metrics for head bucket`, done =>
-            testOps(schemaKey, 'headBucket', 's3:HeadBucket', done));
-
-        it(`should return ${metric} level metrics for head object`, done =>
-            testOps(schemaKey, 'headObject', 's3:HeadObject', done));
-
-        it(`should return ${metric} level metrics for put bucket versioning`,
-            done => testOps(schemaKey, 'putBucketVersioning',
-            's3:PutBucketVersioning', done));
-
-        it(`should return ${metric} level metrics for get bucket versioning`,
-            done => testOps(schemaKey, 'getBucketVersioning',
-            's3:GetBucketVersioning', done));
-
-        it(`should return ${metric} level metrics for put bucket replication`,
-            done => testOps(schemaKey, 'putBucketReplication',
-            's3:PutBucketReplication', done));
+        genericOperations.forEach(operation => {
+            it(`should return ${metric} level metrics for ${operation}`,
+                done => testOps(schemaKey, operation,
+                    `s3:${getS3Operation(operation)}`, done));
+        });
     });
 });

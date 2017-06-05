@@ -5,6 +5,7 @@ const UtapiReplay = require('../../lib/UtapiReplay');
 const UtapiClient = require('../../lib/UtapiClient');
 const Datastore = require('../../lib/Datastore');
 const redisClient = require('../../utils/redisClient');
+const { genericOperations } = require('../../utils/S3operations');
 const { getAllResourceTypeKeys } = require('../testUtils');
 const safeJsonParse = require('../../utils/safeJsonParse');
 const localCache = redisClient({
@@ -25,43 +26,26 @@ const utapiClient = new UtapiClient({
 });
 const log = new Logger();
 const objSize = 1024;
-// All actions supported by Utapi.
-const actions = [
-    'createBucket',
-    'deleteBucket',
-    'listBucket',
-    'getBucketAcl',
-    'putBucketAcl',
-    'putBucketCors',
-    'getBucketCors',
-    'deleteBucketCors',
-    'putBucketWebsite',
-    'getBucketWebsite',
-    'getBucketLocation',
-    'deleteBucketWebsite',
-    'uploadPart',
-    'initiateMultipartUpload',
-    'completeMultipartUpload',
-    'listMultipartUploads',
-    'listMultipartUploadParts',
-    'abortMultipartUpload',
-    'deleteObject',
-    'multiObjectDelete',
-    'getObject',
-    'getObjectAcl',
-    'getObjectTagging',
-    'putObject',
-    'copyObject',
-    'putObjectAcl',
-    'putObjectTagging',
-    'deleteObjectTagging',
-    'headBucket',
-    'headObject',
-    'putBucketVersioning',
-    'getBucketVersioning',
-    'putDeleteMarkerObject',
-    'putBucketReplication',
-];
+
+// Get all actions supported by Utapi.
+function getAllActions() {
+    const actions = [
+        'uploadPart',
+        'completeMultipartUpload',
+        'listMultipartUploads',
+        'abortMultipartUpload',
+        'deleteObject',
+        'multiObjectDelete',
+        'getObject',
+        'putObject',
+        'copyObject',
+        'putDeleteMarkerObject',
+    ];
+    genericOperations.forEach(action => actions.push(action));
+    return actions;
+}
+
+const actions = getAllActions();
 
 // Get the proper params object for a pushMetric call for the given action.
 function getParams(action) {
