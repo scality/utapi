@@ -5,7 +5,7 @@ const MemoryBackend = require('../../lib/backend/Memory');
 const UtapiClient = require('../../lib/UtapiClient');
 const { getNormalizedTimestamp } = require('../testUtils');
 const { genericOperations, getS3Operation } =
-    require('../../utils/genericOperations');
+    require('../../utils/S3operations');
 
 const memoryBackend = new MemoryBackend();
 const ds = new Datastore();

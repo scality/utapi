@@ -6,7 +6,7 @@ const { generateStateKey, generateKey } = require('../../lib/schema');
 const { Logger } = require('werelogs');
 const s3metricResponseJSON = require('../../models/s3metricResponse');
 const { genericOperations, getS3Operation } =
-    require('../../utils/genericOperations');
+    require('../../utils/S3operations');
 const logger = new Logger('UtapiTest');
 const memBackend = new MemoryBackend();
 const datastore = new Datastore();
