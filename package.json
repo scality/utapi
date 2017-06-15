@@ -37,6 +37,5 @@
     "lint_md": "mdlint $(git ls-files '*.md')",
     "start": "node index.js",
     "test": "mocha --recursive tests/unit"
-  },
-  "private": true
+  }
 }
