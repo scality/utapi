@@ -34,17 +34,52 @@ class UtapiServer {
         routes.forEach(item => this.router.addRoute(new Route(item)));
     }
 
+    /**
+     * Function to validate a URI component
+     *
+     * @param {string|object} component - path from url.parse of request.url
+     * (pathname plus query) or query from request
+     * @return {string|undefined} If `decodeURIComponent` throws an error,
+     * return the invalid `decodeURIComponent` string, otherwise return
+     * `undefined`
+     */
+    _checkURIComponent(component) {
+        if (typeof component === 'string') {
+            try {
+                decodeURIComponent(component);
+            } catch (err) {
+                return true;
+            }
+        } else {
+            return Object.keys(component).find(x => {
+                try {
+                    decodeURIComponent(x);
+                    decodeURIComponent(component[x]);
+                } catch (err) {
+                    return true;
+                }
+                return false;
+            });
+        }
+        return undefined;
+    }
+
     requestListener(req, res, router) {
         // disable nagle algorithm
         req.socket.setNoDelay();
-        const { query, path } = url.parse(req.url, true);
+        const { query, path, pathname } = url.parse(req.url, true);
         const utapiRequest = new UtapiRequest()
             .setRequest(req)
             .setLog(this.logger.newRequestLogger())
             .setResponse(res)
-            .setDatastore(this.datastore)
-            .setRequestQuery(query)
-            .setRequestPath(path);
+            .setDatastore(this.datastore);
+        // Sanity check for valid URI component
+        if (this._checkURIComponent(query) || this._checkURIComponent(path)) {
+            return this.errorResponse(utapiRequest, errors.InvalidURI);
+        }
+        utapiRequest.setRequestQuery(query);
+        utapiRequest.setRequestPath(path);
+        utapiRequest.setRequestPathname(pathname);
         // temp hack: healthcheck route
         if (path === '/_/healthcheck' && (req.method === 'GET'
             || req.method === 'POST')) {
