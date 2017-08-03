@@ -19,10 +19,10 @@ export default class UtapiReplay {
      * @param {object} [config] - The configuration of UtapiReplay
      * @param {object} [config.log] - Object defining the level and dumplevel of
      * the log
-     * @param {object} [config.redis] - Object defining the host and port of the
-     * Redis datastore
-     * @param {object} [config.localCache] - Object defining the host and port
-     * of the local cache datastore
+     * @param {object} [config.redis] - Object defining the host, port and
+     * password(optional) of the Redis datastore
+     * @param {object} [config.localCache] - Object defining the host, port and
+     * password(optional) of the local cache datastore
      * @param {number} [config.batchSize] - The batch size to get metrics from
      * Redis datastore
      * @param {string} [config.replaySchedule] - The Cron-style schedule at
