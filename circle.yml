@@ -1,16 +1,19 @@
 general:
-    branches:
-        ignore:
-            - /^ultron\/.*/ # Ignore ultron/* branches
+  branches:
+    ignore:
+      - /^ultron\/.*/ # Ignore ultron/* branches
 
 machine:
-    node:
-        version: 6.9.5
-    services:
-        - redis
+  node:
+      version: 6.9.5
+  services:
+      - redis
+  environment:
+    CXX: g++-4.9
+
 test:
-    override:
-        - npm run --silent lint_md
-        - npm run --silent lint
-        - npm test
-        - npm run ft_test
+  override:
+    - npm run --silent lint_md
+    - npm run --silent lint
+    - npm test
+    - npm run ft_test
