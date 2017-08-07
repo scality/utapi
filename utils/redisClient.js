@@ -3,6 +3,9 @@ const Redis = require('ioredis');
 /**
 * Creates a new Redis client instance
 * @param {object} config - redis configuration
+* @param {string} config.host - redis host
+* @param {number} config.port - redis port
+* @param {string} [config.password] - redis password (optional)
 * @param {Werelogs} log - Werelogs logger
 * @return {Redis} - Redis client instance
 */
