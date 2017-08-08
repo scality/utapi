@@ -7,10 +7,12 @@ const Datastore = require('../../lib/Datastore');
 const redisClient = require('../../utils/redisClient');
 const { getAllResourceTypeKeys } = require('../testUtils');
 const safeJsonParse = require('../../utils/safeJsonParse');
+
+const log = new Logger('UTAPIReplayTest');
 const localCache = redisClient({
     host: '127.0.0.1',
     port: 6379,
-}, Logger);
+}, log);
 const datastore = new Datastore().setClient(localCache);
 const utapiClient = new UtapiClient({
     redis: {
@@ -23,7 +25,6 @@ const utapiClient = new UtapiClient({
     },
     component: 's3',
 });
-const log = new Logger();
 const objSize = 1024;
 // All actions supported by Utapi.
 const actions = [
