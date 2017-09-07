@@ -105,14 +105,10 @@ function checkListElement(action, params, res) {
         'incorrect timestamp value');
     assert(reqUid !== undefined,
         `reqUid property not in cached element: ${action}`);
-    const reqLog = log.newRequestLoggerFromSerializedUids(reqUid);
-    const reqUids = reqLog.getSerializedUids();
-    // The first two reqUidss should be those in the response.
-    const expectedReqUid = reqUids.substring(0, reqUids.lastIndexOf(':'));
     // We want the action and original params for use during the replay.
     assert.deepStrictEqual(result, {
         action,
-        reqUid: expectedReqUid,
+        reqUid,
         params,
         timestamp,
     }, `incorrect value for action: ${action}`);
