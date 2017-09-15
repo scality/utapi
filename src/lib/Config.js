@@ -101,6 +101,11 @@ class Config {
                 this.redis.host = config.redis.host;
                 this.redis.port = config.redis.port;
             }
+            if (config.redis.password !== undefined) {
+                assert(typeof config.redis.password === 'string',
+                'bad confg: redis.password must be a string');
+                this.redis.password = config.redis.password;
+            }
         }
 
         this.vaultd = {};

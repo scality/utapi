@@ -48,10 +48,11 @@ const keys = {
 * @return {string} - prefix for the schema key
 */
 function getSchemaPrefix(params, timestamp) {
-    const { bucket, accountId, level } = params;
-    const id = bucket || accountId;
-    const prefix = timestamp ? `s3:${level}:${timestamp}:${id}:` :
-        `s3:${level}:${id}:`;
+    const { bucket, accountId, userId, level, service } = params;
+    // `service` property must remain last because other objects also include it
+    const id = bucket || accountId || userId || service;
+    const prefix = timestamp ? `${service}:${level}:${timestamp}:${id}:` :
+        `${service}:${level}:${id}:`;
     return prefix;
 }
 
@@ -91,19 +92,13 @@ export function getKeys(params, timestamp) {
 /**
 * Returns metric from key
 * @param {string} key - schema key
-* @param {string} value - the metric value
-* @param {string} metricType - the metric type
-* @return {string|undefined} metric - S3 metric or `undefined`
+* @return {string} metric - Utapi metric
 */
-export function getMetricFromKey(key, value, metricType) {
-    if (metricType === 'buckets') {
-        // s3:buckets:1473451689898:demo:putObject
-        return key.slice(25).replace(`${value}:`, '');
-    } else if (metricType === 'accounts') {
-        // s3:accounts:1473451689898:demo:putObject
-        return key.slice(26).replace(`${value}:`, '');
-    }
-    return undefined;
+export function getMetricFromKey(key) {
+    const fields = key.split(':');
+    // Identify the location of the metric in the array.
+    const metricLocation = key.includes('counter') ? -2 : -1;
+    return fields[fields.length + metricLocation];
 }
 
 /**

@@ -1,7 +1,9 @@
 import async from 'async';
 import { errors } from 'arsenal';
 import { getMetricFromKey, getKeys, generateStateKey } from './schema';
-import metricResponseJSON from '../../models/metricResponse';
+import s3metricResponseJSON from '../../models/s3metricResponse';
+import config from './Config';
+import Vault from './Vault';
 
 /**
 * Provides methods to get metrics of different levels
@@ -11,9 +13,12 @@ export default class ListMetrics {
     /**
      * Assign the metric property to an instance of this class
      * @param {string} metric - The metric type (e.g., 'buckets', 'accounts')
+     * @param {string} component - The service component (e.g., 's3')
      */
-    constructor(metric) {
+    constructor(metric, component) {
         this.metric = metric;
+        this.service = component;
+        this.vault = new Vault(config);
     }
 
     /**
@@ -22,15 +27,18 @@ export default class ListMetrics {
      * @return {object} obj - Object with a key-value pair for a schema method
      */
     _getSchemaObject(resource) {
-        let type;
-        if (this.metric === 'buckets') {
-            type = 'bucket';
-        } else if (this.metric === 'accounts') {
-            type = 'accountId';
-        }
-        const obj = {};
-        obj[type] = resource;
-        obj.level = this.metric;
+        // Include service to generate key for any non-service level metric
+        const obj = {
+            level: this.metric,
+            service: this.service,
+        };
+        const schemaKeys = {
+            buckets: 'bucket',
+            accounts: 'accountId',
+            users: 'userId',
+            service: 'service',
+        };
+        obj[schemaKeys[this.metric]] = resource;
         return obj;
     }
 
@@ -38,11 +46,13 @@ export default class ListMetrics {
     _getMetricResponse(resource, start, end) {
         // Use `JSON.parse` to make deep clone because `Object.assign` will
         // copy property values.
-        const metricResponse = JSON.parse(JSON.stringify(metricResponseJSON));
+        const metricResponse = JSON.parse(JSON.stringify(s3metricResponseJSON));
         metricResponse.timeRange = [start, end];
         const metricResponseKeys = {
             buckets: 'bucketName',
             accounts: 'accountId',
+            users: 'userId',
+            service: 'serviceName',
         };
         metricResponse[metricResponseKeys[this.metric]] = resource;
         return metricResponse;
@@ -67,6 +77,50 @@ export default class ListMetrics {
         const validator = utapiRequest.getValidator();
         const resources = validator.get(this.metric);
         const timeRange = validator.get('timeRange');
+        const datastore = utapiRequest.getDatastore();
+        // map account ids to canonical ids
+        if (this.metric === 'accounts') {
+            return this.vault.getCanonicalIds(resources, log, (err, list) => {
+                if (err) {
+                    return cb(err);
+                }
+                return async.mapLimit(list.message.body, 5,
+                    (item, next) => this.getMetrics(item.canonicalId, timeRange,
+                        datastore, log, (err, res) => {
+                            if (err) {
+                                return next(err);
+                            }
+                            return next(null, Object.assign({}, res,
+                            { accountId: item.accountId }));
+                        }),
+                        cb
+                    );
+            });
+        }
+        return async.mapLimit(resources, 5, (resource, next) =>
+            this.getMetrics(resource, timeRange, datastore, log,
+                next), cb
+        );
+    }
+
+    /**
+    * Get metrics starting from the second most recent normalized timestamp
+    * range (e.g., if it is 6:31 when the request is made, then list metrics
+    * starting from 6:15).
+    * @param {utapiRequest} utapiRequest - utapiRequest instance
+    * @param {ListMetrics~bucketsMetricsCb} cb - callback
+    * @return {undefined}
+    */
+    getRecentTypesMetrics(utapiRequest, cb) {
+        const log = utapiRequest.getLog();
+        const validator = utapiRequest.getValidator();
+        const resources = validator.get(this.metric);
+        const end = Date.now();
+        const d = new Date(end);
+        const minutes = d.getMinutes();
+        const start = d.setMinutes((minutes - minutes % 15), 0, 0);
+        const fifteenMinutes = 15 * 60 * 1000; // In milliseconds
+        const timeRange = [start - fifteenMinutes, end];
         const datastore = utapiRequest.getDatastore();
         async.mapLimit(resources, 5, (resource, next) =>
             this.getMetrics(resource, timeRange, datastore, log,
@@ -200,13 +254,14 @@ export default class ListMetrics {
                         cmd: key,
                     });
                 } else {
-                    const m = getMetricFromKey(key, resource, this.metric);
+                    const m = getMetricFromKey(key);
                     let count = parseInt(item[1], 10);
                     count = Number.isNaN(count) ? 0 : count;
                     if (m === 'incomingBytes' || m === 'outgoingBytes') {
                         metricResponse[m] += count;
                     } else {
-                        metricResponse.operations[`s3:${m}`] += count;
+                        metricResponse.operations[`${this.service}:${m}`] +=
+                            count;
                     }
                 }
             });

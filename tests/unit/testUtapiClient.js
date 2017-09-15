@@ -12,33 +12,35 @@ const REQUID = 'aaaaaaaaaaaaaaaaaaa';
 const metricTypes = {
     bucket: 'foo-bucket',
     accountId: 'foo-account',
+    userId: 'foo-user',
 };
 const redisLocal = { host: 'localhost', port: 6379 };
 const config = {
     redis: redisLocal,
     localCache: redisLocal,
+    component: 's3',
 };
 
-// Get prefix values to construct the expected Redis schema keys
+// Build prefix values to construct the expected Redis schema keys
 function getPrefixValues(timestamp) {
-    const arr = [];
-    Object.keys(metricTypes).forEach(metric => {
-        if (metricTypes[metric] === undefined) {
-            return;
-        }
-        const name = metricTypes[metric];
-        let type;
-        if (metric === 'bucket') {
-            type = 'buckets';
-        } else if (metric === 'accountId') {
-            type = 'accounts';
-        }
-        arr.push({
-            key: `s3:${type}:${name}`,
-            timestampKey: `s3:${type}:${timestamp}:${name}`,
-        });
-    });
-    return arr;
+    return [
+        {
+            key: 's3:buckets:foo-bucket',
+            timestampKey: `s3:buckets:${timestamp}:foo-bucket`,
+        },
+        {
+            key: 's3:accounts:foo-account',
+            timestampKey: `s3:accounts:${timestamp}:foo-account`,
+        },
+        {
+            key: 's3:users:foo-user',
+            timestampKey: `s3:users:${timestamp}:foo-user`,
+        },
+        {
+            key: 's3:service:s3',
+            timestampKey: `s3:service:${timestamp}:s3`,
+        },
+    ];
 }
 
 // Set mock data of a particular storageUtilized and numberOfObjects
@@ -241,9 +243,16 @@ describe('UtapiClient:: push metrics', () => {
     });
 
     it('should push abortMultipartUpload metrics', done => {
-        const expected = getObject(timestamp,
-            { action: 'AbortMultipartUpload' });
-        testMetric('abortMultipartUpload', metricTypes, expected, done);
+        const expected = getObject(timestamp, {
+            action: 'AbortMultipartUpload',
+            storageUtilized: '0',
+        });
+        Object.assign(params, metricTypes, { byteLength: 1024 });
+        // Set mock data of one, 1024 byte part object for
+        // `AbortMultipartUpload` to update.
+        const data = { storageUtilized: '1024' };
+        setMockData(data, timestamp, () =>
+            testMetric('abortMultipartUpload', params, expected, done));
     });
 
     it('should push deleteObject metrics', done => {

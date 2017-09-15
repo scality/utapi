@@ -37,6 +37,27 @@ export default class Datastore {
     }
 
     /**
+    * Set the replay lock key (if it does not already exist) with an expiration
+    * @param {string} key - key to set with an expiration
+    * @param {string} value - value containing the data
+    * @param {string} ttl - time after which the key expires
+    * @return {undefined}
+    */
+    setExpire(key, value, ttl) {
+        // This method is a Promise because no callback is given.
+        return this._client.set(key, value, 'EX', ttl, 'NX');
+    }
+
+    /**
+    * delete a key
+    * @param {string} key - key to delete
+    * @return {undefined}
+    */
+    del(key) {
+        return this._client.del(key);
+    }
+
+    /**
     * get value from a key
     * @param {string} key - key holding the value
     * @param {callback} cb - callback
@@ -87,6 +108,19 @@ export default class Datastore {
     */
     zadd(key, score, value, cb) {
         return this._client.zadd(key, score, value, cb);
+    }
+
+    /**
+    * get a list of results containing values whose keys fall within the
+    * min and max range
+    * @param {string} key - key holding the value
+    * @param {number} min - integer for start range (inclusive)
+    * @param {number} max - integer for end range (inclusive)
+    * @param {callback} cb - callback
+    * @return {undefined}
+    */
+    zrange(key, min, max, cb) {
+        return this._client.zrange(key, min, max, cb);
     }
 
     /**

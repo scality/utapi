@@ -1,6 +1,6 @@
 import { getKeys, getCounters } from '../src/lib/schema';
 
-const resouceTypes = ['buckets', 'accounts'];
+const resouceTypes = ['buckets', 'accounts', 'service'];
 const propertyNames = {
     buckets: 'bucket',
     accounts: 'accountId',
@@ -18,8 +18,10 @@ export function getNormalizedTimestamp() {
 
 // Build the resouceType object that gets keys from the schema.
 function _getResourceTypeObject(resourceType) {
-    const obj = { level: resourceType };
-    obj[propertyNames[resourceType]] = resources[resourceType];
+    const obj = { level: resourceType, service: 's3' };
+    if (resourceType !== 'service') {
+        obj[propertyNames[resourceType]] = resources[resourceType];
+    }
     return obj;
 }
 
