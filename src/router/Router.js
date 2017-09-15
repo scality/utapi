@@ -11,6 +11,7 @@ class Router {
      * @param {Config} config - Config instance
      */
     constructor(config) {
+        this._service = config.component;
         this._routes = {};
         this._vault = new Vault(config);
     }
@@ -85,7 +86,7 @@ class Router {
         log.trace('call handler of the request', {
             method: 'Router._startRequest',
         });
-        route.getHandler()(utapiRequest, (err, res) => {
+        route.getHandler()(utapiRequest, this._service, (err, res) => {
             if (err) {
                 log.trace('handler returns an error', {
                     method: 'Router._startRequest',

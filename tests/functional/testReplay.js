@@ -21,6 +21,7 @@ const utapiClient = new UtapiClient({
         host: '127.0.0.1',
         port: 6379, // Set the local cache a port for successful connection.
     },
+    component: 's3',
 });
 const log = new Logger();
 const objSize = 1024;
@@ -59,6 +60,7 @@ function getParams(action) {
     const resources = {
         bucket: 'foo-bucket',
         accountId: 'foo-account',
+        userId: 'foo-user',
     };
     switch (action) {
     case 'getObject':
@@ -72,6 +74,10 @@ function getParams(action) {
             newByteLength: objSize,
             oldByteLength: null,
         });
+    case 'abortMultipartUpload':
+        return Object.assign(resources, {
+            byteLength: objSize,
+        });
     case 'deleteObject':
         return Object.assign(resources, {
             byteLength: objSize,
@@ -79,7 +85,7 @@ function getParams(action) {
         });
     case 'multiObjectDelete':
         return Object.assign(resources, {
-            byteLength: objSize * 2,
+            byteLength: objSize,
             numberOfObjects: 2,
         });
     default:
@@ -99,14 +105,10 @@ function checkListElement(action, params, res) {
         'incorrect timestamp value');
     assert(reqUid !== undefined,
         `reqUid property not in cached element: ${action}`);
-    const reqLog = log.newRequestLoggerFromSerializedUids(reqUid);
-    const reqUids = reqLog.getSerializedUids();
-    // The first two reqUidss should be those in the response.
-    const expectedReqUid = reqUids.substring(0, reqUids.lastIndexOf(':'));
     // We want the action and original params for use during the replay.
     assert.deepStrictEqual(result, {
         action,
-        reqUid: expectedReqUid,
+        reqUid,
         params,
         timestamp,
     }, `incorrect value for action: ${action}`);
@@ -204,6 +206,7 @@ describe('Replay', () => {
     });
 
     describe('UtapiReplay', () => {
+        const TTL = 60 * 15; // fifteen minutes
         // Set redis to correct port so replay successfully pushes metrics.
         const replay = new UtapiReplay({
             redis: { host: '127.0.0.1', port: 6379 },
@@ -213,25 +216,30 @@ describe('Replay', () => {
                 port: 6379,
             },
         });
-        replay.start();
+        // Set the replay lock before the replay job for the first test.
+        before(() => datastore.setExpire('s3:utapireplay:lock', 'true', TTL)
+            .then(() => replay.start()));
+        beforeEach(done => pushAllMetrics(done));
+        afterEach(() => localCache.flushdb());
 
-        after(() => localCache.flushdb());
+        it('should not push any cached metrics when replay lock is set',
+            function callback(done) {
+                this.timeout(5000);
+                // Give time to ensure a replay job has time to complete.
+                return setTimeout(() =>
+                    checkListLength(actions.length, done), 3000);
+            });
 
         it('should record all metrics from the local cache as schema keys',
             function callback(done) {
                 this.timeout(5000);
-                return pushAllMetrics(err => {
+                // Give time to ensure a replay job has time to complete.
+                return setTimeout(() => checkAllMetrics(err => {
                     if (err) {
                         return done(err);
                     }
-                    // Give time to ensure list elements are pushed by replay.
-                    return setTimeout(() => checkAllMetrics(err => {
-                        if (err) {
-                            return done(err);
-                        }
-                        return checkListLength(0, done);
-                    }), 3000);
-                });
+                    return checkListLength(0, done);
+                }), 3000);
             });
     });
 });
