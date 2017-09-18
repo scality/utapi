@@ -215,7 +215,7 @@ export default class ListMetrics {
             // last 4 are results of storageUtilized, numberOfObjects,
             const absolutes = res.slice(-4);
             const deltas = res.slice(0, res.length - 4);
-            absolutes.forEach((item, index) => {
+            const areMetricsPositive = absolutes.every((item, index) => {
                 if (item[0]) {
                     // log error and continue
                     log.trace('command in a batch failed to execute', {
@@ -225,6 +225,9 @@ export default class ListMetrics {
                 } else {
                     let val = parseInt(item[1], 10);
                     val = isNaN(val) ? 0 : val;
+                    if (val < 0) {
+                        return false;
+                    }
                     if (index === 0) {
                         metricResponse.storageUtilized[0] = val;
                     } else if (index === 1) {
@@ -235,8 +238,15 @@ export default class ListMetrics {
                         metricResponse.numberOfObjects[1] = val;
                     }
                 }
+                return true;
             });
 
+            if (!areMetricsPositive) {
+                return cb(errors.InternalError.customizeDescription(
+                    'Utapi is in a transient state for this time period as ' +
+                    'metrics are being collected. Please try again in a few ' +
+                    'minutes.'));
+            }
             /**
             * Batch result is of the format
             * [ [null, '1'], [null, '2'], [null, '3'] ] where each
