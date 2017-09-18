@@ -257,7 +257,6 @@ export default class ListMetrics {
                     const m = getMetricFromKey(key);
                     let count = parseInt(item[1], 10);
                     count = Number.isNaN(count) ? 0 : count;
-                    count = count < 0 ? 0 : count;
                     if (m === 'incomingBytes' || m === 'outgoingBytes') {
                         metricResponse[m] += count;
                     } else {
