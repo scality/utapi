@@ -68,7 +68,7 @@ function getSchemaObject(schemaKey) {
     return schemaObject;
 }
 
-function testOps(schemaKey, keyIndex, metricindex, done) {
+function testOps(schemaKey, keyIndex, metricindex, isNegativeValue, done) {
     const schemaObject = getSchemaObject(schemaKey);
     const timestamp = new Date().setMinutes(0, 0, 0);
     let key;
@@ -76,131 +76,154 @@ function testOps(schemaKey, keyIndex, metricindex, done) {
     let val;
     if (keyIndex === 'storageUtilized' || keyIndex === 'numberOfObjects') {
         key = generateStateKey(schemaObject, keyIndex);
-        val = 1024;
-        props[metricindex] = [val, val];
+        val = isNegativeValue ? -1024 : 1024;
+        props[metricindex] = isNegativeValue ? [0, 0] : [val, val];
         memBackend.zadd(key, timestamp, val, () =>
             assertMetrics(schemaKey, schemaObject[schemaKey], props, done));
     } else if (keyIndex === 'incomingBytes' || keyIndex === 'outgoingBytes') {
         key = generateKey(schemaObject, keyIndex, timestamp);
-        val = 1024;
-        props[metricindex] = val;
+        val = isNegativeValue ? -1024 : 1024;
+        props[metricindex] = isNegativeValue ? 0 : val;
         memBackend.incrby(key, val, () =>
             assertMetrics(schemaKey, schemaObject[schemaKey], props, done));
     } else {
         key = generateKey(schemaObject, keyIndex, timestamp);
-        val = 1;
+        val = isNegativeValue ? -1 : 1;
         props = { operations: {} };
-        props.operations[metricindex] = val;
-        memBackend.incr(key, () =>
+        props.operations[metricindex] = isNegativeValue ? 0 : 1;
+        memBackend.incrby(key, val, () =>
             assertMetrics(schemaKey, schemaObject[schemaKey], props, done));
     }
 }
+[false, true].forEach(isNegativeValue => {
+    Object.keys(metricLevels).forEach(schemaKey => {
+        const metric = metricLevels[schemaKey];
+        const message = isNegativeValue ? 'with negative values' :
+            'with positive values';
+        describe(`Get ${metric} level metrics ${message}`, () => {
+            afterEach(() => memBackend.flushDb());
 
-Object.keys(metricLevels).forEach(schemaKey => {
-    const metric = metricLevels[schemaKey];
-    describe(`Get ${metric} level metrics`, () => {
-        afterEach(() => memBackend.flushDb());
+            it(`should list default (0s) ${metric} level metrics of a bucket`,
+                done => assertMetrics(schemaKey, resourceNames[schemaKey],
+                    isNegativeValue, done));
 
-        it(`should list default (0s) ${metric} level metrics of a bucket`,
-            done => assertMetrics(schemaKey, resourceNames[schemaKey], null,
-                done));
+            it(`should return ${metric} level metrics for storage utilized`,
+                done => testOps(schemaKey, 'storageUtilized', 'storageUtilized',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for storage utilized`, done =>
-            testOps(schemaKey, 'storageUtilized', 'storageUtilized', done));
+            it(`should return ${metric} level metrics for number of objects`,
+                done => testOps(schemaKey, 'numberOfObjects', 'numberOfObjects',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for number of objects`,
-            done => testOps(schemaKey, 'numberOfObjects', 'numberOfObjects',
-                done));
+            it(`should return ${metric} level metrics for incoming bytes`,
+                done => testOps(schemaKey, 'incomingBytes', 'incomingBytes',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for incoming bytes`, done =>
-            testOps(schemaKey, 'incomingBytes', 'incomingBytes', done));
+            it(`should return ${metric} level metrics for outgoing bytes`,
+                done => testOps(schemaKey, 'outgoingBytes', 'outgoingBytes',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for outgoing bytes`, done =>
-            testOps(schemaKey, 'outgoingBytes', 'outgoingBytes', done));
+            it(`should return ${metric} level metrics for delete bucket`,
+                done => testOps(schemaKey, 'deleteBucket', 's3:DeleteBucket',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for delete bucket`, done =>
-            testOps(schemaKey, 'deleteBucket', 's3:DeleteBucket', done));
+            it(`should return ${metric} level metrics for list bucket`,
+                done => testOps(schemaKey, 'listBucket', 's3:ListBucket',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for list bucket`, done =>
-            testOps(schemaKey, 'listBucket', 's3:ListBucket', done));
+            it(`should return ${metric} level metrics for get bucket acl`,
+                done => testOps(schemaKey, 'getBucketAcl', 's3:GetBucketAcl',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for get bucket acl`, done =>
-            testOps(schemaKey, 'getBucketAcl', 's3:GetBucketAcl', done));
+            it(`should return ${metric} level metrics for put bucket acl`,
+                done => testOps(schemaKey, 'putBucketAcl', 's3:PutBucketAcl',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for put bucket acl`, done =>
-            testOps(schemaKey, 'putBucketAcl', 's3:PutBucketAcl', done));
+            it(`should return ${metric} level metrics for get bucket cors`,
+                done => testOps(schemaKey, 'getBucketCors', 's3:GetBucketCors',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for get bucket cors`, done =>
-            testOps(schemaKey, 'getBucketCors', 's3:GetBucketCors', done));
+            it(`should return ${metric} level metrics for put bucket cors`,
+                done => testOps(schemaKey, 'putBucketCors', 's3:PutBucketCors',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for put bucket cors`, done =>
-            testOps(schemaKey, 'putBucketCors', 's3:PutBucketCors', done));
+            it(`should return ${metric} level metrics for delete bucket cors`,
+                done => testOps(schemaKey, 'deleteBucketCors',
+                    's3:DeleteBucketCors', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for delete bucket cors`,
-            done => testOps(schemaKey, 'deleteBucketCors',
-                's3:DeleteBucketCors', done));
+            it(`should return ${metric} level metrics for get bucket website`,
+                done => testOps(schemaKey, 'getBucketWebsite',
+                    's3:GetBucketWebsite', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for get bucket website`,
-            done => testOps(schemaKey, 'getBucketWebsite',
-                's3:GetBucketWebsite', done));
+            it(`should return ${metric} level metrics for put bucket website`,
+                done => testOps(schemaKey, 'putBucketWebsite',
+                    's3:PutBucketWebsite', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for put bucket website`,
-            done => testOps(schemaKey, 'putBucketWebsite',
-                's3:PutBucketWebsite', done));
+            it(`should return ${metric} level metrics for delete bucket ` +
+                'website', done => testOps(schemaKey, 'deleteBucketWebsite',
+                    's3:DeleteBucketWebsite', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for delete bucket website`,
-            done => testOps(schemaKey, 'deleteBucketWebsite',
-                's3:DeleteBucketWebsite', done));
+            it(`should return ${metric} level metrics for put object`, done =>
+                testOps(schemaKey, 'putObject', 's3:PutObject',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for put object`, done =>
-            testOps(schemaKey, 'putObject', 's3:PutObject', done));
+            it(`should return ${metric} level metrics for copy object`, done =>
+                testOps(schemaKey, 'copyObject', 's3:CopyObject',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for copy object`, done =>
-            testOps(schemaKey, 'copyObject', 's3:CopyObject', done));
+            it(`should return ${metric} level metrics for upload part`, done =>
+                testOps(schemaKey, 'uploadPart', 's3:UploadPart',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for upload part`, done =>
-            testOps(schemaKey, 'uploadPart', 's3:UploadPart', done));
+            it(`should return ${metric} level metrics for list bucket ` +
+                'multipart uploads', done => testOps(schemaKey,
+                    'listBucketMultipartUploads',
+                    's3:ListBucketMultipartUploads', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for list bucket multipart ` +
-            'uploads', done => testOps(schemaKey, 'listBucketMultipartUploads',
-                's3:ListBucketMultipartUploads', done));
+            it(`should return ${metric} level metrics for list multipart ` +
+                'upload parts', done => testOps(schemaKey,
+                    'listMultipartUploadParts', 's3:ListMultipartUploadParts',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for list multipart upload ` +
-            'parts', done => testOps(schemaKey, 'listMultipartUploadParts',
-                's3:ListMultipartUploadParts', done));
+            it(`should return ${metric} level metrics for initiate multipart ` +
+                'upload', done => testOps(schemaKey, 'initiateMultipartUpload',
+                    's3:InitiateMultipartUpload', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for initiate multipart ` +
-            'upload', done => testOps(schemaKey, 'initiateMultipartUpload',
-                's3:InitiateMultipartUpload', done));
+            it(`should return ${metric} level metrics for complete multipart ` +
+                'upload', done => testOps(schemaKey, 'completeMultipartUpload',
+                    's3:CompleteMultipartUpload', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for complete multipart ` +
-            'upload', done => testOps(schemaKey, 'completeMultipartUpload',
-                's3:CompleteMultipartUpload', done));
+            it(`should return ${metric} level metrics for abort multipart ` +
+                'upload', done => testOps(schemaKey, 'abortMultipartUpload',
+                    's3:AbortMultipartUpload', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for abort multipart ` +
-            'upload', done => testOps(schemaKey, 'abortMultipartUpload',
-                's3:AbortMultipartUpload', done));
+            it(`should return ${metric} level metrics for delete object`,
+                done => testOps(schemaKey, 'deleteObject', 's3:DeleteObject',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for delete object`, done =>
-            testOps(schemaKey, 'deleteObject', 's3:DeleteObject', done));
+            it(`should return ${metric} level metrics for multiObjectDelete`,
+                done => testOps(schemaKey, 'multiObjectDelete',
+                    's3:MultiObjectDelete', isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for multiObjectDelete`,
-            done => testOps(schemaKey, 'multiObjectDelete',
-                's3:MultiObjectDelete', done));
+            it(`should return ${metric} level metrics for get object`, done =>
+                testOps(schemaKey, 'getObject', 's3:GetObject', isNegativeValue,
+                    done));
 
-        it(`should return ${metric} level metrics for get object`, done =>
-            testOps(schemaKey, 'getObject', 's3:GetObject', done));
+            it(`should return ${metric} level metrics for get object acl`,
+                done => testOps(schemaKey, 'getObjectAcl', 's3:GetObjectAcl',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for get object acl`, done =>
-            testOps(schemaKey, 'getObjectAcl', 's3:GetObjectAcl', done));
+            it(`should return ${metric} level metrics for put object acl`,
+                done => testOps(schemaKey, 'putObjectAcl', 's3:PutObjectAcl',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for put object acl`, done =>
-            testOps(schemaKey, 'putObjectAcl', 's3:PutObjectAcl', done));
+            it(`should return ${metric} level metrics for head bucket`, done =>
+                testOps(schemaKey, 'headBucket', 's3:HeadBucket',
+                    isNegativeValue, done));
 
-        it(`should return ${metric} level metrics for head bucket`, done =>
-            testOps(schemaKey, 'headBucket', 's3:HeadBucket', done));
-
-        it(`should return ${metric} level metrics for head object`, done =>
-            testOps(schemaKey, 'headObject', 's3:HeadObject', done));
+            it(`should return ${metric} level metrics for head object`, done =>
+                testOps(schemaKey, 'headObject', 's3:HeadObject',
+                    isNegativeValue, done));
+        });
     });
 });

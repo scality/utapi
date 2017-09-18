@@ -226,13 +226,13 @@ export default class ListMetrics {
                     let val = parseInt(item[1], 10);
                     val = isNaN(val) ? 0 : val;
                     if (index === 0) {
-                        metricResponse.storageUtilized[0] = val;
+                        metricResponse.storageUtilized[0] = val < 0 ? 0 : val;
                     } else if (index === 1) {
-                        metricResponse.storageUtilized[1] = val;
+                        metricResponse.storageUtilized[1] = val < 0 ? 0 : val;
                     } else if (index === 2) {
-                        metricResponse.numberOfObjects[0] = val;
+                        metricResponse.numberOfObjects[0] = val < 0 ? 0 : val;
                     } else if (index === 3) {
-                        metricResponse.numberOfObjects[1] = val;
+                        metricResponse.numberOfObjects[1] = val < 0 ? 0 : val;
                     }
                 }
             });
@@ -257,6 +257,7 @@ export default class ListMetrics {
                     const m = getMetricFromKey(key);
                     let count = parseInt(item[1], 10);
                     count = Number.isNaN(count) ? 0 : count;
+                    count = count < 0 ? 0 : count;
                     if (m === 'incomingBytes' || m === 'outgoingBytes') {
                         metricResponse[m] += count;
                     } else {
