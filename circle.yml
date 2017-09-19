@@ -11,6 +11,10 @@ machine:
   environment:
       CXX: g++-4.9
 
+dependencies:
+  override:
+    - rm -rf node_modules
+    - npm install
 test:
   override:
     - npm run --silent lint_md
