@@ -49,7 +49,9 @@ function assertMetrics(schemaKey, metricName, props, isNegativeValue, done) {
             if (isNegativeValue) {
                 assert.deepStrictEqual(err,
                     errors.InternalError.customizeDescription(
-                    'Redis server is not ready'));
+                    'Utapi is in transient state for this time period as ' +
+                    'metrics are being collected. Please try again in a few ' +
+                    'minutes.'));
                 return done();
             }
             assert.strictEqual(err, null);
