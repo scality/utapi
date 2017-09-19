@@ -215,6 +215,7 @@ export default class ListMetrics {
             // last 4 are results of storageUtilized, numberOfObjects,
             const absolutes = res.slice(-4);
             const deltas = res.slice(0, res.length - 4);
+            let isAnyMetricNegative = false;
             absolutes.forEach((item, index) => {
                 if (item[0]) {
                     // log error and continue
@@ -225,18 +226,25 @@ export default class ListMetrics {
                 } else {
                     let val = parseInt(item[1], 10);
                     val = isNaN(val) ? 0 : val;
+                    if (val < 0) {
+                        isAnyMetricNegative = true;
+                    }
                     if (index === 0) {
-                        metricResponse.storageUtilized[0] = val < 0 ? 0 : val;
+                        metricResponse.storageUtilized[0] = val;
                     } else if (index === 1) {
-                        metricResponse.storageUtilized[1] = val < 0 ? 0 : val;
+                        metricResponse.storageUtilized[1] = val;
                     } else if (index === 2) {
-                        metricResponse.numberOfObjects[0] = val < 0 ? 0 : val;
+                        metricResponse.numberOfObjects[0] = val;
                     } else if (index === 3) {
-                        metricResponse.numberOfObjects[1] = val < 0 ? 0 : val;
+                        metricResponse.numberOfObjects[1] = val;
                     }
                 }
             });
 
+            if (isAnyMetricNegative) {
+                return cb(errors.InternalError.customizeDescription(
+                    'Redis server is not ready'));
+            }
             /**
             * Batch result is of the format
             * [ [null, '1'], [null, '2'], [null, '3'] ] where each

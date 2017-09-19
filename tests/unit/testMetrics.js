@@ -1,4 +1,5 @@
 import assert from 'assert';
+import { errors } from 'arsenal';
 import MemoryBackend from '../../src/lib/backend/Memory';
 import Datastore from '../../src/lib/Datastore';
 import ListMetrics from '../../src/lib/ListMetrics';
@@ -37,7 +38,7 @@ function getMetricResponse(schemaKey) {
     return response;
 }
 
-function assertMetrics(schemaKey, metricName, props, done) {
+function assertMetrics(schemaKey, metricName, props, isNegativeValue, done) {
     const timestamp = new Date().setMinutes(0, 0, 0);
     const timeRange = [timestamp, timestamp];
     const expectedRes = getMetricResponse(schemaKey);
@@ -45,6 +46,12 @@ function assertMetrics(schemaKey, metricName, props, done) {
     const metricType = new ListMetrics(metricLevels[schemaKey], 's3');
     metricType.getMetrics(metricName, timeRange, datastore, logger,
         (err, res) => {
+            if (isNegativeValue) {
+                assert.deepStrictEqual(err,
+                    errors.InternalError.customizeDescription(
+                    'Redis server is not ready'));
+                return done();
+            }
             assert.strictEqual(err, null);
             // overwrite operations metrics
             if (expectedResProps.operations) {
@@ -77,22 +84,25 @@ function testOps(schemaKey, keyIndex, metricindex, isNegativeValue, done) {
     if (keyIndex === 'storageUtilized' || keyIndex === 'numberOfObjects') {
         key = generateStateKey(schemaObject, keyIndex);
         val = isNegativeValue ? -1024 : 1024;
-        props[metricindex] = isNegativeValue ? [0, 0] : [val, val];
+        props[metricindex] = [val, val];
         memBackend.zadd(key, timestamp, val, () =>
-            assertMetrics(schemaKey, schemaObject[schemaKey], props, done));
+            assertMetrics(schemaKey, schemaObject[schemaKey], props,
+                isNegativeValue, done));
     } else if (keyIndex === 'incomingBytes' || keyIndex === 'outgoingBytes') {
         key = generateKey(schemaObject, keyIndex, timestamp);
-        val = isNegativeValue ? -1024 : 1024;
-        props[metricindex] = isNegativeValue ? 0 : val;
+        val = 1024;
+        props[metricindex] = val;
         memBackend.incrby(key, val, () =>
-            assertMetrics(schemaKey, schemaObject[schemaKey], props, done));
+            assertMetrics(schemaKey, schemaObject[schemaKey], props,
+                isNegativeValue, done));
     } else {
         key = generateKey(schemaObject, keyIndex, timestamp);
         val = 1;
         props = { operations: {} };
         props.operations[metricindex] = val;
         memBackend.incr(key, () =>
-            assertMetrics(schemaKey, schemaObject[schemaKey], props, done));
+            assertMetrics(schemaKey, schemaObject[schemaKey], props,
+                isNegativeValue, done));
     }
 }
 
@@ -103,7 +113,7 @@ Object.keys(metricLevels).forEach(schemaKey => {
 
         it(`should list default (0s) ${metric} level metrics of a bucket`,
             done => assertMetrics(schemaKey, resourceNames[schemaKey], null,
-                done));
+                false, done));
 
         it(`should return ${metric} level metrics for storage utilized`,
             done => testOps(schemaKey, 'storageUtilized', 'storageUtilized',
