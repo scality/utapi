@@ -1,5 +1,7 @@
 # utapi
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/scality/utapi.svg)](https://greenkeeper.io/)
+
 ![Utapi logo](res/utapi-logo.png)
 
 [![Circle CI][badgepub]](https://circleci.com/gh/scality/utapi)
