@@ -113,8 +113,11 @@ function _checkMissingOperations(assertKeys, metricObj, operation, valuesObject,
                     Object.assign(metricObj, {
                         newByteLength: 9,
                         oldByteLength: null,
-                    }), utapiClient.pushMetric('completeMultipartUpload',
-                        reqUid, metricObj, next));
+                    }), () => utapiClient.pushMetric('completeMultipartUpload',
+                        reqUid, {
+                            byteLength: 0,
+                            isOverwrite: false,
+                        }, next));
             default:
                 return next();
             }
