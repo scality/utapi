@@ -123,7 +123,7 @@ describe('UtapiClient:: push metrics', () => {
     beforeEach(() => {
         params = {
             byteLength: undefined,
-            overwriting: undefined,
+            isOverwrite: undefined,
             newByteLength: undefined,
             oldByteLength: undefined,
             numberOfObjects: undefined,
@@ -236,7 +236,7 @@ describe('UtapiClient:: push metrics', () => {
         });
         Object.assign(params, metricTypes, {
             byteLength: 1024,
-            overwriting: false,
+            isOverwrite: false,
         });
         const data = { storageUtilized: '2048' };
         setMockData(data, timestamp, () =>
@@ -252,7 +252,7 @@ describe('UtapiClient:: push metrics', () => {
         });
         Object.assign(params, metricTypes, {
             byteLength: 2047,
-            overwriting: true,
+            isOverwrite: true,
         });
         const data = { storageUtilized: '2048', numberOfObjects: '1' };
         setMockData(data, timestamp, () =>

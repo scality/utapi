@@ -100,8 +100,8 @@ function getParams(action) {
         });
     case 'completeMultipartUpload':
         return Object.assign(resources, {
-            bytesDeleted: 0,
-            overwriting: false,
+            byteLength: 0,
+            isOverwrite: false,
         });
     default:
         return resources;
