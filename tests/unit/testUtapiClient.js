@@ -123,7 +123,6 @@ describe('UtapiClient:: push metrics', () => {
     beforeEach(() => {
         params = {
             byteLength: undefined,
-            bytesDeleted: undefined,
             overwriting: undefined,
             newByteLength: undefined,
             oldByteLength: undefined,
@@ -236,7 +235,7 @@ describe('UtapiClient:: push metrics', () => {
             storageUtilized: '1024',
         });
         Object.assign(params, metricTypes, {
-            bytesDeleted: 1024,
+            byteLength: 1024,
             overwriting: false,
         });
         const data = { storageUtilized: '2048' };
@@ -252,7 +251,7 @@ describe('UtapiClient:: push metrics', () => {
             storageUtilized: '1',
         });
         Object.assign(params, metricTypes, {
-            bytesDeleted: 2047,
+            byteLength: 2047,
             overwriting: true,
         });
         const data = { storageUtilized: '2048', numberOfObjects: '1' };
