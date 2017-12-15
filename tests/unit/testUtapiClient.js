@@ -123,6 +123,8 @@ describe('UtapiClient:: push metrics', () => {
     beforeEach(() => {
         params = {
             byteLength: undefined,
+            bytesDeleted: undefined,
+            overwriting: undefined,
             newByteLength: undefined,
             oldByteLength: undefined,
             numberOfObjects: undefined,
@@ -231,8 +233,32 @@ describe('UtapiClient:: push metrics', () => {
         const expected = getObject(timestamp, {
             action: 'CompleteMultipartUpload',
             numberOfObjects: '1',
+            storageUtilized: '1024',
         });
-        testMetric('completeMultipartUpload', metricTypes, expected, done);
+        Object.assign(params, metricTypes, {
+            bytesDeleted: 1024,
+            overwriting: false,
+        });
+        const data = { storageUtilized: '2048' };
+        setMockData(data, timestamp, () =>
+            testMetric('completeMultipartUpload', params, expected, done)
+        );
+    });
+
+    it('should push metric for completeMultipartUpload overwrite', done => {
+        const expected = getObject(timestamp, {
+            action: 'CompleteMultipartUpload',
+            numberOfObjects: '1',
+            storageUtilized: '1',
+        });
+        Object.assign(params, metricTypes, {
+            bytesDeleted: 2047,
+            overwriting: true,
+        });
+        const data = { storageUtilized: '2048', numberOfObjects: '1' };
+        setMockData(data, timestamp, () =>
+            testMetric('completeMultipartUpload', params, expected, done)
+        );
     });
 
     it('should push listMultipartUploads metrics', done => {

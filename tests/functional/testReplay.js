@@ -98,6 +98,11 @@ function getParams(action) {
             byteLength: objSize,
             numberOfObjects: 2,
         });
+    case 'completeMultipartUpload':
+        return Object.assign(resources, {
+            bytesDeleted: 0,
+            overwriting: false,
+        });
     default:
         return resources;
     }
