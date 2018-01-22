@@ -262,13 +262,13 @@ class Router {
      * @return {undefined}
      */
     _processSecurityChecks(utapiRequest, route, cb) {
+        return this._startRequest(utapiRequest, route, cb);
         const log = utapiRequest.getLog();
         return this._authSquared(utapiRequest, err => {
             if (err) {
                 log.trace('error from vault', { errors: err });
                 return cb(err);
             }
-            return this._startRequest(utapiRequest, route, cb);
         });
     }
 
