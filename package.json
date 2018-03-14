@@ -3,7 +3,7 @@
   "engines": {
       "node": "6.9.5"
   },
-  "version": "7.4.0",
+  "version": "7.4.0-beta",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
@@ -17,18 +17,18 @@
   },
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
-    "arsenal": "scality/Arsenal#rel/7.4",
+    "arsenal": "scality/Arsenal#rel/7.4-beta",
     "async": "^2.0.1",
     "ioredis": "^2.3.0",
     "node-schedule": "1.2.0",
-    "vaultclient": "scality/vaultclient#rel/7.4",
-    "werelogs": "scality/werelogs#rel/7.4"
+    "vaultclient": "scality/vaultclient#rel/7.4-beta",
+    "werelogs": "scality/werelogs#rel/7.4-beta"
   },
   "devDependencies": {
     "eslint": "^2.4.0",
     "eslint-plugin-react": "^4.3.0",
     "eslint-config-airbnb": "^6.0.0",
-    "eslint-config-scality": "scality/Guidelines#rel/7.4",
+    "eslint-config-scality": "scality/Guidelines#rel/7.4-beta",
     "mocha": "^3.0.2"
   },
   "scripts": {
