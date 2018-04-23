@@ -3,14 +3,14 @@
   "engines": {
       "node": ">=6.9.5"
   },
-  "version": "7.0.0",
+  "version": "1.0.0-zenko",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/scality/utapi.git"
   },
-  "author": "Scality",
+  "author": "Scality Inc.",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/scality/utapi/issues"
