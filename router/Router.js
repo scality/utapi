@@ -263,6 +263,10 @@ class Router {
      */
     _processSecurityChecks(utapiRequest, route, cb) {
         const log = utapiRequest.getLog();
+        if (process.env.UTAPI_AUTH === 'false') {
+            // Zenko route request does not need to go through Vault
+            return this._startRequest(utapiRequest, route, cb);
+        }
         return this._authSquared(utapiRequest, err => {
             if (err) {
                 log.trace('error from vault', { errors: err });
