@@ -35,7 +35,7 @@
     "ft_test": "mocha --recursive tests/functional",
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
-    "start": "node index.js",
+    "start": "node start-server.js",
     "test": "mocha --recursive tests/unit"
   }
 }
