@@ -20,6 +20,9 @@ const config = {
     localCache: redisLocal,
     component: 's3',
 };
+const location = 'foo-backend';
+const incrby = 100;
+const decrby = -30;
 
 // Build prefix values to construct the expected Redis schema keys
 function getPrefixValues(timestamp) {
@@ -96,6 +99,29 @@ function testMetric(metric, params, expected, cb) {
         assert.deepStrictEqual(memoryBackend.data, expected);
         return cb();
     });
+}
+
+function getLocationObject(bytesValue) {
+    const obj = {};
+    obj[`s3:location:${location}:locationStorage`] = `${bytesValue}`;
+    return obj;
+}
+
+function testLocationMetric(c, params, expected, cb) {
+    const { location, updateSize } = params;
+    if (updateSize) {
+        c.pushLocationMetric(location, updateSize, REQUID, err => {
+            assert.equal(err, null);
+            assert.deepStrictEqual(memoryBackend.data, expected);
+            return cb();
+        });
+    } else {
+        c.getLocationMetric(location, REQUID, (err, bytesStored) => {
+            assert.equal(err, null);
+            assert.strictEqual(bytesStored, expected);
+            return cb();
+        });
+    }
 }
 
 describe('UtapiClient:: enable/disable client', () => {
@@ -462,5 +488,29 @@ describe('UtapiClient:: push metrics', () => {
     it('should allow pushing an unsupported metric', done => {
         const expected = {};
         testMetric('unsupportedMetric', metricTypes, expected, done);
+    });
+});
+
+describe('UtapiClient:: location quota metrics', () => {
+    beforeEach(function beFn() {
+        this.currentTest.c = new UtapiClient(config);
+        this.currentTest.c.setDataStore(ds);
+    });
+
+    afterEach(() => memoryBackend.flushDb());
+
+    it('should increment location metric', function itFn(done) {
+        const expected = getLocationObject(incrby);
+        testLocationMetric(this.test.c, { location, updateSize: incrby },
+            expected, done);
+    });
+    it('should decrement location metric', function itFn(done) {
+        const expected = getLocationObject(decrby);
+        testLocationMetric(this.test.c, { location, updateSize: decrby },
+            expected, done);
+    });
+    it('should list location metric', function itFn(done) {
+        const expected = 0;
+        testLocationMetric(this.test.c, { location }, expected, done);
     });
 });
