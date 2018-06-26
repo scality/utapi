@@ -5,14 +5,14 @@ const Datastore = require('../../lib/Datastore');
 const redisClient = require('../../utils/redisClient');
 const { Logger } = require('werelogs');
 const { getCounters, getMetricFromKey,
-    getStateKeys } = require('../../lib/schema');
+    getStateKeys, getKeys } = require('../../lib/schema');
 const log = new Logger('TestUtapiClient');
 const redis = redisClient({
     host: '127.0.0.1',
     port: 6379,
 }, log);
 const datastore = new Datastore().setClient(redis);
-const utapiClient = new UtapiClient({
+const utapiConfig = {
     redis: {
         host: '127.0.0.1',
         port: 6379,
@@ -22,7 +22,10 @@ const utapiClient = new UtapiClient({
         port: 6379,
     },
     component: 's3',
-});
+};
+const utapiClient = new UtapiClient(utapiConfig);
+const utapiClientExp = new UtapiClient(Object.assign({ expireMetrics: true,
+    expireMetricsTTL: 0 }, utapiConfig));
 const reqUid = 'foo';
 const metricTypes = {
     bucket: 'foo-bucket',
@@ -74,6 +77,56 @@ function _assertStateKeys(metricObj, valueObj, cb) {
             assert.strictEqual(parseInt(res[0], 10), valueObj[metric],
                 `${metric} must be ${valueObj[metric]}`);
             return cb();
+        }), cb);
+}
+
+function _seedMetrics(metricObj, cb) {
+    series([
+        next => utapiClientExp.pushMetric('createBucket', reqUid, metricObj,
+            next),
+        next => utapiClientExp.pushMetric('listBucket', reqUid, metricObj,
+            next),
+        next => utapiClientExp.pushMetric('putObject', reqUid,
+            Object.assign(metricObj, {
+                newByteLength: 8,
+                oldByteLength: null,
+            }), next),
+        next => utapiClientExp.pushMetric('deleteBucket', reqUid,
+            metricObj, next),
+    ], cb);
+}
+
+function _assertExpiredKeys(metricObj, type, cb) {
+    let keys;
+    switch (type) {
+    case 'stateful keys':
+        keys = getStateKeys(metricObj);
+        break;
+    case 'api counters':
+        keys = getKeys(metricObj);
+        break;
+    case 'global counters':
+        keys = getCounters(metricObj);
+        break;
+    default:
+        throw new Error('unrecognized key type');
+    }
+    if (type === 'globalcounters') {
+        return map(keys,
+            (item, next) => datastore.get(item, (err, res) => {
+                assert.ifError(err);
+                assert.deepStrictEqual(res, null);
+                next();
+            }),
+            cb);
+    }
+    return map(keys, (item, next) =>
+        datastore.zrange(item, 0, -1, (err, res) => {
+            if (err) {
+                return next(err);
+            }
+            assert.deepStrictEqual(res, []);
+            return next();
         }), cb);
 }
 
@@ -194,6 +247,33 @@ Object.keys(metricTypes).forEach(type => {
             it(`should record correct values if counters are < 0: ${op}`,
                 done => _checkMissingOperations(_assertStateKeys, metricObj, op,
                     stateKeyVals, done));
+        });
+    });
+});
+
+describe('UtapiClient: expire bucket metrics', () => {
+    afterEach(() => redis.flushdb());
+
+    ['stateful keys', 'api counters', 'global counters'].forEach(item => {
+        it(`should expire bucket level ${item}`, done => {
+            const metricObj = _getMetricObj('bucket');
+            _seedMetrics(metricObj, err => {
+                assert.ifError(err);
+                _assertExpiredKeys(metricObj, item, done);
+            });
+        });
+    });
+
+    ['accountId', 'userId', 'service'].forEach(level => {
+        it(`should not expire global counters ${level} level`, done => {
+            const metricObj = _getMetricObj(level);
+            _seedMetrics(metricObj, err => {
+                assert.ifError(err);
+                _assertCounters(metricObj, {
+                    storageUtilized: 8,
+                    numberOfObjects: 1,
+                }, done);
+            });
         });
     });
 });
