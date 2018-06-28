@@ -17,18 +17,18 @@
   },
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
-    "arsenal": "scality/Arsenal#7.4.0.3",
+    "arsenal": "scality/Arsenal#67365083",
     "async": "^2.0.1",
     "ioredis": "^2.3.0",
     "node-schedule": "1.2.0",
-    "vaultclient": "scality/vaultclient#7.4.0.3",
-    "werelogs": "scality/werelogs#7.4.0.3"
+    "vaultclient": "scality/vaultclient#fdb9988d",
+    "werelogs": "scality/werelogs#0ff7ec82"
   },
   "devDependencies": {
     "eslint": "^2.4.0",
     "eslint-plugin-react": "^4.3.0",
     "eslint-config-airbnb": "^6.0.0",
-    "eslint-config-scality": "scality/Guidelines#7.4.0.3",
+    "eslint-config-scality": "scality/Guidelines#71a059ad",
     "mocha": "^3.0.2"
   },
   "scripts": {
