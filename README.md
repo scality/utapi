@@ -3,9 +3,8 @@
 ![Utapi logo](res/utapi-logo.png)
 
 [![Circle CI][badgepub]](https://circleci.com/gh/scality/utapi)
-[![Scality CI][badgepriv]](http://ci.ironmann.io/gh/scality/utapi)
 
-Service Utilization API for tracking resource usage and metrics reporting
+Service Utilization API for tracking resource usage and metrics reporting.
 
 ## Design
 
@@ -80,13 +79,13 @@ Server is running.
 1. Create an IAM user
 
     ```
-    aws iam --endpoint-url <endpoint> create-user --user-name utapiuser
+    aws iam --endpoint-url <endpoint> create-user --user-name <user-name>
     ```
 
 2. Create access key for the user
 
     ```
-    aws iam --endpoint-url <endpoint> create-access-key --user-name utapiuser
+    aws iam --endpoint-url <endpoint> create-access-key --user-name <user-name>
     ```
 
 3. Define a managed IAM policy
@@ -195,12 +194,11 @@ Server is running.
 5. Attach user to the managed policy
 
     ```
-    aws --endpoint-url <endpoint> iam  attach-user-policy --user-name utapiuser
-    --policy-arn <policy arn>
+    aws --endpoint-url <endpoint> iam  attach-user-policy --user-name
+    <user-name> --policy-arn <policy arn>
     ```
 
-Now the user `utapiuser` has access to ListMetrics request in Utapi on all
-buckets.
+Now the user has access to ListMetrics request in Utapi on all buckets.
 
 ### Signing request with Auth V4
 
@@ -216,16 +214,18 @@ following urls for reference.
 You may also view examples making a request with Auth V4 using various languages
 and AWS SDKs [here](/examples).
 
-Alternatively, you can use a nifty command line tool available in Scality's S3.
+Alternatively, you can use a nifty command line tool available in Scality's
+CloudServer.
 
-You can git clone S3 repo from here https://github.com/scality/S3.git and follow
-the instructions in README to install the dependencies.
+You can git clone the CloudServer repo from here
+https://github.com/scality/cloudserver and follow the instructions in the README
+to install the dependencies.
 
-If you have S3 running inside a docker container you can docker exec into the S3
-container as
+If you have CloudServer running inside a docker container you can docker exec
+into the CloudServer container as
 
 ```
-docker exec -it <container id> bash
+docker exec -it <container-id> bash
 ```
 
 and then run the command
@@ -263,7 +263,7 @@ Usage: list_metrics [options]
     -v, --verbose
 ```
 
-A typical call to list metrics for a bucket `demo` to Utapi in a https enabled
+An example call to list metrics for a bucket `demo` to Utapi in a https enabled
 deployment would be
 
 ```
@@ -275,7 +275,7 @@ Both start and end times are time expressed as UNIX epoch timestamps **expressed
 in milliseconds**.
 
 Keep in mind, since Utapi metrics are normalized to the nearest 15 min.
-interval, so start time and end time need to be in specific format as follows.
+interval, start time and end time need to be in the specific format as follows.
 
 #### Start time
 
@@ -289,7 +289,7 @@ Date: Tue Oct 11 2016 17:35:25 GMT-0700 (PDT)
 
 Unix timestamp (milliseconds): 1476232525320
 
-Here's a typical JS method to get start timestamp
+Here's an example JS method to get a start timestamp
 
 ```javascript
 function getStartTimestamp(t) {
@@ -309,7 +309,7 @@ seconds and milliseconds set to 59 and 999 respectively. So valid end timestamps
 would look something like `09:14:59:999`, `09:29:59:999`, `09:44:59:999` and
 `09:59:59:999`.
 
-Here's a typical JS method to get end timestamp
+Here's an example JS method to get an end timestamp
 
 ```javascript
 function getEndTimestamp(t) {
@@ -334,4 +334,3 @@ In order to contribute, please follow the
 https://github.com/scality/Guidelines/blob/master/CONTRIBUTING.md).
 
 [badgepub]: http://circleci.com/gh/scality/utapi.svg?style=svg
-[badgepriv]: http://ci.ironmann.io/gh/scality/utapi.svg?style=svg
