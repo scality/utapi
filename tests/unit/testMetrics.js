@@ -63,7 +63,7 @@ function assertMetrics(schemaKey, metricName, props, isNegativeValue, done) {
             }
             assert.deepStrictEqual(res, Object.assign(expectedRes,
                 { timeRange }, expectedResProps));
-            done();
+            return done();
         });
 }
 
