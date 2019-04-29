@@ -5,7 +5,7 @@ import UtapiReplay from '../../src/lib/UtapiReplay';
 import UtapiClient from '../../src/lib/UtapiClient';
 import Datastore from '../../src/lib/Datastore';
 import redisClient from '../../src/utils/redisClient';
-import { getAllResourceTypeKeys } from '../testUtils';
+import { getAllResourceTypeKeys } from '../utils/utils';
 import safeJsonParse from '../../src/utils/safeJsonParse';
 const localCache = redisClient({
     host: '127.0.0.1',
