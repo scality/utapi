@@ -37,7 +37,7 @@
     "ft_test": "mocha --compilers js:babel-core/register --recursive tests/functional",
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
-    "start": "node index.js",
+    "start": "node server.js",
     "test": "mocha --compilers js:babel-core/register --recursive tests/unit"
   },
   "private": true
