@@ -1,6 +1,6 @@
 import assert from 'assert';
 import ListMetrics from '../../src/lib/ListMetrics';
-import { buildMockResponse } from '../testUtils';
+import { buildMockResponse } from '../utils/utils';
 
 const MAX_RANGE_MS = (((1000 * 60) * 60) * 24) * 30; // One month.
 

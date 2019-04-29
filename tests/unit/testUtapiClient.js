@@ -3,7 +3,7 @@ import { Logger } from 'werelogs';
 import Datastore from '../../src/lib/Datastore';
 import MemoryBackend from '../../src/lib/backend/Memory';
 import UtapiClient from '../../src/lib/UtapiClient';
-import { getNormalizedTimestamp } from '../testUtils';
+import { getNormalizedTimestamp } from '../utils/utils';
 
 const memoryBackend = new MemoryBackend();
 const ds = new Datastore();
