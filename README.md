@@ -15,6 +15,14 @@ To run the server:
 npm start
 ```
 
+To run the server without using the [Signature Version 4 Signing Process](
+https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html), set the
+environment variable `NO_AUTH` to `'true'`:
+
+```
+NO_AUTH=true npm start
+```
+
 ## Client
 
 The module exposes a client, named UtapiClient. Projects can use this client to
