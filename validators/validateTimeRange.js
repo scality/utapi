@@ -37,8 +37,13 @@ function validateTimeRange(timeRange) {
                 return false;
             }
         }
-
-        if (timeRange[0] > timeRange[1]) {
+        const now = Date.now();
+        // If end is not provided, it is later set as the current timestamp.
+        const endTime = timeRange[1] || now;
+        if (endTime > now) {
+            return false;
+        }
+        if (timeRange[0] > endTime) {
             return false;
         }
         return true;
