@@ -199,6 +199,10 @@ class Router {
      */
     _authSquared(utapiRequest, cb) {
         const log = utapiRequest.getLog();
+        if (process.env.NO_AUTH === 'true') {
+            log.trace('skipping authentication check');
+            return process.nextTick(() => cb());
+        }
         const authHeader = utapiRequest.getRequestHeaders().authorization;
         if (!authHeader || !authHeader.startsWith('AWS4')) {
             log.trace('missing auth header for v4 auth');
