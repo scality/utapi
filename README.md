@@ -11,6 +11,14 @@ Service Utilization API for tracking resource usage and metrics reporting
 
 Please refer to the [design](/DESIGN.md) for more information.
 
+To run the server without using the [Signature Version 4 Signing Process](
+https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html), set the
+environment variable `NO_AUTH` to `'true'`:
+
+```
+NO_AUTH=true npm start
+```
+
 ## Client
 
 The module exposes a client, named UtapiClient. Projects can use this client to
