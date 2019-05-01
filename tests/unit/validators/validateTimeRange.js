@@ -1,6 +1,6 @@
-import assert from 'assert';
-import validateTimeRange from '../../../src/validators/validateTimeRange';
-import { getNormalizedTimestamp } from '../../testUtils';
+const assert = require('assert');
+const validateTimeRange = require('../../../validators/validateTimeRange');
+const { getNormalizedTimestamp } = require('../../testUtils');
 
 describe('validateTimeRange', () => {
     const fifteenMinutes = (1000 * 60) * 15;
