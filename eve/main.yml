@@ -8,12 +8,20 @@ branches:
 stages:
   pre-merge:
     worker:
-      type: docker
-      path: eve/workers/unit_and_feature_tests
-      volumes:
-        - '/home/eve/workspace'
+      type: local
     steps:
-      - Git:
+    - TriggerStages:
+        name: trigger all the tests
+        stage_names:
+        - run-tests
+  run-tests:
+    worker: &workspace
+      type: kube_pod
+      path: eve/workers/pod.yml
+      images:
+        aggressor: eve/workers/unit_and_feature_tests
+    steps:
+      - Git: &git
           name: fetch source
           repourl: '%(prop:git_reference)s'
           shallow: True
@@ -22,9 +30,7 @@ stages:
       - ShellCommand:
           name: npm install
           command: npm install
-#      - ShellCommand:
-#          name: get api node modules from cache
-#          command: mv /home/eve/node_reqs/node_modules .
+          haltOnFailure: True
       - ShellCommand:
           name: run static analysis tools on markdown
           command: npm run lint_md
@@ -36,4 +42,4 @@ stages:
           command: npm test
       - ShellCommand:
           name: run feature tests
-          command: npm run ft_test
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash ft_test
