@@ -11,6 +11,14 @@ Service Utilization API for tracking resource usage and metrics reporting
 
 Please refer to the [design](/DESIGN.md) for more information.
 
+## Server
+
+To run the server:
+
+```
+npm start
+```
+
 ## Client
 
 The module exposes a client, named UtapiClient. Projects can use this client to
