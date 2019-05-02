@@ -3,7 +3,7 @@ const { Logger } = require('werelogs');
 const Datastore = require('../../lib/Datastore');
 const MemoryBackend = require('../../lib/backend/Memory');
 const UtapiClient = require('../../lib/UtapiClient');
-const { getNormalizedTimestamp } = require('../testUtils');
+const { getNormalizedTimestamp } = require('../utils/utils');
 
 const memoryBackend = new MemoryBackend();
 const ds = new Datastore();

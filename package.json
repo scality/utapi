@@ -25,6 +25,7 @@
     "werelogs": "scality/werelogs#0ff7ec82"
   },
   "devDependencies": {
+    "aws4": "^1.8.0",
     "eslint": "^2.4.0",
     "eslint-plugin-react": "^4.3.0",
     "eslint-config-airbnb": "^6.0.0",
@@ -35,7 +36,7 @@
     "ft_test": "mocha --recursive tests/functional",
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
-    "start": "node start-server.js",
+    "start": "node server.js",
     "test": "mocha --recursive tests/unit"
   }
 }

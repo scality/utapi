@@ -1,4 +1,6 @@
-const { getKeys, getCounters } = require('../lib/schema');
+const http = require('http');
+const aws4 = require('aws4');
+const { getKeys, getCounters } = require('../../lib/schema');
 
 const resouceTypes = ['buckets', 'accounts', 'service'];
 const propertyNames = {
@@ -86,8 +88,34 @@ function buildMockResponse({ start, end, val }) {
     };
 }
 
+function makeUtapiClientRequest({ timeRange, resource }, cb) {
+    const header = {
+        host: 'localhost',
+        port: 8100,
+        method: 'POST',
+        service: 's3',
+        path: `/${resource.type}?Action=ListMetrics`,
+    };
+    const credentials = {
+        accessKeyId: 'accessKey1',
+        secretAccessKey: 'verySecretKey1',
+    };
+    const options = aws4.sign(header, credentials);
+    const req = http.request(options, res => {
+        const body = [];
+        res.on('data', chunk => body.push(chunk));
+        res.on('end', () => cb(null, `${body.join('')}`));
+    });
+    req.on('error', err => cb(err));
+    const body = { timeRange };
+    body[resource.type] = resource[resource.type];
+    req.write(JSON.stringify(body));
+    req.end();
+}
+
 module.exports = {
     getAllResourceTypeKeys,
     getNormalizedTimestamp,
     buildMockResponse,
+    makeUtapiClientRequest,
 };
