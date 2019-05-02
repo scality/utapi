@@ -1,6 +1,6 @@
 const assert = require('assert');
 const ListMetrics = require('../../lib/ListMetrics');
-const { buildMockResponse } = require('../testUtils');
+const { buildMockResponse } = require('../utils/utils');
 
 const MAX_RANGE_MS = (((1000 * 60) * 60) * 24) * 30; // One month.
 

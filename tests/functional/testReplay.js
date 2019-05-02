@@ -5,7 +5,7 @@ const UtapiReplay = require('../../lib/UtapiReplay');
 const UtapiClient = require('../../lib/UtapiClient');
 const Datastore = require('../../lib/Datastore');
 const redisClient = require('../../utils/redisClient');
-const { getAllResourceTypeKeys } = require('../testUtils');
+const { getAllResourceTypeKeys } = require('../utils/utils');
 const safeJsonParse = require('../../utils/safeJsonParse');
 
 const log = new Logger('UTAPIReplayTest');
