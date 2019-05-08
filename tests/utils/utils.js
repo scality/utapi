@@ -43,11 +43,11 @@ export function getAllResourceTypeKeys() {
 
 export function buildMockResponse({ start, end, val }) {
     return {
-        timeRange: [start, end],
-        storageUtilized: [val, val],
+        timeRange: [start.time, end.time],
+        storageUtilized: [start.storageUtilized, end.storageUtilized],
         incomingBytes: val,
         outgoingBytes: val,
-        numberOfObjects: [val, val],
+        numberOfObjects: [start.numberOfObjects, end.numberOfObjects],
         operations: {
             's3:DeleteBucket': val,
             's3:DeleteBucketCors': val,
