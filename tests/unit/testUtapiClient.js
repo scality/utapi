@@ -74,8 +74,10 @@ function getObject(timestamp, data) {
     const prefixValuesArr = getPrefixValues(timestamp);
     prefixValuesArr.forEach(type => {
         const { key, timestampKey } = type;
-        // The action is always incremented to one in the tests
-        obj[`${timestampKey}:${data.action}`] = '1';
+        if (data.action) {
+            // The action is always incremented to one in the tests
+            obj[`${timestampKey}:${data.action}`] = '1';
+        }
         // The expected object is constructed based on the `data` object
         Object.keys(data).forEach(metric => {
             if (metric === 'storageUtilized') {
@@ -412,6 +414,19 @@ describe('UtapiClient:: push metrics', () => {
         };
         setMockData(data, timestamp, () =>
             testMetric('copyObject', params, expected, done));
+    });
+
+    it('should push putData metrics', done => {
+        const expected = getObject(timestamp, {
+            storageUtilized: '1024',
+            numberOfObjects: '1',
+            incomingBytes: '1024',
+        });
+        Object.assign(params, metricTypes, {
+            newByteLength: 1024,
+            oldByteLength: null,
+        });
+        testMetric('putData', params, expected, done);
     });
 
     it('should push putObjectAcl metrics', done => {
