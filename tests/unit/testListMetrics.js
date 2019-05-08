@@ -43,18 +43,78 @@ describe('ListMetrics', () => {
         const tests = [
             {
                 results: [
-                    buildMockResponse({ start: 0, end: 1, val: 1 }),
+                    buildMockResponse({
+                        start: {
+                            time: 0,
+                            storageUtilized: 0,
+                            numberOfObjects: 0,
+                        },
+                        end: {
+                            time: 1,
+                            storageUtilized: 1,
+                            numberOfObjects: 1,
+                        },
+                        val: 1,
+                    }),
                 ],
                 expected:
-                    buildMockResponse({ start: 0, end: 1, val: 1 }),
+                    buildMockResponse({
+                        start: {
+                            time: 0,
+                            storageUtilized: 0,
+                            numberOfObjects: 0,
+                        },
+                        end: {
+                            time: 1,
+                            storageUtilized: 1,
+                            numberOfObjects: 1,
+                        },
+                        val: 1,
+                    }),
             },
             {
                 results: [
-                    buildMockResponse({ start: 0, end: 1, val: 1 }),
-                    buildMockResponse({ start: 2, end: 3, val: 1 }),
+                    buildMockResponse({
+                        start: {
+                            time: 0,
+                            storageUtilized: 0,
+                            numberOfObjects: 0,
+                        },
+                        end: {
+                            time: 1,
+                            storageUtilized: 1,
+                            numberOfObjects: 1,
+                        },
+                        val: 1,
+                    }),
+                    buildMockResponse({
+                        start: {
+                            time: 2,
+                            storageUtilized: 1,
+                            numberOfObjects: 1,
+                        },
+                        end: {
+                            time: 3,
+                            storageUtilized: 2,
+                            numberOfObjects: 2,
+                        },
+                        val: 1,
+                    }),
                 ],
                 expected:
-                    buildMockResponse({ start: 0, end: 3, val: 2 }),
+                    buildMockResponse({
+                        start: {
+                            time: 0,
+                            storageUtilized: 0,
+                            numberOfObjects: 0,
+                        },
+                        end: {
+                            time: 3,
+                            storageUtilized: 2,
+                            numberOfObjects: 2,
+                        },
+                        val: 2,
+                    }),
             },
         ];
         tests.forEach(test => {
