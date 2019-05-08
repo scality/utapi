@@ -168,11 +168,9 @@ export default class ListMetrics {
     _reduceResults(results) {
         const reducer = (accumulator, current) => {
             const result = Object.assign({}, accumulator);
-            result.timeRange[1] = current.timeRange[1]; // Get the end time.
-            result.storageUtilized[0] += current.storageUtilized[0];
-            result.storageUtilized[1] += current.storageUtilized[1];
-            result.numberOfObjects[0] += current.numberOfObjects[0];
-            result.numberOfObjects[1] += current.numberOfObjects[1];
+            result.timeRange[1] = current.timeRange[1];
+            result.storageUtilized[1] = current.storageUtilized[1];
+            result.numberOfObjects[1] = current.numberOfObjects[1];
             result.incomingBytes += current.incomingBytes;
             result.outgoingBytes += current.outgoingBytes;
             const operations = Object.keys(result.operations);
