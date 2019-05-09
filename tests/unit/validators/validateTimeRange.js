@@ -17,13 +17,6 @@ describe('validateTimeRange', () => {
         assert.strictEqual(isValid, false);
     });
 
-    it('should not allow an end time in the future', () => {
-        const start = getNormalizedTimestamp();
-        const end = getNormalizedTimestamp() + fifteenMinutes - 1;
-        const isValid = validateTimeRange([start, end]);
-        assert.strictEqual(isValid, false);
-    });
-
     it('should not allow a start time greater than the end time', () => {
         const start = getNormalizedTimestamp() - (fifteenMinutes * 2);
         const end = getNormalizedTimestamp() - (fifteenMinutes * 3) - 1;
