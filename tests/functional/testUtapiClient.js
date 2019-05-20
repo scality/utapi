@@ -34,7 +34,7 @@ const metricTypes = {
     service: 's3',
 };
 const putOperations = ['PutObject', 'CopyObject', 'UploadPart',
-    'CompleteMultipartUpload'];
+    'UploadPartCopy', 'CompleteMultipartUpload'];
 
 // Get the metric object for the given type
 function _getMetricObj(type) {
@@ -162,6 +162,12 @@ function _checkMissingOperations(assertKeys, metricObj, operation, valuesObject,
                         newByteLength: 9,
                         oldByteLength: null,
                     }), next);
+            case 'UploadPartCopy':
+                return utapiClient.pushMetric('uploadPartCopy', reqUid,
+                    Object.assign(metricObj, {
+                        newByteLength: 9,
+                        oldByteLength: null,
+                    }), next);
             case 'CompleteMultipartUpload':
                 return utapiClient.pushMetric('uploadPart', reqUid,
                     Object.assign(metricObj, {
@@ -219,9 +225,10 @@ Object.keys(metricTypes).forEach(type => {
 
         putOperations.forEach(op => {
             // Calculated based on negative counter values.
-            const counterKeyVals = op === 'UploadPart' ? {
+            const counterKeyVals =
+            (op === 'UploadPart' || op === 'UploadPartCopy') ? {
                 storageUtilized: -11,
-                numberOfObjects: -2, // UploadPart does not increment value.
+                numberOfObjects: -2, // Uploading parts do not increment value.
             } : {
                 storageUtilized: -11,
                 numberOfObjects: -1,
@@ -237,9 +244,10 @@ Object.keys(metricTypes).forEach(type => {
 
         putOperations.forEach(op => {
             // Calculated based on negative counter values.
-            const stateKeyVals = op === 'UploadPart' ? {
+            const stateKeyVals =
+            (op === 'UploadPart' || op === 'UploadPartCopy') ? {
                 storageUtilized: 9,
-                numberOfObjects: 0, // UploadPart does not increment value.
+                numberOfObjects: 0, // Uploading parts do not increment value.
             } : {
                 storageUtilized: 9,
                 numberOfObjects: 1,

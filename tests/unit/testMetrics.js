@@ -181,6 +181,10 @@ Object.keys(metricLevels).forEach(schemaKey => {
         it(`should return ${metric} level metrics for upload part`, done =>
             testOps(schemaKey, 'uploadPart', 's3:UploadPart', false, done));
 
+        it(`should return ${metric} level metrics for upload part copy`, done =>
+            testOps(schemaKey, 'uploadPartCopy', 's3:UploadPartCopy', false,
+                done));
+
         it(`should return ${metric} level metrics for list bucket multipart ` +
             'uploads', done => testOps(schemaKey, 'listBucketMultipartUploads',
                 's3:ListBucketMultipartUploads', false, done));

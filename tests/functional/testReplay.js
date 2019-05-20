@@ -41,6 +41,7 @@ const actions = [
     'getBucketLocation',
     'deleteBucketWebsite',
     'uploadPart',
+    'uploadPartCopy',
     'initiateMultipartUpload',
     'completeMultipartUpload',
     'listMultipartUploads',
@@ -79,6 +80,7 @@ function getParams(action) {
             newByteLength: objSize,
         });
     case 'uploadPart':
+    case 'uploadPartCopy':
     case 'putObject':
     case 'copyObject':
         return Object.assign(resources, {
@@ -194,11 +196,13 @@ function checkAllMetrics(cb) {
             }
             let expected = 1; // Actions should have been incremented once.
             if (key.includes('incomingBytes')) {
-                expected = objSize * 2; // putObject and uploadPart.
+                // putObject, uploadPart, and uploadPartCopy.
+                expected = objSize * 3;
             } else if (key.includes('outgoingBytes')) {
                 expected = objSize; // getObject.
             } else if (key.includes('storageUtilized')) {
-                expected = 0; // After PUT and DELETE operations, should be 0.
+                // After all PUT and DELETE operations, should be 1024.
+                expected = 1024;
             } else if (key.includes('numberOfObjects')) {
                 expected = 1; // After PUT and DELETE operations, should be 1.
             } else if (key.endsWith('DeleteObject')) {

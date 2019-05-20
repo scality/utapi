@@ -21,6 +21,7 @@
         "s3:PutObject": 0,
         "s3:CopyObject": 0,
         "s3:UploadPart": 0,
+        "s3:UploadPartCopy": 0,
         "s3:ListBucketMultipartUploads": 0,
         "s3:ListMultipartUploadParts": 0,
         "s3:InitiateMultipartUpload": 0,

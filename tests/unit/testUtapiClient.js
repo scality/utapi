@@ -249,6 +249,34 @@ describe('UtapiClient:: push metrics', () => {
             testMetric('uploadPart', params, expected, done));
     });
 
+    it('should push uploadPartCopy metrics', done => {
+        const expected = getObject(timestamp, {
+            action: 'UploadPartCopy',
+            storageUtilized: '1024',
+            incomingBytes: '1024',
+        });
+        Object.assign(params, metricTypes, {
+            newByteLength: 1024,
+            oldByteLength: null,
+        });
+        testMetric('uploadPartCopy', params, expected, done);
+    });
+
+    it('should push metric for uploadPartCopy overwrite', done => {
+        const expected = getObject(timestamp, {
+            action: 'UploadPartCopy',
+            storageUtilized: '1024',
+            incomingBytes: '1024',
+        });
+        Object.assign(params, metricTypes, {
+            newByteLength: 1024,
+            oldByteLength: 2048,
+        });
+        const data = { storageUtilized: '2048' };
+        setMockData(data, timestamp, () =>
+            testMetric('uploadPartCopy', params, expected, done));
+    });
+
     it('should push initiateMultipartUpload metrics', done => {
         const expected = getObject(timestamp,
             { action: 'InitiateMultipartUpload' });
