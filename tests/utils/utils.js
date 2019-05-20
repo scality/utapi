@@ -65,6 +65,7 @@ function buildMockResponse({ start, end, val }) {
             's3:PutObject': val,
             's3:CopyObject': val,
             's3:UploadPart': val,
+            's3:UploadPartCopy': val,
             's3:ListBucketMultipartUploads': val,
             's3:ListMultipartUploadParts': val,
             's3:InitiateMultipartUpload': val,
