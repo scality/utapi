@@ -28,12 +28,12 @@ class askRedis():
         r = redis.Redis(host=ip, port=port, db=0)
         self._ip, self._port = r.sentinel_get_master_addr_by_name('scality-s3')
 
-    def read(self, ressource, name):
+    def read(self, resource, name):
 
         r = redis.Redis(host=self._ip, port=self._port, db=0)
-        res = 's3:%s:%s:storageUtilized:counter' % (ressource, name)
+        res = 's3:%s:%s:storageUtilized:counter' % (resource, name)
         total_size = r.get(res)
-        res = 's3:%s:%s:numberOfObjects:counter' % (ressource, name)
+        res = 's3:%s:%s:numberOfObjects:counter' % (resource, name)
         files = r.get(res)
         return {'files': int(files), "total_size": int(total_size)}
 

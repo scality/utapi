@@ -28,20 +28,20 @@ class updateRedis():
         r = redis.Redis(host=ip, port=port, db=0)
         self._ip, self._port = r.sentinel_get_master_addr_by_name('scality-s3')
 
-    def read(self, ressource, name):
+    def read(self, resource, name):
 
         r = redis.Redis(host=self._ip, port=self._port, db=0)
-        store = r.get('s3:'+ressource+':'+name+':storageUtilized:counter')
-        nbr = r.get('s3:'+ressource+':'+name+':numberOfObjects:counter')
+        store = r.get('s3:'+resource+':'+name+':storageUtilized:counter')
+        nbr = r.get('s3:'+resource+':'+name+':numberOfObjects:counter')
         print("Redis:%s:%s:%s" % (name,int(nbr),int(store)))
 
-    def update(self, ressource, name, size, files):
+    def update(self, resource, name, size, files):
 
         timestamp = int(time.time() - 15 * 60) * 1000
         r = redis.Redis(host=self._ip, port=self._port, db=0)
 
-        numberOfObjects = 's3:%s:%s:numberOfObjects' % (ressource, name)
-        storageUtilized = 's3:%s:%s:storageUtilized' % (ressource, name)
+        numberOfObjects = 's3:%s:%s:numberOfObjects' % (resource, name)
+        storageUtilized = 's3:%s:%s:storageUtilized' % (resource, name)
 
         r.zremrangebyscore(numberOfObjects, timestamp, timestamp)
         r.zremrangebyscore(storageUtilized, timestamp, timestamp)
@@ -49,9 +49,9 @@ class updateRedis():
         r.zadd(numberOfObjects, {files: timestamp})
 
         numberOfObjectsCounter = 's3:%s:%s:numberOfObjects:counter' % (
-            ressource, name)
+            resource, name)
         storageUtilizedCounter = 's3:%s:%s:storageUtilized:counter' % (
-            ressource, name)
+            resource, name)
         r.set(numberOfObjectsCounter, files)
         r.set(storageUtilizedCounter, size)
 
@@ -111,7 +111,7 @@ class S3BucketD(Thread):
         total_size = 0
         files = 0
         key = ""
-        user = "Unknow"
+        user = "Unknown"
         for keys in Contents:
             key = keys["key"]
             pfixed = keys["value"].replace('false', 'False')
