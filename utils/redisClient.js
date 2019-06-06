@@ -6,6 +6,7 @@ const Redis = require('ioredis');
 * @param {string} config.host - redis host
 * @param {number} config.port - redis port
 * @param {string} [config.password] - redis password (optional)
+* @param {string} [config.sentinelPassword] - sentinel password (optional)
 * @param {Werelogs.Logger} log - Werelogs logger
 * @return {Redis} - Redis client instance
 */
