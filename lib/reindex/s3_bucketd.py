@@ -1,5 +1,5 @@
 import requests
-import redis
+from redis.sentinel import Sentinel
 import json
 import ast
 import sys
@@ -14,8 +14,9 @@ if len(sys.argv) == 6:
     ip = sys.argv[1]
     port = sys.argv[2]
     sentinel_cluster_name = sys.argv[3]
-    bucketd_host = sys.argv[4]
-    bucketd_port = sys.argv[5]
+    sentinel_password = sys.argv[4]
+    bucketd_host = sys.argv[5]
+    bucketd_port = sys.argv[6]
     print("Sentinel IP used: %s" % ip)
     print("Sentinel port used: %s" % port)
     print("Sentinel cluster name used: %s" % sentinel_cluster_name)
@@ -25,6 +26,7 @@ else:
     ip = "127.0.0.1"
     port = "16379"
     sentinel_cluster_name = "scality-s3"
+    sentinel_password = ''
     bucketd_host =  "127.0.0.1"
     bucketd_port = "9000"
 
@@ -37,12 +39,12 @@ class updateRedis():
 
     def __init__(self, ip="127.0.0.1", port="16379", sentinel_cluster_name="scality-s3"):
 
-        r = redis.Redis(host=ip, port=port, db=0)
+        r = redis.sentinel([(host, port)], password=sentinel_password)
         self._ip, self._port = r.sentinel_get_master_addr_by_name(sentinel_cluster_name)
 
     def read(self, resource, name):
 
-        r = redis.Redis(host=self._ip, port=self._port, db=0)
+        r = redis.sentinel([(host, port)], password=sentinel_password)
         store = r.get('s3:'+resource+':'+name+':storageUtilized:counter')
         nbr = r.get('s3:'+resource+':'+name+':numberOfObjects:counter')
         print("Redis:%s:%s:%s" % (name,int(nbr),int(store)))
@@ -50,7 +52,7 @@ class updateRedis():
     def update(self, resource, name, size, files):
 
         timestamp = int(time.time() - 15 * 60) * 1000
-        r = redis.Redis(host=self._ip, port=self._port, db=0)
+        r = redis.Redis(host=self._ip, port=self._port, db=0, password=sentinel_password)
 
         numberOfObjects = 's3:%s:%s:numberOfObjects' % (resource, name)
         storageUtilized = 's3:%s:%s:storageUtilized' % (resource, name)
