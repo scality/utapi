@@ -10,7 +10,7 @@ import sys
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 
-if len(sys.argv) == 6:
+if len(sys.argv) == 7:
     ip = sys.argv[1]
     port = sys.argv[2]
     sentinel_cluster_name = sys.argv[3]
