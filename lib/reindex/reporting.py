@@ -1,5 +1,5 @@
 import requests
-from redis.sentinel import Sentinel
+import redis
 import json
 import ast
 import sys
@@ -39,12 +39,12 @@ class askRedis():
 
     def __init__(self, ip="127.0.0.1", port="16379", sentinel_cluster_name="scality-s3"):
 
-        r = redis.sentinel([(host, port)], password=sentinel_password)
+        r = redis.Redis(host=ip, port=port, db=0, password=sentinel_password)
         self._ip, self._port = r.sentinel_get_master_addr_by_name(sentinel_cluster_name)
 
     def read(self, resource, name):
 
-        r = redis.sentinel([(host, port)], password=sentinel_password)
+        r = redis.Redis(host=self._ip, port=self._port, db=0)
         res = 's3:%s:%s:storageUtilized:counter' % (resource, name)
         total_size = r.get(res)
         res = 's3:%s:%s:numberOfObjects:counter' % (resource, name)
