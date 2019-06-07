@@ -44,7 +44,7 @@ class askRedis():
 
     def read(self, resource, name):
 
-        r = redis.Redis(host=self._ip, port=self._port, db=0)
+        r = redis.Redis(host=self._ip, port=self._port, db=0, password=sentinel_password)
         res = 's3:%s:%s:storageUtilized:counter' % (resource, name)
         total_size = r.get(res)
         res = 's3:%s:%s:numberOfObjects:counter' % (resource, name)
