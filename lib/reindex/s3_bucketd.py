@@ -44,7 +44,7 @@ class updateRedis():
 
     def read(self, resource, name):
 
-        r = redis.Redis(host=self._ip, port=self._port, db=0)
+        r = redis.Redis(host=self._ip, port=self._port, db=0, password=sentinel_password)
         store = r.get('s3:'+resource+':'+name+':storageUtilized:counter')
         nbr = r.get('s3:'+resource+':'+name+':numberOfObjects:counter')
         print("Redis:%s:%s:%s" % (name,int(nbr),int(store)))
@@ -52,7 +52,7 @@ class updateRedis():
     def update(self, resource, name, size, files):
 
         timestamp = int(time.time() - 15 * 60) * 1000
-        r = redis.Redis(host=self._ip, port=self._port, db=0)
+        r = redis.Redis(host=self._ip, port=self._port, db=0, password=sentinel_password)
 
         numberOfObjects = 's3:%s:%s:numberOfObjects' % (resource, name)
         storageUtilized = 's3:%s:%s:storageUtilized' % (resource, name)
