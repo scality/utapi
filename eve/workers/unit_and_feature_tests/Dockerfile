@@ -22,5 +22,6 @@ ARG BUILDBOT_VERSION
 
 RUN pip install buildbot-worker==$BUILDBOT_VERSION
 ADD supervisor/buildbot_worker.conf /etc/supervisor/conf.d/
+ADD redis/sentinel.conf /etc/sentinel.conf
 
 CMD ["supervisord", "-n"]
