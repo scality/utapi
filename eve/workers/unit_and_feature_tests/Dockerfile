@@ -21,6 +21,8 @@ RUN curl -sL https://deb.nodesource.com/setup_6.x | bash - \
 ARG BUILDBOT_VERSION
 
 RUN pip install buildbot-worker==$BUILDBOT_VERSION
+RUN pip3 install requests
+RUN pip3 install redis
 ADD supervisor/buildbot_worker.conf /etc/supervisor/conf.d/
 ADD redis/sentinel.conf /etc/sentinel.conf
 
