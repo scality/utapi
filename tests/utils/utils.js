@@ -115,7 +115,59 @@ function makeUtapiClientRequest({ timeRange, resource }, cb) {
     req.end();
 }
 
+function _getNormalizedTimestamp() {
+    const d = new Date();
+    const minutes = d.getMinutes();
+    return d.setMinutes((minutes - minutes % 15), 0, 0);
+}
+
+function _getStartTime() {
+    const thirtyMinutes = (1000 * 60) * 30;
+    return _getNormalizedTimestamp() - thirtyMinutes;
+}
+
+function _getEndTime() {
+    const fifteenMinutes = (1000 * 60) * 15;
+    return (_getNormalizedTimestamp() - 1) + fifteenMinutes;
+}
+
+function _buildRequestBody(resource) {
+    const { type } = resource;
+    const body = { timeRange: [_getStartTime(), _getEndTime()] };
+    body[type] = resource[type];
+    return JSON.stringify(body);
+}
+
+function listMetrics(resource, cb) {
+    const requestBody = _buildRequestBody(resource);
+    const header = {
+        host: 'localhost',
+        port: 8100,
+        method: 'POST',
+        service: 's3',
+        path: `/${resource.type}?Action=ListMetrics`,
+        signQuery: false,
+        body: requestBody,
+    };
+    const options = aws4.sign(header, {
+        accessKeyId: 'accessKey1',
+        secretAccessKey: 'verySecretKey1',
+    });
+    const request = http.request(options, response => {
+        const body = [];
+        response.on('data', chunk => body.push(chunk));
+        response.on('end', () => {
+            const data = JSON.parse(body.join(''));
+            cb(null, data);
+        });
+    });
+    request.on('error', err => cb(err));
+    request.write(requestBody);
+    request.end();
+}
+
 module.exports = {
+    listMetrics,
     getAllResourceTypeKeys,
     getNormalizedTimestamp,
     buildMockResponse,
