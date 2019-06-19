@@ -4,7 +4,7 @@ const UtapiReindex = require('../../lib/UtapiReindex');
 const redisClient = require('../../utils/redisClient');
 const log = require('../utils/mock/log');
 
-describe('UtapiReindex', () => {
+describe.only('UtapiReindex', () => {
     let reindex;
     let redis;
 
@@ -16,7 +16,12 @@ describe('UtapiReindex', () => {
     });
 
     afterEach(done => {
-        redis.flushdb(done);
+        redis
+            .on('close', done)
+            .on('error', done)
+            .flushdb()
+            .then(() => redis.quit())
+            .catch(done);
     });
 
     describe('::_connect', () => {
