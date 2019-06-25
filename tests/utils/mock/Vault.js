@@ -12,7 +12,7 @@ class Vault {
     _onRequest(req, res) {
         res.writeHead(200);
         const { query } = url.parse(req.url, true);
-        if (query.Action && query.Action === 'AccountsCanonicalIds') {
+        if (query.Action === 'AccountsCanonicalIds') {
             const body = JSON.stringify([{ canonicalId: CANONICAL_ID }]);
             res.write(body);
         }
