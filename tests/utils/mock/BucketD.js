@@ -4,7 +4,7 @@ const express = require('express');
 
 const { models, constants } = require('arsenal');
 
-const { CANONICAL_ID, BUCKET_NAME } = require('./values');
+const { CANONICAL_ID, BUCKET_NAME, OBJECT_KEY } = require('./values');
 
 const { ObjectMD } = models;
 const app = express();
@@ -19,7 +19,7 @@ app.param('bucketName', (req, res, next, bucketName) => {
     } else {
         const value = new ObjectMD().setContentLength(1024).getValue();
         metadata = {
-            key: 'testobjectkey',
+            key: OBJECT_KEY,
             value: JSON.stringify(value),
         };
     }
