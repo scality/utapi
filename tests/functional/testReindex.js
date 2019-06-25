@@ -2,6 +2,8 @@ const assert = require('assert');
 
 const async = require('async');
 
+const { constants } = require('arsenal');
+
 const UtapiReindex = require('../../lib/UtapiReindex');
 const redisClient = require('../../utils/redisClient');
 const mock = require('../utils/mock');
@@ -226,7 +228,7 @@ describe('UtapiReindex', () => {
                     const params = {
                         resource: {
                             type: 'buckets',
-                            buckets: ['test-bucket'],
+                            buckets: [mock.BUCKET_NAME],
                         },
                         expected: {
                             storageUtilized: [0, 1024],
@@ -236,10 +238,13 @@ describe('UtapiReindex', () => {
                     checkMetrics(params, next);
                 },
                 next => {
+                    const buckets = [
+                        `${constants.mpuBucketPrefix}${mock.BUCKET_NAME}`,
+                    ];
                     const params = {
                         resource: {
                             type: 'buckets',
-                            buckets: ['mpuShadowBuckettest-bucket'],
+                            buckets,
                         },
                         expected: {
                             storageUtilized: [0, 1024],
@@ -252,7 +257,7 @@ describe('UtapiReindex', () => {
                     const params = {
                         resource: {
                             type: 'accounts',
-                            accounts: ['014810915030'],
+                            accounts: [mock.ACCOUNT_ID],
                         },
                         expected: {
                             storageUtilized: [0, 2048],
