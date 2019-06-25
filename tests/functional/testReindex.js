@@ -121,7 +121,7 @@ describe('UtapiReindex', () => {
         });
 
         describe('lock is not acquired', () => {
-            it('should not release lock key', done => {
+            it('should not release the lock key', done => {
                 shouldNotReleaseLock(done);
             });
         });
@@ -131,7 +131,7 @@ describe('UtapiReindex', () => {
                 shouldAcquireLock(done);
             });
 
-            it('should not acquire the lock key', done => {
+            it('should release the lock key', done => {
                 shouldReleaseLock(done);
             });
         });
@@ -185,17 +185,17 @@ describe('UtapiReindex', () => {
 
     describe('::_scheduleJob', () => {
         function waitUntilLockHasValue({ value }, cb) {
-            let shouldWait;
+            let shouldLeave;
 
             async.doUntil(next =>
                 redis.get(REINDEX_LOCK_KEY, (err, res) => {
                     if (err) {
                         return next(err);
                     }
-                    shouldWait = res === value;
+                    shouldLeave = res === value;
                     return setTimeout(next, 200);
                 }),
-            () => shouldWait, cb);
+            () => shouldLeave, cb);
         }
 
         function checkMetrics({ resource, expected }, cb) {
@@ -215,7 +215,7 @@ describe('UtapiReindex', () => {
 
         beforeEach(done => {
             reindex._scheduleJob();
-            // Wait until the scripts have started and finsihed reindexing.
+            // Wait until the scripts have started and finished reindexing.
             async.series([
                 next => waitUntilLockHasValue({ value: 'true' }, next),
                 next => waitUntilLockHasValue({ value: null }, next),
