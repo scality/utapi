@@ -1,0 +1,15 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.13.5
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  'npm:debug:20170905':
+    - Arsenal > ioredis > debug:
+        patched: '2019-06-26T01:02:26.963Z'
+    - vaultclient > Arsenal > ioredis > debug:
+        patched: '2019-06-26T01:02:26.963Z'
+  'npm:ms:20170412':
+    - Arsenal > ioredis > debug > ms:
+        patched: '2019-06-26T01:02:26.963Z'
+    - vaultclient > Arsenal > ioredis > debug > ms:
+        patched: '2019-06-26T01:02:26.963Z'
