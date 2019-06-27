@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
-    "arsenal": "scality/Arsenal#49cf54e2",
+    "arsenal": "scality/Arsenal#4fd77d73",
     "async": "^3.1.0",
     "ioredis": "^4.10.0",
     "node-schedule": "1.3.2",
