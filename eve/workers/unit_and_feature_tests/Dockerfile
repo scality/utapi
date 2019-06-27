@@ -6,7 +6,7 @@ FROM buildpack-deps:jessie-curl
 ENV LANG C.UTF-8
 COPY utapi_packages.list buildbot_worker_packages.list /tmp/
 
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
     && apt-get update -qq \
     && cat /tmp/*packages.list | xargs apt-get install -y \
     && pip install pip==9.0.1 \
