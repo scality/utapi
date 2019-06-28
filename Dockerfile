@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 COPY package.json /usr/src/app
 
 RUN apt-get update \
+    && apt-get install git \
     && apt-get install -y jq --no-install-recommends \
     && npm install --production \
     && rm -rf /var/lib/apt/lists/* \
