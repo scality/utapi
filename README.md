@@ -7,6 +7,10 @@
 
 Service Utilization API for tracking resource usage and metrics reporting
 
+## Quickstart
+
+Please see the [quickstart](/DESIGN.md) guide.
+
 ## Design
 
 Please refer to the [design](/DESIGN.md) for more information.
