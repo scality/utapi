@@ -3,6 +3,7 @@ const url = require('url');
 const { auth, errors, policies } = require('arsenal');
 const safeJsonParse = require('../utils/safeJsonParse');
 const Vault = require('../lib/Vault');
+const config = require('../lib/Config');
 
 class Router {
 
@@ -199,7 +200,7 @@ class Router {
      */
     _authSquared(utapiRequest, cb) {
         const log = utapiRequest.getLog();
-        if (process.env.NO_AUTH === 'true') {
+        if (config.noauth === 'true') {
             log.trace('skipping authentication check');
             return process.nextTick(() => cb());
         }

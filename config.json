@@ -1,6 +1,7 @@
 {
     "port": 8100,
     "workers": 10,
+    "noauth": false,
     "healthChecks": {
         "allowFrom": ["127.0.0.1/8", "::1"]
     },

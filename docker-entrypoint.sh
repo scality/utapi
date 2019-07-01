@@ -39,6 +39,10 @@ if [[ "$HEALTHCHECKS_ALLOWFROM" ]]; then
     JQ_FILTERS_CONFIG="$JQ_FILTERS_CONFIG | .healthChecks.allowFrom=[\"$HEALTHCHECKS_ALLOWFROM\"]"
 fi
 
+if [[ "$NO_AUTH" ]]; then
+    JQ_FILTERS_CONFIG="$JQ_FILTERS_CONFIG | .noauth=[\"$NO_AUTH\"]"
+fi
+
 if [[ $JQ_FILTERS_CONFIG != "." ]]; then
     jq "$JQ_FILTERS_CONFIG" config.json > config.json.tmp
     mv config.json.tmp config.json
