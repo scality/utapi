@@ -17,12 +17,12 @@
   },
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
-    "arsenal": "scality/Arsenal#67365083",
+    "arsenal": "scality/Arsenal#9f2e74e",
     "async": "^2.0.1",
     "ioredis": "^4.9.5",
     "node-schedule": "1.2.0",
-    "vaultclient": "scality/vaultclient#fbd9988d",
-    "werelogs": "scality/werelogs#0ff7ec82"
+    "vaultclient": "scality/vaultclient#90762d2",
+    "werelogs": "scality/werelogs#4e0d97c"
   },
   "devDependencies": {
     "aws4": "^1.8.0",
