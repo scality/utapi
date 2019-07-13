@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { map, series } = require('async');
+const { map, series, waterfall, each } = require('async');
 const UtapiClient = require('../../lib/UtapiClient');
 const Datastore = require('../../lib/Datastore');
 const redisClient = require('../../utils/redisClient');
@@ -282,6 +282,52 @@ describe('UtapiClient: expire bucket metrics', () => {
                     numberOfObjects: 1,
                 }, done);
             });
+        });
+    });
+
+    describe('with a non-zero TTL', () => {
+        const TTL = 10;
+
+        beforeEach(done => {
+            const config = Object.assign({
+                expireMetrics: true,
+                expireMetricsTTL: TTL,
+            }, utapiConfig);
+            const client = new UtapiClient(config);
+            const params = _getMetricObj('bucket');
+
+            series([
+                next => {
+                    client.ds.getClient()
+                        .on('ready', next)
+                        .on('error', next);
+                },
+                next =>
+                    client.pushMetric('createBucket', reqUid, params, next),
+                next =>
+                    client.pushMetric('deleteBucket', reqUid, params, next),
+            ], done);
+        });
+
+        it(`should have a TTL > than 0 and <= ${TTL}`, done => {
+            function assertTTL(keys, cb) {
+                each(keys, (key, next) =>
+                    redis.ttl(key, (err, data) => {
+                        if (err) {
+                            return next(err);
+                        }
+                        assert(data > 0 && data <= TTL);
+                        return next();
+                    }),
+                cb);
+            }
+            waterfall([
+                next => redis.keys('s3:buckets:*', next),
+                (keys, next) => {
+                    assert.strictEqual(keys.length, 2);
+                    assertTTL(keys, next);
+                },
+            ], done);
         });
     });
 });
