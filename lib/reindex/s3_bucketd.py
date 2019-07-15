@@ -105,20 +105,22 @@ class S3BucketD(Thread):
         self.total_size = 0
         if self.mpu:
             self.bucket = "mpuShadowBucket"+bucket
-        self.seekeys = seekeys
         self.ip = ip
         self.bucketd_port = bucketd_port;
 
-    def listbucket(self, session=None, marker=""):
+    def listbucket(self, session=None, marker="", versionmarker=""):
         m = marker.encode('utf8')
         mark = urllib.parse.quote_plus(m)
-        params = "%s?listingType=DelimiterMaster&maxKeys=1000&marker=%s" % (
-            self.bucket, mark)
+        v = versionmarker.encode('utf8')
+        versionmarker = urllib.parse.quote_plus(v)
+        extra = "&versionIdMarker=%s" % versionmarker
+        params = "%s?listingType=DelimiterVersions&maxKeys=1000&keyMarker=%s%s" % (
+            self.bucket, mark, extra)
         url = "http://%s:%s/default/bucket/%s" % (self.ip, self.bucketd_port, params)
         r = session.get(url, timeout=30)
         if r.status_code == 200:
             payload = json.loads(r.text)
-            Contents = payload["Contents"]
+            Contents = payload["Versions"]
             return (r.status_code, payload, Contents)
         else:
             return (r.status_code, "", "")
@@ -127,60 +129,45 @@ class S3BucketD(Thread):
         total_size = 0
         files = 0
         key = ""
-        user = "Unknown"
+        versionId = ""
         for keys in Contents:
             key = keys["key"]
             pfixed = keys["value"].replace('false', 'False')
             pfixed = pfixed.replace('null', 'None')
             pfixed = pfixed.replace('true', 'True')
             data = ast.literal_eval(pfixed)
+            if keys.get("versionId", ""):
+                versionId = keys["versionId"]
             try:
                 total_size += data["content-length"]
+                files += 1
             except:
                 continue
-            files += 1
-            if self.mpu == 0:
-                user = data["owner-display-name"]
-            else:
-                if self.seekeys == 1:
-                    try:
-                        print(data["partLocations"][0]["key"])
-                    except Exception as e:
-                        continue
-                user = "mpu_user"
-        return (key, total_size, user, files)
+        return (key, total_size, files, versionId)
 
     def run(self):
 
         total_size = 0
         files = 0
         Truncate = True
-        key = ''
+        key = ""
+        versionId = ""
         while Truncate:
-            while 1:
-                try:
-                    session = requests.Session()
-                    error, payload, Contents = self.listbucket(session, key)
-                    if error == 200:
-                        break
-                    elif error == 404:
-                        sys.exit(1)
-                    time.sleep(15)
-                except Exception as e:
-                    print("ERROR:%s" % e)
-
+            session = requests.Session()
+            error, payload, Contents = self.listbucket(session, key, versionId)
+            if error == 404:
+                break
             Truncate = payload["IsTruncated"]
-            key, size, user, file = self.retkeys(Contents)
+            key, size, file, versionId = self.retkeys(Contents)
             total_size += size
             files += file
         self.files = files
-        self.user = user
         self.total_size = total_size
-        content = "%s:%s:%s:%s:%s" % (
-            self.userid, self.bucket, user, files, total_size)
+        content = "%s:%s:%s:%s" % (
+            self.userid, self.bucket, files, total_size)
         executor = ThreadPoolExecutor(max_workers=1)
         executor.submit(safe_print, content)
-        return(self.userid, self.bucket, user, files, total_size)
+        return(self.userid, self.bucket, files, total_size)
 
 
 P = S3ListBuckets(ip=bucketd_host, bucketd_port=bucketd_port)
