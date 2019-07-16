@@ -21,7 +21,7 @@
     "async": "^2.0.1",
     "ioredis": "^4.9.5",
     "node-schedule": "1.2.0",
-    "vaultclient": "scality/vaultclient#fbd9988d",
+    "vaultclient": "scality/vaultclient#3eaaff2",
     "werelogs": "scality/werelogs#0ff7ec82"
   },
   "devDependencies": {
