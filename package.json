@@ -21,8 +21,8 @@
     "async": "^2.0.1",
     "ioredis": "^4.9.5",
     "node-schedule": "1.2.0",
-    "vaultclient": "scality/vaultclient#f9a0245",
-    "werelogs": "scality/werelogs#351a2a3"
+    "vaultclient": "scality/vaultclient#3eaaff2",
+    "werelogs": "scality/werelogs#4e0d97c"
   },
   "devDependencies": {
     "aws4": "^1.8.0",
