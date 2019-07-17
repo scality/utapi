@@ -373,7 +373,7 @@ describe.only('Across time intervals', function test() {
     after(() => {
         vault.end();
     });
-    
+
     afterEach(() => redis.flushdb());
 
     function putObject(cb) {
