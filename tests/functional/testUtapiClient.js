@@ -6,6 +6,10 @@ const redisClient = require('../../utils/redisClient');
 const { Logger } = require('werelogs');
 const { getCounters, getMetricFromKey,
     getStateKeys, getKeys } = require('../../lib/schema');
+
+const { makeUtapiClientRequest } = require('../utils/utils');
+const Vault = require('../utils/mock/Vault');
+
 const log = new Logger('TestUtapiClient');
 const redis = redisClient({
     host: '127.0.0.1',
@@ -326,6 +330,205 @@ describe('UtapiClient: expire bucket metrics', () => {
                 (keys, next) => {
                     assert.strictEqual(keys.length, 2);
                     assertTTL(keys, next);
+                },
+            ], done);
+        });
+    });
+});
+
+describe.only('Across time intervals', function test() {
+    this.timeout((1000 * 60) * 2);
+
+    function checkMetricResponse(response, expected) {
+        const data = JSON.parse(response);
+        if (data.code) {
+            assert.ifError(data.message);
+        }
+        const { storageUtilized, numberOfObjects, incomingBytes } = data[0];
+        assert.deepStrictEqual(storageUtilized, expected.storageUtilized);
+        assert.deepStrictEqual(numberOfObjects, expected.numberOfObjects);
+        assert.strictEqual(incomingBytes, expected.incomingBytes);
+    }
+
+    function getNormalizedTimestampSeconds() {
+        const d = new Date();
+        const seconds = d.getSeconds();
+        return d.setSeconds((seconds - seconds % 15), 0, 0);
+    }
+
+    function waitUntilNextInterval() {
+        const start = getNormalizedTimestampSeconds();
+        while (start === getNormalizedTimestampSeconds()) {
+            setTimeout(() => {}, 500);
+        }
+    }
+
+    const vault = new Vault();
+
+    before(() => {
+        process.env.TIMESTAMP_INTERVAL = 'hello';
+        vault.start();
+    });
+
+    after(() => {
+        vault.end();
+    });
+    
+    afterEach(() => redis.flushdb());
+
+    function putObject(cb) {
+        const params = {
+            level: 'buckets',
+            service: 's3',
+            bucket: 'my-bucket',
+            newByteLength: 10,
+            oldByteLength: null,
+        };
+        utapiClient.pushMetric('putObject', reqUid, params, cb);
+    }
+
+    function deleteObject(cb) {
+        const params = {
+            level: 'buckets',
+            service: 's3',
+            bucket: 'my-bucket',
+            byteLength: 10,
+            numberOfObjects: 1,
+        };
+        utapiClient.pushMetric('deleteObject', reqUid, params, cb);
+    }
+
+    let firstInterval;
+    let secondInterval;
+
+    describe('Metrics do not return to same values', () => {
+        beforeEach(done => {
+            series([
+                next => {
+                    waitUntilNextInterval();
+                    firstInterval = getNormalizedTimestampSeconds();
+                    series([
+                        next => putObject(next),
+                        next => putObject(next),
+                    ], next);
+                },
+                next => {
+                    waitUntilNextInterval();
+                    secondInterval = getNormalizedTimestampSeconds();
+                    series([
+                        next => putObject(next),
+                        next => putObject(next),
+                        next => deleteObject(next),
+                    ], next);
+                },
+            ], done);
+        });
+
+        it('should maintain data points', done => {
+            series([
+                next => {
+                    const params = {
+                        timeRange: [firstInterval, secondInterval - 1],
+                        resource: {
+                            type: 'buckets',
+                            buckets: ['my-bucket'],
+                        },
+                    };
+                    makeUtapiClientRequest(params, (err, response) => {
+                        assert.ifError(err);
+                        const expected = {
+                            storageUtilized: [20, 20],
+                            numberOfObjects: [2, 2],
+                            incomingBytes: 20,
+                        };
+                        checkMetricResponse(response, expected);
+                        return next();
+                    });
+                },
+                next => {
+                    const params = {
+                        timeRange: [secondInterval, secondInterval + 14999],
+                        resource: {
+                            type: 'buckets',
+                            buckets: ['my-bucket'],
+                        },
+                    };
+                    makeUtapiClientRequest(params, (err, response) => {
+                        assert.ifError(err);
+                        const expected = {
+                            storageUtilized: [30, 30],
+                            numberOfObjects: [3, 3],
+                            incomingBytes: 20,
+                        };
+                        checkMetricResponse(response, expected);
+                        return next();
+                    });
+                },
+            ], done);
+        });
+    });
+
+    describe('Metrics return to same values', () => {
+        beforeEach(done => {
+            series([
+                next => {
+                    waitUntilNextInterval();
+                    firstInterval = getNormalizedTimestampSeconds();
+                    series([
+                        next => putObject(next),
+                        next => putObject(next),
+                    ], next);
+                },
+                next => {
+                    waitUntilNextInterval();
+                    secondInterval = getNormalizedTimestampSeconds();
+                    series([
+                        next => putObject(next),
+                        next => deleteObject(next),
+                    ], next);
+                },
+            ], done);
+        });
+
+        it('should maintain data points', done => {
+            series([
+                next => {
+                    const params = {
+                        timeRange: [firstInterval, secondInterval - 1],
+                        resource: {
+                            type: 'buckets',
+                            buckets: ['my-bucket'],
+                        },
+                    };
+                    makeUtapiClientRequest(params, (err, response) => {
+                        assert.ifError(err);
+                        const expected = {
+                            storageUtilized: [20, 20],
+                            numberOfObjects: [2, 2],
+                            incomingBytes: 20,
+                        };
+                        checkMetricResponse(response, expected);
+                        return next();
+                    });
+                },
+                next => {
+                    const params = {
+                        timeRange: [secondInterval, secondInterval + 14999],
+                        resource: {
+                            type: 'buckets',
+                            buckets: ['my-bucket'],
+                        },
+                    };
+                    makeUtapiClientRequest(params, (err, response) => {
+                        assert.ifError(err);
+                        const expected = {
+                            storageUtilized: [20, 20],
+                            numberOfObjects: [2, 2],
+                            incomingBytes: 10,
+                        };
+                        checkMetricResponse(response, expected);
+                        return next();
+                    });
                 },
             ], done);
         });
