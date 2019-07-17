@@ -13,5 +13,5 @@ killandsleep () {
   sleep 10
 }
 
-npm start & bash tests/utils/wait_for_local_port.bash $PORT 40
-npm run $1
+CI=true npm start & bash tests/utils/wait_for_local_port.bash $PORT 40
+CI=true npm run $1
