@@ -12,11 +12,7 @@ Please refer to the [design](/DESIGN.md) for more information.
 
 ## Server
 
-To run the server:
-
-```
-npm start
-```
+Please see the [quickstart](/QUICKSTART.md) guide.
 
 ## Client
 
