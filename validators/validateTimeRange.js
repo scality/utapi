@@ -4,6 +4,9 @@
 * @return {boolean} - validation result
 */
 function validateTimeRange(timeRange) {
+    if (process.env.UTAPI_INTERVAL_TEST_MODE === 'true') {
+        return true;
+    }
     if (Array.isArray(timeRange) && timeRange.length > 0 && timeRange.length < 3
         && timeRange.every(item => typeof item === 'number')) {
         // check for start time
