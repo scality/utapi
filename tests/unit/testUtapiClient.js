@@ -4,6 +4,7 @@ const Datastore = require('../../lib/Datastore');
 const MemoryBackend = require('../../lib/backend/Memory');
 const UtapiClient = require('../../lib/UtapiClient');
 const { getNormalizedTimestamp } = require('../utils/utils');
+const member = require('../../utils/member');
 
 const memoryBackend = new MemoryBackend();
 const ds = new Datastore();
@@ -91,10 +92,21 @@ function getObject(timestamp, data) {
     return obj;
 }
 
+function deserializeMemoryBackend(data) {
+    Object.keys(data).forEach(key => {
+        //  && data[key] && Array.isArray(data[key][0])
+        if (key.endsWith('storageUtilized') || key.endsWith('numberOfObjects')) {
+            data[key][0][1] = member.deserialize(data[key][0][1]);
+        }
+    });
+}
+
 function testMetric(metric, params, expected, cb) {
     const c = new UtapiClient(config);
     c.setDataStore(ds);
+
     c.pushMetric(metric, REQUID, params, () => {
+        deserializeMemoryBackend(memoryBackend.data);
         assert.deepStrictEqual(memoryBackend.data, expected);
         return cb();
     });
