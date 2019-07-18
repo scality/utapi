@@ -1,11 +1,11 @@
 const assert = require('assert');
 const { map, series, waterfall, each } = require('async');
-const UtapiClient = require('../../lib/UtapiClient');
-const Datastore = require('../../lib/Datastore');
-const redisClient = require('../../utils/redisClient');
+const UtapiClient = require('../../../lib/UtapiClient');
+const Datastore = require('../../../lib/Datastore');
+const redisClient = require('../../../utils/redisClient');
 const { Logger } = require('werelogs');
 const { getCounters, getMetricFromKey,
-    getStateKeys, getKeys } = require('../../lib/schema');
+    getStateKeys, getKeys } = require('../../../lib/schema');
 const log = new Logger('TestUtapiClient');
 const redis = redisClient({
     host: '127.0.0.1',
