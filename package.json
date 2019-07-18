@@ -35,6 +35,10 @@
   },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional",
+    "ft_test:client": "mocha --recursive tests/functional/client",
+    "ft_test:cron": "mocha --recursive tests/functional/cron",
+    "ft_test:interval": "mocha --recursive tests/functional/interval",
+    "ft_test:server": "mocha --recursive tests/functional/server",
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
     "start": "node server.js",
