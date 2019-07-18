@@ -2,6 +2,7 @@ const http = require('http');
 const aws4 = require('aws4');
 
 const { getKeys, getCounters } = require('../../lib/schema');
+const UtapiClient = require('../../lib/UtapiClient');
 
 const resouceTypes = ['buckets', 'accounts', 'service'];
 const propertyNames = {
@@ -12,12 +13,6 @@ const resources = {
     buckets: 'foo-bucket',
     accounts: 'foo-account',
 };
-
-function getNormalizedTimestamp() {
-    const d = new Date();
-    const minutes = d.getMinutes();
-    return d.setMinutes((minutes - minutes % 15), 0, 0);
-}
 
 // Build the resouceType object that gets keys from the schema.
 function _getResourceTypeObject(resourceType) {
@@ -30,7 +25,7 @@ function _getResourceTypeObject(resourceType) {
 
 // Get all keys for each resource type from the schema.
 function getAllResourceTypeKeys() {
-    const timestamp = getNormalizedTimestamp(Date.now());
+    const timestamp = UtapiClient.getNormalizedTimestamp();
     const allResourceTypeKeys = resouceTypes.map(resourceType => {
         const obj = _getResourceTypeObject(resourceType);
         const counters = getCounters(obj);
@@ -115,20 +110,14 @@ function makeUtapiClientRequest({ timeRange, resource }, cb) {
     req.end();
 }
 
-function _getNormalizedTimestamp() {
-    const d = new Date();
-    const minutes = d.getMinutes();
-    return d.setMinutes((minutes - minutes % 15), 0, 0);
-}
-
 function _getStartTime() {
-    const thirtyMinutes = (1000 * 60) * 30;
-    return _getNormalizedTimestamp() - thirtyMinutes;
+    const thirtySeconds = (1000) * 30;
+    return UtapiClient.getNormalizedTimestamp() - thirtySeconds;
 }
 
 function _getEndTime() {
-    const fifteenMinutes = (1000 * 60) * 15;
-    return (_getNormalizedTimestamp() - 1) + fifteenMinutes;
+    const fifteenSeconds = (1000) * 15;
+    return (UtapiClient.getNormalizedTimestamp() - 1) + fifteenSeconds;
 }
 
 function _buildRequestBody(resource) {
@@ -169,7 +158,6 @@ function listMetrics(resource, cb) {
 module.exports = {
     listMetrics,
     getAllResourceTypeKeys,
-    getNormalizedTimestamp,
     buildMockResponse,
     makeUtapiClientRequest,
 };
