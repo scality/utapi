@@ -111,10 +111,10 @@ function checkListElement(action, params, res) {
     const { error, result } = safeJsonParse(res);
     assert(!error, 'cannot parse cached element into JSON');
     const { reqUid, timestamp } = result;
-    let currTimestamp = UtapiClient.getNormalizedTimestamp();
+    const currTimestamp = UtapiClient.getNormalizedTimestamp();
     let milliseconds = 900000; // 15 minutes
     if (process.env.CI) {
-        let milliseconds = 15000; // 15 seconds
+        milliseconds = 15000; // 15 seconds
     }
     // Allow for previous timestamp interval, since we cannot know start time.
     assert(timestamp, currTimestamp || currTimestamp - milliseconds,
