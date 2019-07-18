@@ -41,5 +41,14 @@ stages:
           name: run unit tests
           command: npm test
       - ShellCommand:
-          name: run feature tests
-          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash ft_test
+          name: run client tests
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:client
+      - ShellCommand:
+          name: run server tests
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:server
+      - ShellCommand:
+          name: run cron tests
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
+      - ShellCommand:
+          name: run interval tests
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
