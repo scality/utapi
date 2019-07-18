@@ -4,10 +4,10 @@ const async = require('async');
 
 const { constants } = require('arsenal');
 
-const UtapiReindex = require('../../lib/UtapiReindex');
-const redisClient = require('../../utils/redisClient');
-const mock = require('../utils/mock');
-const utils = require('../utils/utils');
+const UtapiReindex = require('../../../lib/UtapiReindex');
+const redisClient = require('../../../utils/redisClient');
+const mock = require('../../utils/mock');
+const utils = require('../../utils/utils');
 
 const REINDEX_LOCK_KEY = 's3:utapireindex:lock';
 
