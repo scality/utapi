@@ -132,7 +132,7 @@ describe('UtapiClient:: enable/disable client', () => {
 });
 
 describe('UtapiClient:: push metrics', () => {
-    const timestamp = getNormalizedTimestamp(Date.now());
+    const timestamp = UtapiClient.getNormalizedTimestamp();
     let params;
 
     beforeEach(() => {
