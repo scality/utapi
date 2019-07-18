@@ -42,4 +42,7 @@ stages:
           command: npm test
       - ShellCommand:
           name: run feature tests
-          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash ft_test
+          command: bash ./eve/workers/unit_and_feature_tests/run_server_tests.bash false ft_test:client ft_test:server ft_test:cron
+      - ShellCommand:
+          name: run behavior tests
+          command: bash ./eve/workers/unit_and_feature_tests/run_server_tests.bash true ft_test:interval

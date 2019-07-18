@@ -1,12 +1,12 @@
 const assert = require('assert');
 const async = require('async');
 const { Logger } = require('werelogs');
-const UtapiReplay = require('../../lib/UtapiReplay');
-const UtapiClient = require('../../lib/UtapiClient');
-const Datastore = require('../../lib/Datastore');
-const redisClient = require('../../utils/redisClient');
-const { getAllResourceTypeKeys } = require('../utils/utils');
-const safeJsonParse = require('../../utils/safeJsonParse');
+const UtapiReplay = require('../../../lib/UtapiReplay');
+const UtapiClient = require('../../../lib/UtapiClient');
+const Datastore = require('../../../lib/Datastore');
+const redisClient = require('../../../utils/redisClient');
+const { getAllResourceTypeKeys } = require('../../utils/utils');
+const safeJsonParse = require('../../../utils/safeJsonParse');
 
 const log = new Logger('UTAPIReplayTest');
 const localCache = redisClient({
