@@ -1,7 +1,7 @@
 const uuid = require('uuid/v4');
 
 function serialize(value) {
-    return `${value}:${uuid()}`
+    return `${value}:${uuid()}`;
 }
 
 function deserialize(value) {

@@ -336,7 +336,7 @@ describe('UtapiClient: expire bucket metrics', () => {
     });
 });
 
-describe.only('Across time intervals', function test() {
+describe('Across time intervals', function test() {
     this.timeout((1000 * 60) * 2);
 
     function checkMetricResponse(response, expected) {

@@ -94,9 +94,10 @@ function getObject(timestamp, data) {
 
 function deserializeMemoryBackend(data) {
     Object.keys(data).forEach(key => {
-        //  && data[key] && Array.isArray(data[key][0])
-        if (key.endsWith('storageUtilized') || key.endsWith('numberOfObjects')) {
-            data[key][0][1] = member.deserialize(data[key][0][1]);
+        const isSortedSet =
+            key.endsWith('storageUtilized') || key.endsWith('numberOfObjects');
+        if (isSortedSet) {
+            data[key][0][1] = member.deserialize(data[key][0][1]); // eslint-disable-line
         }
     });
 }
