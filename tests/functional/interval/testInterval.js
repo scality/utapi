@@ -127,7 +127,7 @@ describe('UtapiClient: Across time intervals', function test() {
                     });
                 },
                 next => {
-                    const seconds = (15 * 1000) - 1;
+                    const seconds = (5 * 1000) - 1;
                     const params = {
                         timeRange: [secondInterval, secondInterval + seconds],
                         resource: {
@@ -194,7 +194,7 @@ describe('UtapiClient: Across time intervals', function test() {
                     });
                 },
                 next => {
-                    const seconds = (15 * 1000) - 1;
+                    const seconds = (5 * 1000) - 1;
                     const params = {
                         timeRange: [secondInterval, secondInterval + seconds],
                         resource: {
