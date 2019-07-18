@@ -1,6 +1,6 @@
 const assert = require('assert');
-const { makeUtapiClientRequest } = require('../utils/utils');
-const Vault = require('../utils/mock/Vault');
+const { makeUtapiClientRequest } = require('../../utils/utils');
+const Vault = require('../../utils/mock/Vault');
 
 const MAX_RANGE_MS = (((1000 * 60) * 60) * 24) * 30; // One month.
 

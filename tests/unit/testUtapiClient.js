@@ -4,6 +4,7 @@ const Datastore = require('../../lib/Datastore');
 const MemoryBackend = require('../../lib/backend/Memory');
 const UtapiClient = require('../../lib/UtapiClient');
 const { getNormalizedTimestamp } = require('../utils/utils');
+const member = require('../../utils/member');
 
 const memoryBackend = new MemoryBackend();
 const ds = new Datastore();
@@ -20,6 +21,18 @@ const config = {
     localCache: redisLocal,
     component: 's3',
 };
+
+function isSortedSetKey(key) {
+    return key.endsWith('storageUtilized') || key.endsWith('numberOfObjects');
+}
+
+function deserializeMemoryBackend(data) {
+    Object.keys(data).forEach(key => {
+        if (isSortedSetKey(key)) {
+            data[key][0][1] = member.deserialize(data[key][0][1]); // eslint-disable-line
+        }
+    });
+}
 
 // Build prefix values to construct the expected Redis schema keys
 function getPrefixValues(timestamp) {
@@ -95,6 +108,7 @@ function testMetric(metric, params, expected, cb) {
     const c = new UtapiClient(config);
     c.setDataStore(ds);
     c.pushMetric(metric, REQUID, params, () => {
+        deserializeMemoryBackend(memoryBackend.data);
         assert.deepStrictEqual(memoryBackend.data, expected);
         return cb();
     });
