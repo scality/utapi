@@ -9,41 +9,53 @@ const { CANONICAL_ID, BUCKET_NAME, OBJECT_KEY } = require('./values');
 const { ObjectMD } = models;
 const app = express();
 
-app.param('bucketName', (req, res, next, bucketName) => {
-    let metadata;
-    if (bucketName === constants.usersBucket) {
-        metadata = {
-            key: `${CANONICAL_ID}${constants.splitter}${BUCKET_NAME}`,
-            value: JSON.stringify({ creationDate: new Date() }),
-        };
-    } else {
-        const value = new ObjectMD().setContentLength(1024).getValue();
-        metadata = {
-            key: OBJECT_KEY,
-            value: JSON.stringify(value),
-        };
-    }
-    const body = {
-        CommonPrefixes: [],
-        Contents: [metadata],
-        IsTruncated: false,
-    };
-    req.body = JSON.stringify(body); // eslint-disable-line
-    next();
-});
-
-app.get('/default/bucket/:bucketName', (req, res) => {
-    res.writeHead(200);
-    res.write(req.body);
-    res.end();
-});
-
 class BucketD {
     constructor() {
         this._server = null;
     }
 
+    _getUsersBucketResponse() {
+        const key = `${CANONICAL_ID}${constants.splitter}${BUCKET_NAME}`;
+        const value = JSON.stringify({ creationDate: new Date() });
+        const body = {
+            CommonPrefixes: [],
+            IsTruncated: false,
+            Contents: [{ key, value }],
+        };
+        return JSON.stringify(body);
+    }
+
+    _getBucketResponse() {
+        const key = OBJECT_KEY;
+        const metadata = new ObjectMD().setContentLength(1024).getValue();
+        const value = JSON.stringify(metadata);
+        const body = {
+            CommonPrefixes: [],
+            IsTruncated: false,
+            Versions: [{ key, value }],
+        };
+        return JSON.stringify(body);
+    }
+
+    _initiateRoutes() {
+        app.param('bucketName', (req, res, next, bucketName) => {
+            if (bucketName === constants.usersBucket) {
+                req.body = this._getUsersBucketResponse();
+            } else {
+                req.body = this._getBucketResponse();
+            }
+            next();
+        });
+
+        app.get('/default/bucket/:bucketName', (req, res) => {
+            res.writeHead(200);
+            res.write(req.body);
+            res.end();
+        });
+    }
+
     start() {
+        this._initiateRoutes();
         const port = 9000;
         this._server = http.createServer(app).listen(port);
     }
