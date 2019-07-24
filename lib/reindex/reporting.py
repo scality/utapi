@@ -49,7 +49,10 @@ class askRedis():
         total_size = r.get(res)
         res = 's3:%s:%s:numberOfObjects:counter' % (resource, name)
         files = r.get(res)
-        return {'files': int(files), "total_size": int(total_size)}
+        try:
+            return {'files': int(files), "total_size": int(total_size)}
+        except Exception as e:
+            return {'files': 0, "total_size": 0}
 
 
 class S3ListBuckets():
