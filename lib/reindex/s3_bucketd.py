@@ -78,13 +78,24 @@ class S3ListBuckets():
         self.bucketd_port = bucketd_port
 
     def run(self):
-
+        truncate = True
         docs = []
-        url = "http://%s:%s/default/bucket/users..bucket" % (self.ip, self.bucketd_port)
-        session = requests.Session()
-        r = session.get(url, timeout=30)
-        if r.status_code == 200:
+        key = ""
+        while truncate:
+            m = key.encode('utf8')
+            prefix = urllib.parse.quote_plus(m)
+            params = "%s?delimiter=&maxKeys=1000&marker=%s" % (
+                "default/bucket/users..bucket", prefix)
+            url = "http://%s:9000/%s" % (self.ip, params)
+            while True:
+                session = requests.Session()
+                r = session.get(url, timeout=30)
+                if r.status_code == 500:
+                    time.sleep(15)
+                else:
+                    break
             payload = json.loads(r.text)
+            truncate = payload["IsTruncated"]
             for keys in payload['Contents']:
                 key = keys["key"]
                 r1 = re.match("(\w+)..\|..(\w+.*)", key)
