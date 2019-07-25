@@ -183,14 +183,21 @@ describe('UtapiReindex', () => {
         });
     });
 
-    describe('::_scheduleJob', () => {
-        function waitUntilLockHasValue({ value }, cb) {
+    describe('::_scheduleJob', function test() {
+        this.timeout(30000);
+
+        function waitUntilLockHasValue({ value, job }, cb) {
             let shouldLeave;
+            let shouldCallJob = job !== undefined;
 
             async.doUntil(next =>
                 redis.get(REINDEX_LOCK_KEY, (err, res) => {
                     if (err) {
                         return next(err);
+                    }
+                    if (shouldCallJob) {
+                        job();
+                        shouldCallJob = false;
                     }
                     shouldLeave = res === value;
                     return setTimeout(next, 200);
@@ -213,60 +220,86 @@ describe('UtapiReindex', () => {
             });
         }
 
-        beforeEach(done => {
-            reindex._scheduleJob();
-            // Wait until the scripts have started and finished reindexing.
-            async.series([
-                next => waitUntilLockHasValue({ value: 'true' }, next),
-                next => waitUntilLockHasValue({ value: null }, next),
-            ], done);
-        });
+        const bucketCounts = [1, 1001];
 
-        it('should reindex metrics', done => {
-            async.parallel([
-                next => {
-                    const params = {
-                        resource: {
-                            type: 'buckets',
-                            buckets: [mock.values.BUCKET_NAME],
+        bucketCounts.forEach(count => {
+            describe(`bucket listing with a length of ${count}`, () => {
+                const bucket = `${mock.values.BUCKET_NAME}-${count}`;
+                const MPUBucket = `${constants.mpuBucketPrefix}${bucket}`;
+
+                beforeEach(done => {
+                    bucketD.setBucketContent({
+                        bucketName: bucket,
+                        contentLength: 1024,
+                    })
+                    .setBucketContent({
+                        bucketName: MPUBucket,
+                        contentLength: 1024,
+                    })
+                    .setBucketCount(count)
+                    .createBuckets();
+
+                    function job() {
+                        reindex._scheduleJob();
+                    }
+
+                    // Wait until the scripts have finished reindexing.
+                    async.series([
+                        next =>
+                            waitUntilLockHasValue({ value: 'true', job }, next),
+                        next =>
+                            waitUntilLockHasValue({ value: null }, next),
+                    ], done);
+                });
+
+                afterEach(() => {
+                    bucketD.clearBuckets();
+                });
+
+                it('should reindex metrics', done => {
+                    async.parallel([
+                        next => {
+                            const params = {
+                                resource: {
+                                    type: 'buckets',
+                                    buckets: [bucket],
+                                },
+                                expected: {
+                                    storageUtilized: [0, 1024],
+                                    numberOfObjects: [0, 1],
+                                },
+                            };
+                            checkMetrics(params, next);
                         },
-                        expected: {
-                            storageUtilized: [0, 1024],
-                            numberOfObjects: [0, 1],
+                        next => {
+                            const params = {
+                                resource: {
+                                    type: 'buckets',
+                                    buckets: [MPUBucket],
+                                },
+                                expected: {
+                                    storageUtilized: [0, 1024],
+                                    numberOfObjects: [0, 1],
+                                },
+                            };
+                            checkMetrics(params, next);
                         },
-                    };
-                    checkMetrics(params, next);
-                },
-                next => {
-                    const params = {
-                        resource: {
-                            type: 'buckets',
-                            buckets: [
-                                `${constants.mpuBucketPrefix}` +
-                                `${mock.values.BUCKET_NAME}`,
-                            ],
+                        next => {
+                            const params = {
+                                resource: {
+                                    type: 'accounts',
+                                    accounts: [mock.values.ACCOUNT_ID],
+                                },
+                                expected: {
+                                    storageUtilized: [0, 1024 * 2],
+                                    numberOfObjects: [0, 2],
+                                },
+                            };
+                            checkMetrics(params, next);
                         },
-                        expected: {
-                            storageUtilized: [0, 1024],
-                            numberOfObjects: [0, 1],
-                        },
-                    };
-                    checkMetrics(params, next);
-                },
-                next => {
-                    const params = {
-                        resource: {
-                            type: 'accounts',
-                            accounts: [mock.values.ACCOUNT_ID],
-                        },
-                        expected: {
-                            storageUtilized: [0, 2048],
-                            numberOfObjects: [0, 2],
-                        },
-                    };
-                    checkMetrics(params, next);
-                },
-            ], done);
+                    ], done);
+                });
+            });
         });
     });
 });
