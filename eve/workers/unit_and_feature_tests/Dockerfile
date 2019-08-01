@@ -7,6 +7,8 @@ ENV LANG C.UTF-8
 COPY utapi_packages.list buildbot_worker_packages.list /tmp/
 
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+    && curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && apt-get update -qq \
     && cat /tmp/*packages.list | xargs apt-get install -y \
     && pip install pip==9.0.1 \
