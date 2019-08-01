@@ -19,7 +19,7 @@ models:
         aggressor: eve/workers/unit_and_feature_tests
   - Install: &install
       name: install node modules
-      command: npm install
+      command: yarn install
       haltOnFailure: True
 
 stages:
@@ -43,10 +43,10 @@ stages:
       - ShellCommand: *install
       - ShellCommand:
           name: run static analysis tools on markdown
-          command: npm run lint_md
+          command: yarn run lint_md
       - ShellCommand:
           name: run static analysis tools on code
-          command: npm run lint
+          command: yarn run lint
   run-unit-tests:
     worker: *workspace
     steps:
@@ -54,7 +54,7 @@ stages:
       - ShellCommand: *install
       - ShellCommand:
           name: run unit tests
-          command: npm test
+          command: yarn test
   run-client-tests:
     worker: *workspace
     steps:
