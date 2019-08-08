@@ -19,7 +19,7 @@ models:
         aggressor: eve/workers/unit_and_feature_tests
   - Install: &install
       name: install node modules
-      command: yarn install
+      command: yarn install --frozen-lockfile
       haltOnFailure: True
 
 stages:

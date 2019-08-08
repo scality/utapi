@@ -23,8 +23,7 @@
     "node-schedule": "1.2.0",
     "uuid": "^3.3.2",
     "vaultclient": "scality/vaultclient#3eaaff2",
-    "werelogs": "scality/werelogs#4e0d97c",
-    "yarn": "^1.17.3"
+    "werelogs": "scality/werelogs#4e0d97c"
   },
   "devDependencies": {
     "aws4": "^1.8.0",
