@@ -23,7 +23,8 @@
     "node-schedule": "1.2.0",
     "uuid": "^3.3.2",
     "vaultclient": "scality/vaultclient#3eaaff2",
-    "werelogs": "scality/werelogs#4e0d97c"
+    "werelogs": "scality/werelogs#4e0d97c",
+    "snyk": "^1.213.0"
   },
   "devDependencies": {
     "aws4": "^1.8.0",
@@ -43,6 +44,9 @@
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
     "start": "node server.js",
-    "test": "mocha --recursive tests/unit"
-  }
+    "test": "mocha --recursive tests/unit",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
+  },
+  "snyk": true
 }
