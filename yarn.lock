@@ -2419,9 +2419,9 @@ vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-vaultclient@scality/vaultclient#3eaaff2:
+vaultclient@scality/vaultclient#cc9ba34:
   version "7.4.0"
-  resolved "https://codeload.github.com/scality/vaultclient/tar.gz/3eaaff280e097e012a1c49ffcf52e816304f25ed"
+  resolved "https://codeload.github.com/scality/vaultclient/tar.gz/cc9ba34b9abf3aac8324e912671547f5fc31baf4"
   dependencies:
     arsenal scality/Arsenal#9f2e74e
     commander "2.20.0"
