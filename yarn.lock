@@ -146,20 +146,23 @@ arsenal@scality/Arsenal#9f2e74e:
   optionalDependencies:
     ioctl "2.0.0"
 
-arsenal@scality/Arsenal#b03f5b8:
-  version "7.4.3"
-  resolved "https://codeload.github.com/scality/Arsenal/tar.gz/b03f5b80acd6acaaf8dd2d49cd955e6b95279ab3"
+arsenal@scality/Arsenal#dd6fde6:
+  version "8.0.6"
+  resolved "https://codeload.github.com/scality/Arsenal/tar.gz/dd6fde61bbb7a799c822b8095c67f455c7c55e8f"
   dependencies:
     JSONStream "^1.0.0"
     ajv "4.10.0"
     async "~2.1.5"
+    bson "2.0.4"
     debug "~2.3.3"
     diskusage "^1.1.1"
+    fcntl "github:scality/node-fcntl"
     ioredis "4.9.5"
     ipaddr.js "1.2.0"
     joi "^10.6"
     level "~5.0.1"
     level-sublevel "~6.6.5"
+    mongodb "^3.0.1"
     node-forge "^0.7.1"
     simple-glob "^0.1"
     socket.io "~1.7.3"
@@ -264,6 +267,16 @@ browser-stdout@1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/browser-stdout/-/browser-stdout-1.3.0.tgz#f351d32969d32fa5d7a5567154263d928ae3bd1f"
   integrity sha1-81HTKWnTL6XXpVZxVCY9korjvR8=
+
+bson@2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/bson/-/bson-2.0.4.tgz#5b8e40f80d3d1b96a2ae55311c6612c25e586e50"
+  integrity sha512-e/GPy6CE0xL7MOYYRMIEwPGKF21WNaQdPIpV0YvaQDoR7oc47KUZ8c2P/TlRJVQP8RZ4CEsArGBC1NbkCRvl1w==
+
+bson@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/bson/-/bson-1.1.1.tgz#4330f5e99104c4e751e7351859e2d408279f2f13"
+  integrity sha512-jCGVYLoYMHDkOsbwJZBCqwMHyH4c+wzgI9hG7Z6SZJRXWr+x58pdIbm2i9a/jFGCkRJqRUr8eoI7lDWa0hTkxg==
 
 buffer-from@^1.0.0:
   version "1.1.1"
@@ -710,9 +723,9 @@ eslint-config-airbnb@^6.0.0:
   resolved "https://registry.yarnpkg.com/eslint-config-airbnb/-/eslint-config-airbnb-6.2.0.tgz#4a28196aa4617de01b8c914e992a82e5d0886a6e"
   integrity sha1-SigZaqRhfeAbjJFOmSqC5dCIam4=
 
-eslint-config-scality@scality/Guidelines#20dfffcc:
-  version "1.1.0"
-  resolved "https://codeload.github.com/scality/Guidelines/tar.gz/20dfffcc863bdb3c6bbc93b283e99a33b2fd6136"
+eslint-config-scality@scality/Guidelines#b578e709:
+  version "8.0.0"
+  resolved "https://codeload.github.com/scality/Guidelines/tar.gz/b578e709a511f5224e236ec865c85211b4d3c2db"
   dependencies:
     commander "1.3.2"
     markdownlint "0.0.8"
@@ -849,6 +862,13 @@ fast-levenshtein@~2.0.4:
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz#3d8a5c66883a16a30ca8643e851f19baa7797917"
   integrity sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=
+
+"fcntl@github:scality/node-fcntl":
+  version "0.1.0"
+  resolved "https://codeload.github.com/scality/node-fcntl/tar.gz/9108603d8881d7762dcadfde1db927a1653dfda5"
+  dependencies:
+    bindings "^1.1.1"
+    nan "^2.3.2"
 
 figures@^1.3.5:
   version "1.7.0"
@@ -1593,6 +1613,15 @@ mocha@^3.0.2:
     mkdirp "0.5.1"
     supports-color "3.1.2"
 
+mongodb@^3.0.1:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-3.3.0.tgz#3ec6fa6260405b16fe76cc37b5d09684d13d8c11"
+  integrity sha512-QYa8YEN5uiJyIFdnn1vmBtiSveyygmQghsaL/RDnHqUzjGvkYe0vRg6UikCKba06cg6El/Lu7qzOYnR3vMhwlA==
+  dependencies:
+    bson "^1.1.1"
+    require_optional "^1.0.1"
+    safe-buffer "^5.1.2"
+
 ms@0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.1.tgz#9cd13c03adbff25b65effde7ce864ee952017098"
@@ -1950,10 +1979,23 @@ require-uncached@^1.0.2:
     caller-path "^0.1.0"
     resolve-from "^1.0.0"
 
+require_optional@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/require_optional/-/require_optional-1.0.1.tgz#4cf35a4247f64ca3df8c2ef208cc494b1ca8fc2e"
+  integrity sha512-qhM/y57enGWHAe3v/NcwML6a3/vfESLe/sGM2dII+gEO0BpKRUkWZow/tyloNqJyN6kXSl3RyyM8Ll5D/sJP8g==
+  dependencies:
+    resolve-from "^2.0.0"
+    semver "^5.1.0"
+
 resolve-from@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-1.0.1.tgz#26cbfe935d1aeeeabb29bc3fe5aeb01e93d44226"
   integrity sha1-Jsv+k10a7uq7Kbw/5a6wHpPUQiY=
+
+resolve-from@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-2.0.0.tgz#9480ab20e94ffa1d9e80a804c7ea147611966b57"
+  integrity sha1-lICrIOlP+h2egKgEx+oUdhGWa1c=
 
 restore-cursor@^1.0.1:
   version "1.0.1"
@@ -1987,7 +2029,7 @@ safe-buffer@5.1.2, safe-buffer@~5.1.0, safe-buffer@~5.1.1:
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.1.2.tgz#991ec69d296e0313747d59bdfd2b745c35f8828d"
   integrity sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g==
 
-safe-buffer@~5.2.0:
+safe-buffer@^5.1.2, safe-buffer@~5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.2.0.tgz#b74daec49b1148f88c64b68d49b1e815c1f2f519"
   integrity sha512-fZEwUGbVl7kouZs1jCdMLdt95hdIv0ZeHg6L7qPeciMZhZ+/gdesW4wgTARkrFWEpspjEATAzUGPG8N2jJiwbg==
@@ -2006,6 +2048,11 @@ sax@>=0.6.0:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
   integrity sha512-NqVDv9TpANUjFm0N8uM5GxL36UgKi9/atZw+x7YFnQ8ckwFGKrl4xX4yWtrey3UJm5nP1kUbnYgLopqWNSRhWw==
+
+semver@^5.1.0:
+  version "5.7.1"
+  resolved "https://registry.yarnpkg.com/semver/-/semver-5.7.1.tgz#a954f931aeba508d307bbf069eff0c01c96116f7"
+  integrity sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==
 
 semver@~5.1.0:
   version "5.1.1"
@@ -2343,9 +2390,9 @@ vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-vaultclient@scality/vaultclient#3eaaff2:
+vaultclient@scality/vaultclient#cc9ba34:
   version "7.4.0"
-  resolved "https://codeload.github.com/scality/vaultclient/tar.gz/3eaaff280e097e012a1c49ffcf52e816304f25ed"
+  resolved "https://codeload.github.com/scality/vaultclient/tar.gz/cc9ba34b9abf3aac8324e912671547f5fc31baf4"
   dependencies:
     arsenal scality/Arsenal#9f2e74e
     commander "2.20.0"
