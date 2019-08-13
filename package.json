@@ -3,7 +3,7 @@
   "engines": {
     "node": ">=10"
   },
-  "version": "7.4.5",
+  "version": "8.0.0",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
@@ -22,7 +22,7 @@
     "ioredis": "^4.9.5",
     "node-schedule": "1.2.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#3eaaff2",
+    "vaultclient": "scality/vaultclient#cc9ba34",
     "werelogs": "scality/werelogs#4e0d97c"
   },
   "devDependencies": {
