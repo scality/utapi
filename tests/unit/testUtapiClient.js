@@ -412,7 +412,30 @@ tests.forEach(test => {
                 action: 'CompleteMultipartUpload',
                 numberOfObjects: '1',
             });
-            testMetric('completeMultipartUpload', metricTypes, expected, done);
+            Object.assign(params, metricTypes, {
+                oldByteLength: null,
+            });
+            testMetric('completeMultipartUpload', params, expected, done);
+        });
+
+        it('should push completeMultipartUpload overwrite metrics', done => {
+            // Seed data includes an object and uploaded parts storage.
+            const data = {
+                storageUtilized: '1024',
+                numberOfObjects: '1',
+            };
+            setMockData(data, timestamp, () => {
+                // Seed object to overwrite is 512 bytes.
+                Object.assign(params, metricTypes, {
+                    oldByteLength: 512,
+                });
+                const expected = buildExpectedResult({
+                    action: 'CompleteMultipartUpload',
+                    storageUtilized: '512',
+                    numberOfObjects: '1',
+                });
+                testMetric('completeMultipartUpload', params, expected, done);
+            });
         });
 
         it('should push listMultipartUploads metrics', done => {
