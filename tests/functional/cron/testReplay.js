@@ -118,7 +118,7 @@ function checkListElement(action, params, res) {
         'incorrect timestamp value');
     assert(reqUid !== undefined,
         `reqUid property not in cached element: ${action}`);
-    // We want the action and original params for use during the replay.
+    // We want the action and original params for use during the replay. Test.
     assert.deepStrictEqual(result, {
         action,
         reqUid,
