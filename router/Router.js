@@ -52,6 +52,9 @@ class Router {
         req.on('data', data => body.push(data))
         .on('error', cb)
         .on('end', () => {
+            if (req.method === 'GET') {
+                return cb(errors.AccessForbidden);
+            }
             const jsonParseRes = safeJsonParse(body.join(''));
             if (jsonParseRes.error) {
                 return cb(errors.InvalidParameterValue);
