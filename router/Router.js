@@ -214,21 +214,11 @@ class Router {
         // specific resources will be names of buckets, accounts or users
         const specificResources = validator.get(resourceType);
         let requestContexts = [];
-        if (resourceType === 'buckets') {
-            requestContexts.push(
-                new policies.RequestContext(utapiRequest.getRequestHeaders(),
-                    utapiRequest.getRequestQuery(), resourceType, specificResources,
-                    utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
-                    utapiRequest.getAction(), 'utapi')
-            );
-        } else {
-            requestContexts = specificResources.map(specificResource =>
-                new policies.RequestContext(utapiRequest.getRequestHeaders(),
-                    utapiRequest.getRequestQuery(), resourceType, specificResource,
-                    utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
-                    utapiRequest.getAction(), 'utapi')
-            );
-        }
+        requestContexts.push(
+            new policies.RequestContext(utapiRequest.getRequestHeaders(),
+                utapiRequest.getRequestQuery(), resourceType, specificResources,
+                utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
+                utapiRequest.getAction(), 'utapi'));
         auth.setHandler(this._vault);
         const request = utapiRequest.getRequest();
         request.path = utapiRequest.getRequestPathname();
