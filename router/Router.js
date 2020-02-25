@@ -213,13 +213,12 @@ class Router {
         const validator = utapiRequest.getValidator();
         // specific resources will be names of buckets, accounts or users
         const specificResources = validator.get(resourceType);
-
-        const requestContexts = specificResources.map(specificResource =>
+        const requestContext = [];
+        requestContext.push(
             new policies.RequestContext(utapiRequest.getRequestHeaders(),
-            utapiRequest.getRequestQuery(), resourceType, specificResource,
-            utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
-            utapiRequest.getAction(), 'utapi')
-        );
+                utapiRequest.getRequestQuery(), resourceType, specificResources,
+                utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
+                utapiRequest.getAction(), 'utapi'));
         auth.setHandler(this._vault);
         const request = utapiRequest.getRequest();
         request.path = utapiRequest.getRequestPathname();
@@ -254,7 +253,7 @@ class Router {
             log.trace('passed security checks');
             return cb();
         },
-        's3', requestContexts);
+        's3', requestContext);
     }
 
     /**
