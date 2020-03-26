@@ -16,7 +16,7 @@ import requests
 from requests import ConnectionError, HTTPError, Timeout
 import itertools
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 _log = logging.getLogger('utapi-reindex')
 
 USERS_BUCKET = 'users..bucket'
@@ -186,6 +186,8 @@ class BucketDClient:
     def _sum_objects(self, listing):
         count = 0
         total_size = 0
+        last_master = None
+        last_size = None
         for _, payload in listing:
             contents = payload['Contents'] if isinstance(payload, dict) else payload
             for obj in contents:
@@ -193,11 +195,28 @@ class BucketDClient:
                 if isinstance(obj['value'], dict):
                     # bucketd v6 returns a dict:
                     data = obj.get('value', {})
-                    total_size += data["Size"]
+                    size = data["Size"]
                 else:
                     # bucketd v7 returns an encoded string
                     data = json.loads(obj['value'])
-                    total_size += data["content-length"]
+                    size = data["content-length"]
+                total_size += size
+
+                # If versioned, subtract the size of the master to avoid double counting
+                if last_master is not None and obj['key'].startswith(last_master + '\x00'):
+                    _log.info('Detected versioned key: %s - subtracting master size: %i'% (
+                        obj['key'],
+                        last_size,
+                    ))
+                    total_size -= last_size
+                    count -= 1
+                    last_master = None
+                    
+                # Only save master versions
+                elif '\x00' not in obj['key']:
+                    last_master = obj['key']
+                    last_size = size
+
         return count, total_size
 
     def count_bucket_contents(self, bucket):
