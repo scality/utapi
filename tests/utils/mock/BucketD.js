@@ -33,10 +33,12 @@ class BucketD {
         const metadata = new ObjectMD()
             .setContentLength(contentLength)
             .getValue();
-        this._bucketContent[bucketName] = [{
-            key: OBJECT_KEY,
-            value: JSON.stringify(metadata),
-        }];
+        this._bucketContent[bucketName] = [
+            {
+                key: OBJECT_KEY,
+                value: JSON.stringify(metadata),
+            },
+        ];
         return this;
     }
 
@@ -69,24 +71,51 @@ class BucketD {
         return JSON.stringify(body);
     }
 
+    _getShadowBucketResponse(bucketName) {
+        const body = {
+            CommonPrefixes: [],
+            IsTruncated: false,
+            Contents: this._bucketContent[bucketName] || [],
+        };
+        return JSON.stringify(body);
+    }
+
     _getBucketResponse(bucketName) {
         const body = {
             CommonPrefixes: [],
             IsTruncated: false,
-            Versions: this._bucketContent[bucketName] || [],
+            Contents: this._bucketContent[bucketName] || [],
+        };
+        return JSON.stringify(body);
+    }
+
+    _getShadowBucketOverviewResponse(bucketName) {
+        const mpus = (this._bucketContent[bucketName] || []).map(o => ({
+            key: o.key,
+            value: { UploadId: '123456' },
+        }));
+        const body = {
+            CommonPrefixes: [],
+            IsTruncated: false,
+            Uploads: mpus,
         };
         return JSON.stringify(body);
     }
 
     _initiateRoutes() {
         app.param('bucketName', (req, res, next, bucketName) => {
+            /* eslint-disable no-param-reassign */
             if (bucketName === constants.usersBucket) {
-                // eslint-disable-next-line no-param-reassign
                 req.body = this._getUsersBucketResponse(req);
-            } else {
-                // eslint-disable-next-line no-param-reassign
+            } else if (req.query.listingType === 'MPU') {
+                req.body = this._getShadowBucketOverviewResponse(bucketName);
+            } else if (
+                req.query.listingType === 'Basic' ||
+                req.query.listingType === 'Delimiter'
+            ) {
                 req.body = this._getBucketResponse(bucketName);
             }
+            /* eslint-enable no-param-reassign */
             next();
         });
 

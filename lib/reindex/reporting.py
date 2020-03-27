@@ -10,26 +10,16 @@ import sys
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 
-if len(sys.argv) == 7:
-    ip = sys.argv[1]
-    port = sys.argv[2]
-    sentinel_cluster_name = sys.argv[3]
-    sentinel_password = sys.argv[4]
-    bucketd_host = sys.argv[5]
-    bucketd_port = sys.argv[6]
-    print("Sentinel IP used: %s" % ip)
-    print("Sentinel port used: %s" % port)
-    print("Sentinel cluster name used: %s" % sentinel_cluster_name)
-    print("BucketD host used: %s" % bucketd_host)
-    print("BucketD port used: %s" % bucketd_port)
-else:
-    ip = "127.0.0.1"
-    port = "16379"
-    sentinel_cluster_name = "scality-s3"
-    sentinel_password = ''
-    bucketd_host =  "127.0.0.1"
-    bucketd_port = "9000"
+import argparse
 
+def get_options():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--sentinel-ip", default='127.0.0.1', help="Sentinel IP")
+    parser.add_argument("-p", "--sentinel-port", default="16379", help="Sentinel Port")
+    parser.add_argument("-v", "--redis-password", default=None, help="Redis AUTH Password")
+    parser.add_argument("-n", "--sentinel-cluster-name", default='scality-s3', help="Redis cluster name")
+    parser.add_argument("-b", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
+    return parser.parse_args()
 
 def safe_print(content):
     print("{0}".format(content))
@@ -37,14 +27,13 @@ def safe_print(content):
 
 class askRedis():
 
-    def __init__(self, ip="127.0.0.1", port="16379", sentinel_cluster_name="scality-s3"):
-
-        r = redis.Redis(host=ip, port=port, db=0, password=sentinel_password)
+    def __init__(self, ip="127.0.0.1", port="16379", sentinel_cluster_name="scality-s3", password=None):
+        self._password = password
+        r = redis.Redis(host=ip, port=port, db=0, password=password)
         self._ip, self._port = r.sentinel_get_master_addr_by_name(sentinel_cluster_name)
 
     def read(self, resource, name):
-
-        r = redis.Redis(host=self._ip, port=self._port, db=0, password=sentinel_password)
+        r = redis.Redis(host=self._ip, port=self._port, db=0, password=self._password)
         res = 's3:%s:%s:storageUtilized:counter' % (resource, name)
         total_size = r.get(res)
         res = 's3:%s:%s:numberOfObjects:counter' % (resource, name)
@@ -57,15 +46,12 @@ class askRedis():
 
 class S3ListBuckets():
 
-    def __init__(self, ip="127.0.0.1", bucketd_port="9000"):
-
-        self.ip = ip
-        self.bucketd_port = bucketd_port
+    def __init__(self, host='127.0.0.1:9000'):
+        self.bucketd_host = host
 
     def run(self):
-
         docs = []
-        url = "http://%s:%s/default/bucket/users..bucket" % (self.ip, self.bucketd_port)
+        url = "%s/default/bucket/users..bucket" % self.bucketd_host
         session = requests.Session()
         r = session.get(url, timeout=30)
         if r.status_code == 200:
@@ -79,29 +65,37 @@ class S3ListBuckets():
 
         return(self.userid, self.bucket, user, files, total_size)
 
+if __name__ == '__main__':
+    options = get_options()
+    redis_conf = dict(
+        ip=options.sentinel_ip,
+        port=options.sentinel_port,
+        sentinel_cluster_name=options.sentinel_cluster_name,
+        password=options.redis_password
+    )
 
-P = S3ListBuckets(ip=bucketd_host, bucketd_port=bucketd_port)
-listbuckets = P.run()
+    P = S3ListBuckets(options.bucketd_addr)
+    listbuckets = P.run()
 
-userids = set([x for x, y in listbuckets])
+    userids = set([x for x, y in listbuckets])
 
-executor = ThreadPoolExecutor(max_workers=1)
-for userid, bucket in listbuckets:
-    U = askRedis(ip, port, sentinel_cluster_name)
-    data = U.read('buckets', bucket)
-    content = "Account:%s|Bucket:%s|NumberOFfiles:%s|StorageCapacity:%s " % (
-        userid, bucket, data["files"], data["total_size"])
-    executor.submit(safe_print, content)
-    data = U.read('buckets', 'mpuShadowBucket'+bucket)
-    content = "Account:%s|Bucket:%s|NumberOFfiles:%s|StorageCapacity:%s " % (
-        userid, 'mpuShadowBucket'+bucket, data["files"], data["total_size"])
-    executor.submit(safe_print, content)
+    executor = ThreadPoolExecutor(max_workers=1)
+    for userid, bucket in listbuckets:
+        U = askRedis(**redis_conf)
+        data = U.read('buckets', bucket)
+        content = "Account:%s|Bucket:%s|NumberOFfiles:%s|StorageCapacity:%s " % (
+            userid, bucket, data["files"], data["total_size"])
+        executor.submit(safe_print, content)
+        data = U.read('buckets', 'mpuShadowBucket'+bucket)
+        content = "Account:%s|Bucket:%s|NumberOFfiles:%s|StorageCapacity:%s " % (
+            userid, 'mpuShadowBucket'+bucket, data["files"], data["total_size"])
+        executor.submit(safe_print, content)
 
 
-executor.submit(safe_print, "")
-for userid in sorted(userids):
-    U = askRedis(ip, port, sentinel_cluster_name)
-    data = U.read('accounts', userid)
-    content = "Account:%s|NumberOFfiles:%s|StorageCapacity:%s " % (
-        userid, data["files"], data["total_size"])
-    executor.submit(safe_print, content)
+    executor.submit(safe_print, "")
+    for userid in sorted(userids):
+        U = askRedis(**redis_conf)
+        data = U.read('accounts', userid)
+        content = "Account:%s|NumberOFfiles:%s|StorageCapacity:%s " % (
+            userid, data["files"], data["total_size"])
+        executor.submit(safe_print, content)
