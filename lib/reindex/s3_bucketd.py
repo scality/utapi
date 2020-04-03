@@ -61,7 +61,6 @@ class BucketDClient:
     def __init__(self, bucketd_addr=None):
         self._bucketd_addr = bucketd_addr
         self._session = requests.Session()
-        self.__bucketd_is_v7 = None
 
     def _do_req(self, url, check_500=True, **kwargs):
         while True:
@@ -119,14 +118,6 @@ class BucketDClient:
                 is_truncated = payload.get('IsTruncated', False)
             else: 
                 is_truncated = len(payload) > 0
-
-    @property
-    def _bucketd_is_v7(self):
-        if self.__bucketd_is_v7 is None:
-            url = '{}/_/raft_sessions/1/leader'.format(self._bucketd_addr)
-            resp = self._do_req(url, check_500=False)
-            self.__bucketd_is_v7 = resp.status_code == 200
-        return self.__bucketd_is_v7
 
     def list_buckets(self):
 
