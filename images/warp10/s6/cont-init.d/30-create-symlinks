@@ -1,0 +1,17 @@
+#!/usr/bin/with-contenv sh
+
+WARP10_CONFIG_DIR="$WARP10_DATA_DIR/conf"
+
+ensure_link() {
+    if [ ! -L "$1" ]; then
+        rm -rf "$1"
+        ln -s "$2" "$1"
+        echo "Created symlink $1->$2"
+    fi
+}
+
+ensure_link "$WARP10_HOME/logs" "$WARP10_DATA_DIR/logs"
+ensure_link "$WARP10_HOME/etc/conf.d" "$WARP10_DATA_DIR/conf"
+ensure_link "$WARP10_HOME/leveldb" "$WARP10_DATA_DIR/data/leveldb"
+ensure_link "$WARP10_HOME/datalog" "$WARP10_DATA_DIR/data/datalog"
+ensure_link "$WARP10_HOME/datalog_done" "$WARP10_DATA_DIR/data/datalog_done"

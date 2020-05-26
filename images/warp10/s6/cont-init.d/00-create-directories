@@ -1,0 +1,17 @@
+#!/usr/bin/with-contenv bash
+
+set -eu
+
+ensureDir() {
+    if [ ! -d "$1" ]; then
+        mkdir -p "$1"
+        echo "Created directory $1"
+    fi
+}
+
+ensureDir "$WARP10_DATA_DIR"
+ensureDir "$WARP10_DATA_DIR/logs"
+ensureDir "$WARP10_DATA_DIR/conf"
+ensureDir "$WARP10_DATA_DIR/data/leveldb"
+ensureDir "$WARP10_DATA_DIR/data/datalog"
+ensureDir "$WARP10_DATA_DIR/data/datalog_done"
