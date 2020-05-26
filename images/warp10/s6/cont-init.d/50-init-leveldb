@@ -1,0 +1,14 @@
+#!/usr/bin/with-contenv sh
+
+JAVA="/usr/bin/java"
+WARP10_JAR=${WARP10_HOME}/bin/warp10-${WARP10_VERSION}.jar
+WARP10_CP="${WARP10_HOME}/etc:${WARP10_JAR}:${WARP10_HOME}/lib/*"
+WARP10_INIT="io.warp10.standalone.WarpInit"
+
+LEVELDB_HOME="/opt/warp10/leveldb"
+
+# Create leveldb database
+if [ "$(find -L ${LEVELDB_HOME} -maxdepth 1 -type f | wc -l)" -eq 0 ]; then
+    echo "Init leveldb database..." | tee -a "$WARP10_HOME/logs/warp10.log"
+    $JAVA -cp "$WARP10_CP" "$WARP10_INIT" "$LEVELDB_HOME" | tee -a "$WARP10_HOME/logs/warp10.log" 2>&1
+fi

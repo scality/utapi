@@ -1,0 +1,9 @@
+#!/usr/bin/with-contenv sh
+
+for path in $WARP10_CONF_TEMPLATES/*; do
+    name="$(basename $path .template)"
+    if [ ! -f "$WARP10_DATA_DIR/conf/$name" ]; then
+        cp "$path" "$WARP10_DATA_DIR/conf/$name"
+        echo "Copied $name to $WARP10_DATA_DIR/conf/$name"
+    fi
+done

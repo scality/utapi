@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv sh
+
+WARPSTUDIO_CONFIG=${WARP10_CONFIG_DIR}/80-warpstudio-plugin.conf
+
+if [ -n "$ENABLE_WARPSTUDIO" ]; then
+    cat > $WARPSTUDIO_CONFIG << EOF
+    warp10.plugin.warpstudio = io.warp10.plugins.warpstudio.WarpStudioPlugin
+    warpstudio.port = 8081
+    warpstudio.host = \${standalone.host}
+EOF
+fi

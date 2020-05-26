@@ -1,6 +1,4 @@
-dist
 node_modules/
 **/node_modules/
-logs
-*.log
-dump.rdb
+.git
+eve/
