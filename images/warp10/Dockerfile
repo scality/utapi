@@ -1,8 +1,6 @@
-FROM warp10io/warp10:2.5.0-ci
+FROM warp10io/warp10:2.6.0
 
 ENV S6_VERSION 2.0.0.1
-
-ENV WARP10_VERSION 2.5.0
 
 ENV WARP10_CONF_TEMPLATES ${WARP10_HOME}/conf.templates/standalone
 RUN wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_VERSION}/s6-overlay-amd64.tar.gz -O /tmp/s6-overlay-amd64.tar.gz \
