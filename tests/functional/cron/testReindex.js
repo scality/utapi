@@ -190,18 +190,17 @@ describe('UtapiReindex', () => {
             let shouldLeave;
             let shouldCallJob = job !== undefined;
 
-            async.doUntil(next =>
-                redis.get(REINDEX_LOCK_KEY, (err, res) => {
-                    if (err) {
-                        return next(err);
-                    }
-                    if (shouldCallJob) {
-                        job();
-                        shouldCallJob = false;
-                    }
-                    shouldLeave = res === value;
-                    return setTimeout(next, 200);
-                }),
+            async.doUntil(next => redis.get(REINDEX_LOCK_KEY, (err, res) => {
+                if (err) {
+                    return next(err);
+                }
+                if (shouldCallJob) {
+                    job();
+                    shouldCallJob = false;
+                }
+                shouldLeave = res === value;
+                return setTimeout(next, 200);
+            }),
             () => shouldLeave, cb);
         }
 
@@ -232,12 +231,12 @@ describe('UtapiReindex', () => {
                         bucketName: bucket,
                         contentLength: 1024,
                     })
-                    .setBucketContent({
-                        bucketName: MPUBucket,
-                        contentLength: 1024,
-                    })
-                    .setBucketCount(count)
-                    .createBuckets();
+                        .setBucketContent({
+                            bucketName: MPUBucket,
+                            contentLength: 1024,
+                        })
+                        .setBucketCount(count)
+                        .createBuckets();
 
                     function job() {
                         reindex._scheduleJob();
@@ -245,10 +244,8 @@ describe('UtapiReindex', () => {
 
                     // Wait until the scripts have finished reindexing.
                     async.series([
-                        next =>
-                            waitUntilLockHasValue({ value: 'true', job }, next),
-                        next =>
-                            waitUntilLockHasValue({ value: null }, next),
+                        next => waitUntilLockHasValue({ value: 'true', job }, next),
+                        next => waitUntilLockHasValue({ value: null }, next),
                     ], done);
                 });
 
