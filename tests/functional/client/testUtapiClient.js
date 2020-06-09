@@ -1,11 +1,16 @@
 const assert = require('assert');
-const { map, series, waterfall, each } = require('async');
+const {
+    map, series, waterfall, each,
+} = require('async');
+const { Logger } = require('werelogs');
 const UtapiClient = require('../../../lib/UtapiClient');
 const Datastore = require('../../../lib/Datastore');
 const redisClient = require('../../../utils/redisClient');
-const { Logger } = require('werelogs');
-const { getCounters, getMetricFromKey,
-    getStateKeys, getKeys } = require('../../../lib/schema');
+const {
+    getCounters, getMetricFromKey,
+    getStateKeys, getKeys,
+} = require('../../../lib/schema');
+
 const log = new Logger('TestUtapiClient');
 const redis = redisClient({
     host: '127.0.0.1',
@@ -24,8 +29,10 @@ const utapiConfig = {
     component: 's3',
 };
 const utapiClient = new UtapiClient(utapiConfig);
-const utapiClientExp = new UtapiClient(Object.assign({ expireMetrics: true,
-    expireMetricsTTL: 0 }, utapiConfig));
+const utapiClientExp = new UtapiClient(Object.assign({
+    expireMetrics: true,
+    expireMetricsTTL: 0,
+}, utapiConfig));
 const reqUid = 'foo';
 const metricTypes = {
     bucket: 'foo-bucket',
@@ -54,30 +61,28 @@ function _getMetricObj(type) {
 
 function _assertCounters(metricObj, valueObj, cb) {
     const counters = getCounters(metricObj);
-    return map(counters, (item, cb) =>
-        datastore.get(item, (err, res) => {
-            if (err) {
-                return cb(err);
-            }
-            const metric = getMetricFromKey(item);
-            assert.strictEqual(parseInt(res, 10), valueObj[metric],
-                `${metric} must be ${valueObj[metric]}`);
-            return cb();
-        }), cb);
+    return map(counters, (item, cb) => datastore.get(item, (err, res) => {
+        if (err) {
+            return cb(err);
+        }
+        const metric = getMetricFromKey(item);
+        assert.strictEqual(parseInt(res, 10), valueObj[metric],
+            `${metric} must be ${valueObj[metric]}`);
+        return cb();
+    }), cb);
 }
 
 function _assertStateKeys(metricObj, valueObj, cb) {
     const stateKeys = getStateKeys(metricObj);
-    return map(stateKeys, (item, cb) =>
-        datastore.zrange(item, 0, -1, (err, res) => {
-            if (err) {
-                return cb(err);
-            }
-            const metric = getMetricFromKey(item);
-            assert.strictEqual(parseInt(res[0], 10), valueObj[metric],
-                `${metric} must be ${valueObj[metric]}`);
-            return cb();
-        }), cb);
+    return map(stateKeys, (item, cb) => datastore.zrange(item, 0, -1, (err, res) => {
+        if (err) {
+            return cb(err);
+        }
+        const metric = getMetricFromKey(item);
+        assert.strictEqual(parseInt(res[0], 10), valueObj[metric],
+            `${metric} must be ${valueObj[metric]}`);
+        return cb();
+    }), cb);
 }
 
 function _seedMetrics(metricObj, cb) {
@@ -120,14 +125,13 @@ function _assertExpiredKeys(metricObj, type, cb) {
             }),
             cb);
     }
-    return map(keys, (item, next) =>
-        datastore.zrange(item, 0, -1, (err, res) => {
-            if (err) {
-                return next(err);
-            }
-            assert.deepStrictEqual(res, []);
-            return next();
-        }), cb);
+    return map(keys, (item, next) => datastore.zrange(item, 0, -1, (err, res) => {
+        if (err) {
+            return next(err);
+        }
+        assert.deepStrictEqual(res, []);
+        return next();
+    }), cb);
 }
 
 // Simulates a scenario in which two objects are deleted prior to any put object
@@ -225,8 +229,7 @@ Object.keys(metricTypes).forEach(type => {
 
         putOperations.forEach(op => {
             // Calculated based on negative counter values.
-            const counterKeyVals =
-            (op === 'UploadPart' || op === 'UploadPartCopy') ? {
+            const counterKeyVals = (op === 'UploadPart' || op === 'UploadPartCopy') ? {
                 storageUtilized: -11,
                 numberOfObjects: -2, // Uploading parts do not increment value.
             } : {
@@ -244,8 +247,7 @@ Object.keys(metricTypes).forEach(type => {
 
         putOperations.forEach(op => {
             // Calculated based on negative counter values.
-            const stateKeyVals =
-            (op === 'UploadPart' || op === 'UploadPartCopy') ? {
+            const stateKeyVals = (op === 'UploadPart' || op === 'UploadPartCopy') ? {
                 storageUtilized: 9,
                 numberOfObjects: 0, // Uploading parts do not increment value.
             } : {
@@ -302,23 +304,20 @@ describe('UtapiClient: expire bucket metrics', () => {
                         .on('ready', next)
                         .on('error', next);
                 },
-                next =>
-                    client.pushMetric('createBucket', reqUid, params, next),
-                next =>
-                    client.pushMetric('deleteBucket', reqUid, params, next),
+                next => client.pushMetric('createBucket', reqUid, params, next),
+                next => client.pushMetric('deleteBucket', reqUid, params, next),
             ], done);
         });
 
         it(`should have a TTL > than 0 and <= ${TTL}`, done => {
             function assertTTL(keys, cb) {
-                each(keys, (key, next) =>
-                    redis.ttl(key, (err, data) => {
-                        if (err) {
-                            return next(err);
-                        }
-                        assert(data > 0 && data <= TTL);
-                        return next();
-                    }),
+                each(keys, (key, next) => redis.ttl(key, (err, data) => {
+                    if (err) {
+                        return next(err);
+                    }
+                    assert(data > 0 && data <= TTL);
+                    return next();
+                }),
                 cb);
             }
             waterfall([
