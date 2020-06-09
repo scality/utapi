@@ -1,3 +1,4 @@
+/* eslint-disable symbol-description */
 const { errors } = require('arsenal');
 const validateMetric = require('./validateMetric');
 const validateTimeRange = require('./validateTimeRange');
@@ -26,11 +27,11 @@ const keyError = new Map([
     ['users', errors.InvalidParameterValue],
     ['service', errors.InvalidParameterValue],
     ['timeRange', errors.InvalidParameterValue.customizeDescription(
-        'Timestamps must be one of the following intervals for any past ' +
-        'day/hour (mm:ss:SS) - start must be one of [00:00:000, 15:00:000, ' +
-        '30:00:000, 45:00:000], end must be one of [14:59:999, ' +
-        '29:59:999, 44:59:999, 59:59:999]. Start must not be greater than ' +
-        'end.'
+        'Timestamps must be one of the following intervals for any past '
+        + 'day/hour (mm:ss:SS) - start must be one of [00:00:000, 15:00:000, '
+        + '30:00:000, 45:00:000], end must be one of [14:59:999, '
+        + '29:59:999, 44:59:999, 59:59:999]. Start must not be greater than '
+        + 'end.',
     )],
 ]);
 
@@ -41,7 +42,6 @@ const keyError = new Map([
  * @class Validator
  */
 class Validator {
-
     /**
      * Constructor
      * @param {object} keys - Key value object, form { key: (boolean:required) }
@@ -69,8 +69,7 @@ class Validator {
             if (typeof keys[item] === 'boolean') {
                 const check = keyMap.get(item);
                 if (!check) {
-                    const errmsg =
-                        `Validator::validate()-> Invalid check for ${item}`;
+                    const errmsg = `Validator::validate()-> Invalid check for ${item}`;
                     throw new Error(errmsg);
                 }
                 // return error if check failed
@@ -138,7 +137,6 @@ class Validator {
         }
         throw new Error(`Validator::set(${key})-> Invalid key`);
     }
-
 }
 
 module.exports = Validator;

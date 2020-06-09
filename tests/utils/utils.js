@@ -1,3 +1,4 @@
+/* eslint-disable no-mixed-operators */
 const http = require('http');
 const aws4 = require('aws4');
 
@@ -38,6 +39,7 @@ function getAllResourceTypeKeys() {
         return counters.concat(keys);
     });
     // Concatenate each array of resourceType keys into one single array.
+    // eslint-disable-next-line prefer-spread
     return [].concat.apply([], allResourceTypeKeys);
 }
 
