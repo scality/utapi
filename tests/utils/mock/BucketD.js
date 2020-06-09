@@ -44,7 +44,7 @@ class BucketD {
 
     createBuckets() {
         const buckets = [];
-        for (let i = 0; i < this._bucketCount; i++) {
+        for (let i = 0; i < this._bucketCount; i += 1) {
             const { splitter } = constants;
             const entry = {
                 key: `${CANONICAL_ID}${splitter}${BUCKET_NAME}-${i + 1}`,
@@ -110,8 +110,8 @@ class BucketD {
             } else if (req.query.listingType === 'MPU') {
                 req.body = this._getShadowBucketOverviewResponse(bucketName);
             } else if (
-                req.query.listingType === 'Basic' ||
-                req.query.listingType === 'Delimiter'
+                req.query.listingType === 'Basic'
+                || req.query.listingType === 'Delimiter'
             ) {
                 req.body = this._getBucketResponse(bucketName);
             }

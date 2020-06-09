@@ -1,5 +1,6 @@
 const http = require('http');
-const aws4 = require('aws4'); // eslint-disable-line import/no-unresolved
+// eslint-disable-next-line import/no-extraneous-dependencies
+const aws4 = require('aws4');
 
 // Input AWS access key, secret key, and session token.
 const accessKeyId = 'EO4FRH6BA2L7FCK0EKVT';
