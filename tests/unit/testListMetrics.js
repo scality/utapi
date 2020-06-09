@@ -120,8 +120,7 @@ describe('ListMetrics', () => {
         tests.forEach(test => {
             const { results, expected } = test;
             const result = listMetrics._reduceResults(results);
-            it(`should reduce ${results.length} result(s)`, () =>
-                assert.deepStrictEqual(result, expected));
+            it(`should reduce ${results.length} result(s)`, () => assert.deepStrictEqual(result, expected));
         });
     });
 });

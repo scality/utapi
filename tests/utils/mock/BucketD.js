@@ -110,8 +110,8 @@ class BucketD {
             } else if (req.query.listingType === 'MPU') {
                 req.body = this._getShadowBucketOverviewResponse(bucketName);
             } else if (
-                req.query.listingType === 'Basic' ||
-                req.query.listingType === 'Delimiter'
+                req.query.listingType === 'Basic'
+                || req.query.listingType === 'Delimiter'
             ) {
                 req.body = this._getBucketResponse(bucketName);
             }

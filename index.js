@@ -1,4 +1,5 @@
-'use strict'; // eslint-disable-line strict
+
+// eslint-disable-line strict
 
 module.exports = {
     UtapiServer: require('./lib/server'),
