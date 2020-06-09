@@ -27,10 +27,10 @@
   },
   "devDependencies": {
     "aws4": "^1.8.0",
-    "eslint": "^2.4.0",
-    "eslint-config-airbnb": "^6.0.0",
-    "eslint-config-scality": "scality/Guidelines#20dfffcc",
-    "eslint-plugin-react": "^4.3.0",
+    "eslint": "^5.12.0",
+    "eslint-config-airbnb-base": "13.1.0",
+    "eslint-config-scality": "scality/Guidelines#7cc5ff1",
+    "eslint-plugin-import": "2.14.0",
     "express": "^4.17.1",
     "mocha": "^3.0.2"
   },
