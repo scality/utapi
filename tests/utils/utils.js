@@ -39,7 +39,8 @@ function getAllResourceTypeKeys() {
         return counters.concat(keys);
     });
     // Concatenate each array of resourceType keys into one single array.
-    return [...allResourceTypeKeys];
+    // eslint-disable-next-line prefer-spread
+    return [].concat.apply([], allResourceTypeKeys);
 }
 
 function buildMockResponse({ start, end, val }) {
