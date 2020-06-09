@@ -63,14 +63,12 @@ function setMockData(data, timestamp, cb) {
     prefixValuesArr.forEach(type => {
         const { key } = type;
         if (storageUtilized) {
-            memoryBackend.data[`${key}:storageUtilized:counter`] =
-                storageUtilized;
+            memoryBackend.data[`${key}:storageUtilized:counter`] = storageUtilized;
             memoryBackend.data[`${key}:storageUtilized`] = [[timestamp,
                 storageUtilized]];
         }
         if (numberOfObjects) {
-            memoryBackend.data[`${key}:numberOfObjects:counter`] =
-                numberOfObjects;
+            memoryBackend.data[`${key}:numberOfObjects:counter`] = numberOfObjects;
             memoryBackend.data[`${key}:numberOfObjects`] = [[timestamp,
                 numberOfObjects]];
         }
@@ -99,8 +97,8 @@ describe('UtapiClient:: enable/disable client', () => {
 describe('UtapiClient:: _isCounterEnabled', () => {
     const metric = 'putObject';
 
-    it('should return true when disableOperationCounters and ' +
-    'enabledOperationCounters are not provided in config', () => {
+    it('should return true when disableOperationCounters and '
+    + 'enabledOperationCounters are not provided in config', () => {
         const client = new UtapiClient();
         const result = client._isCounterEnabled(metric);
         assert.strictEqual(result, true);
@@ -201,10 +199,11 @@ tests.forEach(test => {
     const timestamp = getNormalizedTimestamp(Date.now());
 
     function shouldIncludeCounter(action) {
-        const enabledOperationCounters = configuration.enabledOperationCounters;
+        const { enabledOperationCounters } = configuration;
         if (enabledOperationCounters && enabledOperationCounters.length > 0) {
             return enabledOperationCounters.some(
-                counter => counter.toLowerCase() === action.toLowerCase());
+                counter => counter.toLowerCase() === action.toLowerCase(),
+            );
         }
         return !configuration.disableOperationCounters;
     }

@@ -2,7 +2,6 @@
  * This class is used to retain information about a route
  */
 class Route {
-
     /**
      * Constructor
      *
