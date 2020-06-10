@@ -193,40 +193,37 @@ function popAllMetrics(cb) {
 // deleteObject metric
 function checkAllMetrics(cb) {
     const keys = getAllResourceTypeKeys();
-    return async.each(keys, (key, next) =>
-        datastore.get(key, (err, res) => {
-            if (err) {
-                return next(err);
-            }
-            let expected = 1; // Actions should have been incremented once.
-            if (key.includes('incomingBytes')) {
-                // putObject, uploadPart, and uploadPartCopy.
-                expected = objSize * 3;
-            } else if (key.includes('outgoingBytes')) {
-                expected = objSize; // getObject.
-            } else if (key.includes('storageUtilized')) {
-                // After all PUT and DELETE operations, should be 1024.
-                expected = 1024;
-            } else if (key.includes('numberOfObjects')) {
-                expected = 1; // After PUT and DELETE operations, should be 1.
-            } else if (key.endsWith('DeleteObject')) {
-                expected = 2; // After DELETE operations, should be 2.
-            }
-            assert.strictEqual(parseInt(res, 10), expected, 'incorrect value ' +
-                `of key: ${key}`);
-            return next();
-        }), err => cb(err));
+    return async.each(keys, (key, next) => datastore.get(key, (err, res) => {
+        if (err) {
+            return next(err);
+        }
+        let expected = 1; // Actions should have been incremented once.
+        if (key.includes('incomingBytes')) {
+            // putObject, uploadPart, and uploadPartCopy.
+            expected = objSize * 3;
+        } else if (key.includes('outgoingBytes')) {
+            expected = objSize; // getObject.
+        } else if (key.includes('storageUtilized')) {
+            // After all PUT and DELETE operations, should be 1024.
+            expected = 1024;
+        } else if (key.includes('numberOfObjects')) {
+            expected = 1; // After PUT and DELETE operations, should be 1.
+        } else if (key.endsWith('DeleteObject')) {
+            expected = 2; // After DELETE operations, should be 2.
+        }
+        assert.strictEqual(parseInt(res, 10), expected, 'incorrect value '
+                + `of key: ${key}`);
+        return next();
+    }), err => cb(err));
 }
 
 describe('Replay', () => {
     describe('Local cache list', () => {
         after(() => localCache.flushdb());
 
-        it('should push all metrics to the local cache list', done =>
-            pushAllMetrics(done));
+        it('should push all metrics to the local cache list', done => pushAllMetrics(done));
 
-        it('should pop all metrics from the local cache list', done =>
-            popAllMetrics(done));
+        it('should pop all metrics from the local cache list', done => popAllMetrics(done));
     });
 
     describe('UtapiReplay', () => {
@@ -250,8 +247,7 @@ describe('Replay', () => {
             function callback(done) {
                 this.timeout(5000);
                 // Give time to ensure a replay job has time to complete.
-                return setTimeout(() =>
-                    checkListLength(actions.length, done), 3000);
+                return setTimeout(() => checkListLength(actions.length, done), 3000);
             });
 
         it('should record all metrics from the local cache as schema keys',

@@ -1,10 +1,12 @@
-const { BucketsHandler, AccountsHandler, UsersHandler, ServiceHandler } =
-    require('../handlers/metricsHandlers');
-const { validateBucketsListMetrics, validateAccountsListMetrics,
+const {
+    BucketsHandler, AccountsHandler, UsersHandler, ServiceHandler,
+} = require('../handlers/metricsHandlers');
+const {
+    validateBucketsListMetrics, validateAccountsListMetrics,
     validateUsersListMetrics, validateServiceListMetrics,
     validateBucketsListRecentMetrics, validateAccountsListRecentMetrics,
-    validateUsersListRecentMetrics, validateServiceListRecentMetrics } =
-    require('../validators/listMetrics');
+    validateUsersListRecentMetrics, validateServiceListRecentMetrics,
+} = require('../validators/listMetrics');
 const listMetricsResponse = require('../responses/listMetrics');
 
 module.exports = [

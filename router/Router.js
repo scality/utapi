@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 const assert = require('assert');
 const url = require('url');
 const { auth, errors, policies } = require('arsenal');
@@ -5,7 +6,6 @@ const safeJsonParse = require('../utils/safeJsonParse');
 const Vault = require('../lib/Vault');
 
 class Router {
-
     /**
      * @constructor
      * @param {Config} config - Config instance
@@ -50,17 +50,17 @@ class Router {
         // assign query params
         Object.assign(reqData, query);
         req.on('data', data => body.push(data))
-        .on('error', cb)
-        .on('end', () => {
-            if (req.method === 'GET') {
-                return cb(errors.AccessForbidden);
-            }
-            const jsonParseRes = safeJsonParse(body.join(''));
-            if (jsonParseRes.error) {
-                return cb(errors.InvalidParameterValue);
-            }
-            return cb(null, Object.assign(reqData, jsonParseRes.result));
-        });
+            .on('error', cb)
+            .on('end', () => {
+                if (req.method === 'GET') {
+                    return cb(errors.AccessForbidden);
+                }
+                const jsonParseRes = safeJsonParse(body.join(''));
+                if (jsonParseRes.error) {
+                    return cb(errors.InvalidParameterValue);
+                }
+                return cb(null, Object.assign(reqData, jsonParseRes.result));
+            });
     }
 
     /**
@@ -180,13 +180,13 @@ class Router {
             }
             const route = this._routes[req.method][resource][Action];
             if (!route) {
-                log.trace('cannot find route for this Action under this ' +
-                    'http method', {
-                        method: 'Router.doRoute',
-                        httpMethod: req.method,
-                        resource,
-                        Action: requestData.Action,
-                    });
+                log.trace('cannot find route for this Action under this '
+                    + 'http method', {
+                    method: 'Router.doRoute',
+                    httpMethod: req.method,
+                    resource,
+                    Action: requestData.Action,
+                });
                 return cb(errors.NotImplemented);
             }
             utapiRequest.setRoute(route);
@@ -205,8 +205,8 @@ class Router {
         const authHeader = utapiRequest.getRequestHeaders().authorization;
         if (!authHeader || !authHeader.startsWith('AWS4')) {
             log.trace('missing auth header for v4 auth');
-            return cb(errors.InvalidRequest.customizeDescription('Must ' +
-                'use Auth V4 for this request.'));
+            return cb(errors.InvalidRequest.customizeDescription('Must '
+                + 'use Auth V4 for this request.'));
         }
         // resourceType will either be "buckets", "accounts" or "users"
         const resourceType = utapiRequest.getResource();
@@ -218,7 +218,8 @@ class Router {
             new policies.RequestContext(utapiRequest.getRequestHeaders(),
                 utapiRequest.getRequestQuery(), resourceType, specificResources,
                 utapiRequest.getRequesterIp(), utapiRequest.getSslEnabled(),
-                utapiRequest.getAction(), 'utapi'));
+                utapiRequest.getAction(), 'utapi'),
+        );
         auth.setHandler(this._vault);
         const request = utapiRequest.getRequest();
         request.path = utapiRequest.getRequestPathname();
@@ -243,8 +244,8 @@ class Router {
                     }
                 });
                 if (authorizedResources.length === 0) {
-                    log.trace('not authorized to access any requested ' +
-                    'resources');
+                    log.trace('not authorized to access any requested '
+                    + 'resources');
                     return cb(errors.AccessDenied);
                 }
                 // Change list of resources to those that are authorized
@@ -277,7 +278,6 @@ class Router {
             return this._startRequest(utapiRequest, route, cb);
         });
     }
-
 }
 
 module.exports = Router;

@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 const http = require('http');
 const url = require('url');
 

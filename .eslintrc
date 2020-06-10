@@ -1,1 +1,7 @@
-{ "extends": "scality" }
+{
+    "extends": "scality",
+    "rules": {
+        "no-underscore-dangle": "off",
+	"implicit-arrow-linebreak" : "off"
+    }
+}
