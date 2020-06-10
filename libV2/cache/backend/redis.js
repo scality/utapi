@@ -3,7 +3,9 @@ const schema = require('../schema');
 
 const { LoggerContext } = require('../../utils');
 
-const moduleLogger = new LoggerContext({ module: 'cache.backend.redis.RedisCache' });
+const moduleLogger = new LoggerContext({
+    module: 'cache.backend.redis.RedisCache',
+});
 
 class RedisCache {
     constructor(options) {
@@ -17,19 +19,28 @@ class RedisCache {
         moduleLogger.debug('Connecting to redis...');
         this._redis = new IORedis(this._options);
         this._redis
-            .on('error', err => moduleLogger.error(`error connecting to redis ${err}`))
+            .on('error', err =>
+                moduleLogger.error(`error connecting to redis ${err}`),
+            );
             .on('connect', () => moduleLogger.log('connected to redis'));
         return true;
     }
 
     async disconnect() {
+        const logger = moduleLogger.from({ method: 'disconnect' });
         if (this._redis) {
-            moduleLogger.debug('closing connection to redis');
-            await this._redis.quit();
-            await this._redis.disconnect();
+            try {
+                logger.debug('closing connection to redis');
+                await this._redis.quit();
+                this._redis.disconnect();
+            } catch (error) {
+                logger.error('error while closing connection to redis', {
+                    error,
+                });
+            }
             this._reds = null;
         } else {
-            moduleLogger.debug('disconnect called but no connection to redis found');
+            logger.debug('disconnect called but no connection to redis found');
         }
     }
 
@@ -55,20 +66,27 @@ class RedisCache {
                     ['sadd', shardKey, metricKey],
                 ])
                 .exec();
-        } catch (err) {
-            moduleLogger.error()
+        } catch (error) {
+            logger.error('error during redis command', { error });
+            return false;
         }
 
         let success = true;
         // Check the results of our set
         if (results[0][1] !== 'OK') {
-            moduleLogger.error('failed to set metric key', { metricKey, shardKey });
+            moduleLogger.error('failed to set metric key', {
+                metricKey,
+                shardKey,
+            });
             success = false;
         }
 
         // Check the results of our sadd
         if (results[1][1] !== 1) {
-            moduleLogger.error('failed to add metric key to shard', { metricKey, shardKey });
+            moduleLogger.error('failed to add metric key to shard', {
+                metricKey,
+                shardKey,
+            });
             success = false;
         }
         return success;
@@ -99,7 +117,16 @@ class RedisCache {
 
     async shardExists(shard) {
         const shardKey = schema.getShardKey(this._prefix, shard);
-        return (await this._redis.exists(shardKey)) === 1;
+        let res;
+        try {
+            res = await this._redis.exists(shardKey);
+        } catch (error) {
+            moduleLogger
+                .from({ method: 'shardExists' })
+                .error('error while checking shard', { shard, error });
+            throw error;
+        }
+        return res === 1;
     }
 }
 
