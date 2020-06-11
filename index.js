@@ -1,8 +1,18 @@
 /* eslint-disable global-require */
 // eslint-disable-line strict
-module.exports = {
-    UtapiServer: require('./lib/server'),
-    UtapiClient: require('./lib/UtapiClient.js'),
-    UtapiReplay: require('./lib/UtapiReplay.js'),
-    UtapiReindex: require('./lib/UtapiReindex.js'),
-};
+let toExport;
+
+if (process.env.ENABLE_UTAPI_V2) {
+    toExport = {
+        version: 2,
+    };
+} else {
+    toExport = {
+        UtapiServer: require('./lib/server'),
+        UtapiClient: require('./lib/UtapiClient'),
+        UtapiReplay: require('./lib/UtapiReplay'),
+        UtapiReindex: require('./lib/UtapiReindex'),
+    };
+}
+
+module.exports = toExport;
