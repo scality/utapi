@@ -1,6 +1,6 @@
 
 function getShardKey(prefix, shard) {
-    return `${prefix}:shard:${shard}`
+    return `${prefix}:shard:${shard}`;
 }
 
 function getUtapiMetricKey(prefix, metric) {

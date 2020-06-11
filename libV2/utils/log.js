@@ -1,9 +1,9 @@
 const werelogs = require('werelogs');
-const { config } = require('../config');
 
+// TODO Make these configurable
 const loggerConfig = {
-    level: config.logging.level,
-    dump: config.logging.dumpLevel,
+    level: 'debug',
+    dump: 'trace',
 };
 
 werelogs.configure(loggerConfig);
@@ -19,7 +19,7 @@ class LoggerContext {
         return this._defaults || {};
     }
 
-    from(extraDefaults) {
+    with(extraDefaults) {
         return new LoggerContext({ ...this.defaults, extraDefaults });
     }
 
@@ -36,7 +36,7 @@ class LoggerContext {
     }
 
     warn(msg, data) {
-        return rootLogger.warn((msg, { ...this.defaults, ...data });
+        return rootLogger.warn(msg, { ...this.defaults, ...data });
     }
 
     error(msg, data) {
@@ -49,7 +49,7 @@ class LoggerContext {
 }
 
 
-logger.debug('logger initialized', { loggerConfig });
+rootLogger.debug('logger initialized', { loggerConfig });
 
 function buildRequestLogger(req) {
     let reqUids = [];
@@ -60,7 +60,7 @@ function buildRequestLogger(req) {
     // Remove any overly long request ids
     reqUids = reqUids.filter(id => id.length < 128);
 
-    const reqLogger = logger.newRequestLogger(reqUids);
+    const reqLogger = rootLogger.newRequestLogger(reqUids);
 
     const defaultInfo = {
         clientIP: req.ip,
@@ -75,7 +75,7 @@ function buildRequestLogger(req) {
 }
 
 module.exports = {
-    logger,
+    logger: rootLogger,
     buildRequestLogger,
     LoggerContext,
 };

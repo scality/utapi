@@ -20,23 +20,22 @@ class RedisCache {
         this._redis = new IORedis(this._options);
         this._redis
             .on('error', err =>
-                moduleLogger.error(`error connecting to redis ${err}`),
-            );
+                moduleLogger.error(`error connecting to redis ${err}`))
             .on('connect', () => moduleLogger.log('connected to redis'));
         return true;
     }
 
     async disconnect() {
-        const logger = moduleLogger.from({ method: 'disconnect' });
+        const logger = moduleLogger.with({ method: 'disconnect' });
         if (this._redis) {
             try {
                 logger.debug('closing connection to redis');
                 await this._redis.quit();
-                this._redis.disconnect();
             } catch (error) {
                 logger.error('error while closing connection to redis', {
                     error,
                 });
+                throw error;
             }
             this._reds = null;
         } else {
@@ -45,17 +44,32 @@ class RedisCache {
     }
 
     async getKey(key) {
-        return this._redis.get(key);
+        try {
+            return this._redis.get(key);
+        } catch (error) {
+            moduleLogger
+                .with({ method: 'getKey' })
+                .error('error fetching key from redis', { key });
+            throw error;
+        }
     }
 
     async setKey(key, value) {
-        return (await this._redis.set(key, value)) === 'OK';
+        try {
+            const res = await this._redis.set(key, value);
+            return res === 'OK';
+        } catch (error) {
+            moduleLogger
+                .with({ method: 'setKey' })
+                .error('error setting key in redis', { key });
+            throw error;
+        }
     }
 
     async addToShard(shard, metric) {
         const metricKey = schema.getUtapiMetricKey(this._prefix, metric);
         const shardKey = schema.getShardKey(this._prefix, shard);
-        const logger = moduleLogger.from({ method: 'addToShard' });
+        const logger = moduleLogger.with({ method: 'addToShard' });
         logger.debug('adding metric to shard', { metricKey, shardKey });
 
         let results;
@@ -68,7 +82,7 @@ class RedisCache {
                 .exec();
         } catch (error) {
             logger.error('error during redis command', { error });
-            return false;
+            throw error;
         }
 
         let success = true;
@@ -93,22 +107,43 @@ class RedisCache {
     }
 
     async getKeysInShard(shard) {
-        const shardKey = schema.getShardKey(this._prefix, shard);
-        return this._redis.smembers(shardKey);
+        try {
+            const shardKey = schema.getShardKey(this._prefix, shard);
+            return this._redis.smembers(shardKey);
+        } catch (error) {
+            moduleLogger
+                .with({ method: 'getKeysInShard' })
+                .error('error while fetching shard keys', { shard, error });
+            throw error;
+        }
     }
 
     async fetchShard(shard) {
-        const keys = await this.getKeysInShard(shard);
-        if (!keys.length) {
-            return [];
+        try {
+            const keys = await this.getKeysInShard(shard);
+            if (!keys.length) {
+                return [];
+            }
+            return this._redis.mget(...keys);
+        } catch (error) {
+            moduleLogger
+                .with({ method: 'fetchShard' })
+                .error('error while fetching shard data', { shard, error });
+            throw error;
         }
-        return this._redis.mget(...keys);
     }
 
     async deleteShardAndKeys(shard) {
         const shardKey = schema.getShardKey(this._prefix, shard);
-        const keys = await this.getKeysInShard(shard);
-        return this._redis.del(shardKey, ...keys);
+        try {
+            const keys = await this.getKeysInShard(shard);
+            return this._redis.del(shardKey, ...keys);
+        } catch (error) {
+            moduleLogger
+                .with({ method: 'deleteShardAndKeys' })
+                .error('error while deleting shard', { shard, error });
+            throw error;
+        }
     }
 
     async getShards() {
@@ -117,16 +152,15 @@ class RedisCache {
 
     async shardExists(shard) {
         const shardKey = schema.getShardKey(this._prefix, shard);
-        let res;
         try {
-            res = await this._redis.exists(shardKey);
+            const res = await this._redis.exists(shardKey);
+            return res === 1;
         } catch (error) {
             moduleLogger
-                .from({ method: 'shardExists' })
+                .with({ method: 'shardExists' })
                 .error('error while checking shard', { shard, error });
             throw error;
         }
-        return res === 1;
     }
 }
 

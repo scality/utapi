@@ -1,4 +1,3 @@
-const schema = require('./schema');
 const { shardFromTimestamp } = require('../utils');
 
 class CacheClient {

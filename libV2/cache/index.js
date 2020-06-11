@@ -1,4 +1,7 @@
-module.exports = { 
-    CacheClient: require('./client'),
-    backends: require('./backend')
+const CacheClient = require('./client');
+const backends = require('./backend');
+
+module.exports = {
+    CacheClient,
+    backends,
 };

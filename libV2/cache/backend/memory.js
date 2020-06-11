@@ -1,5 +1,3 @@
-
-
 class MemoryCache {
     constructor() {
         this._data = {};
@@ -16,7 +14,7 @@ class MemoryCache {
     }
 
     async addToShard(shard, key) {
-        if (!!this._shards[shard]) {
+        if (this._shards[shard]) {
             this._shards[shard].push(key);
         } else {
             this._shards[shard] = [key];
@@ -25,17 +23,16 @@ class MemoryCache {
     }
 
     async getKeysInShard(shard) {
-        if (!!this._shards[shard]) {
+        if (this._shards[shard]) {
             return this._shards[shard];
-        } else {
-            return [];
         }
+        return [];
     }
 
     async deleteShardAndKeys(shard) {
         (this._shards[shard] || []).forEach(key => {
             this._data[key] = undefined;
-        })
+        });
         this._shards[shard] = undefined;
         return true;
     }

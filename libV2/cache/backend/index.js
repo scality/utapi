@@ -1,4 +1,7 @@
+const MemoryCache = require('./memory');
+const RedisCache = require('./redis');
+
 module.exports = {
-    memory: require('./memory'),
-    redis: require('./redis'),
+    MemoryCache,
+    RedisCache,
 };
