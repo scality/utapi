@@ -435,6 +435,30 @@ Object.keys(metricLevels).forEach(schemaKey => {
                     done,
                 ),
         );
+
+        it(`should return ${metric} level metrics for put bucket object lock`,
+            done => testOps(schemaKey, 'putBucketObjectLock',
+            's3:PutBucketObjectLock', false, done));
+
+        it(`should return ${metric} level metrics for get bucket object lock`,
+            done => testOps(schemaKey, 'getBucketObjectLock',
+            's3:GetBucketObjectLock', false, done));
+
+        it(`should return ${metric} level metrics for put object retention`,
+            done => testOps(schemaKey, 'putObjectRetention',
+            's3:PutObjectRetention', false, done));
+
+        it(`should return ${metric} level metrics for get object retention`,
+            done => testOps(schemaKey, 'getObjectRetention',
+            's3:GetObjectRetention', false, done));
+
+        it(`should return ${metric} level metrics for put object legal hold`,
+            done => testOps(schemaKey, 'putObjectLegalHold',
+            's3:PutObjectLegalHold', false, done));
+
+        it(`should return ${metric} level metrics for get object legal hold`,
+            done => testOps(schemaKey, 'getObjectLegalHold',
+            's3:GetObjectLegalHold', false, done));
     });
 });
 
