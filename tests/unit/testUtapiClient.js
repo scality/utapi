@@ -188,6 +188,12 @@ const tests = [
                 'PutBucketReplication',
                 'GetBucketReplication',
                 'DeleteBucketReplication',
+                'PutBucketObjectLock',
+                'GetBucketObjectLock',
+                'PutObjectRetention',
+                'GetObjectRetention',
+                'PutObjectLegalHold',
+                'GetObjectLegalHold',
             ],
         },
     },
@@ -690,6 +696,48 @@ tests.forEach(test => {
                 action: 'DeleteBucketReplication',
             });
             testMetric('deleteBucketReplication', metricTypes, expected, done);
+        });
+
+        it('should push putBucketObjectLock metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'PutBucketObjectLock',
+            });
+            testMetric('putBucketObjectLock', metricTypes, expected, done);
+        });
+
+        it('should push getBucketObjectLock metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'GetBucketObjectLock',
+            });
+            testMetric('getBucketObjectLock', metricTypes, expected, done);
+        });
+
+        it('should push putObjectRetention metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'PutObjectRetention',
+            });
+            testMetric('putObjectRetention', metricTypes, expected, done);
+        });
+
+        it('should push getObjectRetention metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'GetObjectRetention',
+            });
+            testMetric('getObjectRetention', metricTypes, expected, done);
+        });
+
+        it('should push putObjectLegalHold metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'PutObjectLegalHold',
+            });
+            testMetric('putObjectLegalHold', metricTypes, expected, done);
+        });
+
+        it('should push getObjectLegalHold metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'GetObjectLegalHold',
+            });
+            testMetric('getObjectLegalHold', metricTypes, expected, done);
         });
 
         // Allows for decoupling of projects that use Utapi

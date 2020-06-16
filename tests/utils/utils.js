@@ -87,6 +87,12 @@ function buildMockResponse({ start, end, val }) {
             's3:PutBucketReplication': val,
             's3:GetBucketReplication': val,
             's3:DeleteBucketReplication': val,
+            's3:PutBucketObjectLock': val,
+            's3:GetBucketObjectLock': val,
+            's3:PutObjectRetention': val,
+            's3:GetObjectRetention': val,
+            's3:PutObjectLegalHold': val,
+            's3:GetObjectLegalHold': val,
         },
         bucketName: 'utapi-bucket',
     };
