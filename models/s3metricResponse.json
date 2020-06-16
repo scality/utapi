@@ -40,6 +40,12 @@
         "s3:GetBucketVersioning": 0,
         "s3:PutBucketReplication": 0,
         "s3:GetBucketReplication": 0,
-        "s3:DeleteBucketReplication": 0
+        "s3:DeleteBucketReplication": 0,
+        "s3:PutBucketObjectLock": 0,
+        "s3:GetBucketObjectLock": 0,
+        "s3:PutObjectRetention": 0,
+        "s3:GetObjectRetention": 0,
+        "s3:PutObjectLegalHold": 0,
+        "s3:GetObjectLegalHold": 0
     }
 }

@@ -65,6 +65,12 @@ const actions = [
     'putBucketReplication',
     'getBucketReplication',
     'deleteBucketReplication',
+    'putBucketObjectLock',
+    'getBucketObjectLock',
+    'putObjectRetention',
+    'getObjectRetention',
+    'putObjectLegalHold',
+    'getObjectLegalHold',
 ];
 
 // Get the proper params object for a pushMetric call for the given action.
