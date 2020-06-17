@@ -12,7 +12,7 @@ const testValues = generateFakeEvents(startTime, endTime, 1);
 
 const testWarpscript = "CLEAR [ 'OK' ]";
 
-describe.only('Test Warp Client', () => {
+describe('Test Warp Client', () => {
     let className;
     beforeEach(() => {
         className = `utapi.test.${uuid.v4().replace(/-/g, '')}`;
