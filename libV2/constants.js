@@ -55,4 +55,13 @@ module.exports = {
         outgoingBytes: 'outB',
     },
     warp10ValueType: ':utapi:event',
+    truthy: [
+        'true',
+        'on',
+        'yes',
+        'y',
+        't',
+        'enabled',
+        'enable',
+    ],
 };
