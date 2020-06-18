@@ -1,0 +1,38 @@
+openapi: 3.0.0
+info:
+  description: Scality Utilization Monitoring API
+  title: UTAPI
+  version: 0.0.1
+
+components:
+  responses:
+    not-implemented:
+        description: This operation has yet to be implemented.
+        content:
+          text/plain:
+              schema:
+                  type: string
+    json-error:
+      description: Error containing code and message
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+paths:
+  /_/healthcheck:
+    get:
+      x-router-controller: internal
+      operationId: healthcheck
+      responses:
+        default:
+          $ref: '#/components/responses/json-error'
+        200:
+          description: Service is healthy
