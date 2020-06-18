@@ -7,6 +7,7 @@ const truthy = new Set([
     't',
     'enabled',
     'enable',
+    '1',
 ]);
 
 module.exports = {
