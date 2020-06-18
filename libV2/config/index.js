@@ -69,8 +69,8 @@ class Config {
             return JSON.parse(data);
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error(`error reading config file at ${path}`, { error });
-            throw new Error(`could not parse config file: ${error.message}`);
+            console.error({ message: `error reading config file at ${path}`, error });
+            throw error;
         }
     }
 
