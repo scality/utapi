@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
+    "@hapi/joi": "^17.1.1",
+    "@senx/warp10": "^1.0.7",
     "arsenal": "scality/Arsenal#32c895b",
     "async": "^2.0.1",
     "ioredis": "^4.9.5",
@@ -26,7 +28,6 @@
     "werelogs": "scality/werelogs#0a4c576"
   },
   "devDependencies": {
-    "@hapi/joi": "^17.1.1",
     "aws4": "^1.8.0",
     "eslint": "^5.12.0",
     "eslint-config-airbnb-base": "13.1.0",
