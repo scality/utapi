@@ -1,3 +1,15 @@
+
+const truthy = new Set([
+    'true',
+    'on',
+    'yes',
+    'y',
+    't',
+    'enabled',
+    'enable',
+    '1',
+]);
+
 module.exports = {
     envNamespace: 'UTAPI',
     operations: [
@@ -55,4 +67,5 @@ module.exports = {
         outgoingBytes: 'outB',
     },
     warp10ValueType: ':utapi:event',
+    truthy,
 };
