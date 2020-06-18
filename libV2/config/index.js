@@ -1,28 +1,27 @@
 const fs = require('fs');
 const path = require('path');
 const Joi = require('@hapi/joi');
-const { truthy } = require('../constants');
 
-const { envNamespace } = require('../constants');
-
+const { truthy, envNamespace } = require('../constants');
 const configSchema = require('./schema');
 
 const _typeCasts = {
-    bool: val => truthy.includes(val.toLowerCase()),
+    bool: val => truthy.has(val.toLowerCase()),
     int: val => parseInt(val, 10),
     list: val => val.split(',').map(v => v.trim()),
 };
+
 
 function _definedInEnv(key) {
     return process.env[`${envNamespace}_${key}`] !== undefined;
 }
 
 function _loadFromEnv(key, defaultValue, type) {
-    if (_definedInEnv(key)) {
-        const envKey = `${envNamespace}_${key}`;
-        const value = process.env[envKey];
+    const envKey = `${envNamespace}_${key}`;
+    const value = process.env[envKey];
+    if (value !== undefined) {
         if (type !== undefined) {
-            return _typeCasts[type](value);
+            return type(value);
         }
         return value;
     }
@@ -96,17 +95,17 @@ class Config {
     }
 
     _recursiveUpdateObject(parent, child) {
-        const keys = Object.keys(parent)
+        return Object.keys(parent)
             .concat(Object.keys(child))
             .reduce((keys, key) => {
                 if (!keys.includes(key)) keys.push(key);
                 return keys;
-            }, []);
-        return keys.reduce((ret, key) => {
-            // eslint-disable-next-line no-param-reassign
-            ret[key] = this._recursiveUpdate(parent[key], child[key]);
-            return ret;
-        }, {});
+            }, [])
+            .reduce((ret, key) => {
+                // eslint-disable-next-line no-param-reassign
+                ret[key] = this._recursiveUpdate(parent[key], child[key]);
+                return ret;
+            }, {});
     }
 
     /**
@@ -143,15 +142,15 @@ class Config {
     static _parseConfig(config) {
         const parsedConfig = {};
 
-        parsedConfig.development = _loadFromEnv('DEV_MODE', config.development, 'bool');
+        parsedConfig.development = _loadFromEnv('DEV_MODE', config.development, _typeCasts.bool);
 
         parsedConfig.host = _loadFromEnv('HOST', config.host);
-        parsedConfig.port = _loadFromEnv('PORT', config.port);
+        parsedConfig.port = _loadFromEnv('PORT', config.port, _typeCasts.int);
 
         const healthCheckFromEnv = _loadFromEnv(
             'ALLOW_HEALTHCHECK',
             [],
-            'list',
+            _typeCasts.list,
         );
         parsedConfig.healthChecks = {
             allowFrom: healthCheckFromEnv.concat(config.healthChecks.allowFrom),
@@ -163,7 +162,7 @@ class Config {
             const sentinels = _loadFromEnv(
                 'REDIS_SENTINELS',
                 config.redis.sentinels,
-                'list',
+                _typeCasts.list,
             );
             redisConf.sentinels = sentinels.map(v => {
                 const [host, port] = v.split(':');
@@ -181,7 +180,7 @@ class Config {
             redisConf.port = _loadFromEnv(
                 'REDIS_PORT',
                 config.redis.port,
-                'int',
+                _typeCasts.int,
             );
             redisConf.password = _loadFromEnv(
                 'REDIS_PASSWORD',
@@ -192,7 +191,7 @@ class Config {
 
         const warp10Conf = {};
         warp10Conf.host = _loadFromEnv('WARP10_HOST', config.warp10.host);
-        warp10Conf.port = _loadFromEnv('WARP10_PORT', config.warp10.port);
+        warp10Conf.port = _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int);
         parsedConfig.warp10 = warp10Conf;
 
         parsedConfig.log = {
