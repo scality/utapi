@@ -55,7 +55,7 @@ class Config {
         // read config automatically
         const loadedConfig = this._loadConfig();
         let parsedConfig = Config._parseConfig(loadedConfig);
-        if (overrides && typeof overrides === 'object') {
+        if (typeof overrides === 'object') {
             parsedConfig = this._recursiveUpdate(parsedConfig, overrides);
         }
         Object.assign(this, parsedConfig);
@@ -95,12 +95,12 @@ class Config {
     }
 
     _recursiveUpdateObject(parent, child) {
-        return Object.keys(parent)
-            .concat(Object.keys(child))
-            .reduce((keys, key) => {
-                if (!keys.includes(key)) keys.push(key);
-                return keys;
-            }, [])
+        return Array.from(
+            new Set([
+                ...Object.keys(parent),
+                ...Object.keys(child)],
+            // eslint-disable-next-line function-paren-newline
+            ))
             .reduce((ret, key) => {
                 // eslint-disable-next-line no-param-reassign
                 ret[key] = this._recursiveUpdate(parent[key], child[key]);
