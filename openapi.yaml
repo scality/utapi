@@ -7,11 +7,11 @@ info:
 components:
   responses:
     not-implemented:
-        description: This operation has yet to be implemented.
-        content:
-          text/plain:
-              schema:
-                  type: string
+      description: This operation has yet to be implemented.
+      content:
+        text/plain:
+            schema:
+                type: string
     json-error:
       description: Error containing code and message
       content:
