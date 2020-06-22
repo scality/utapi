@@ -38,6 +38,7 @@ const schema = Joi.object({
     }),
     expireMetrics: Joi.boolean(),
     expireMetricsTTL: Joi.number(),
+    cacheBackend: Joi.string().valid('memory', 'redis'),
 });
 
 module.exports = schema;

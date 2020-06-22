@@ -21,8 +21,12 @@
     "@senx/warp10": "^1.0.7",
     "arsenal": "scality/Arsenal#32c895b",
     "async": "^2.0.1",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
     "ioredis": "^4.9.5",
+    "js-yaml": "^3.14.0",
     "node-schedule": "1.2.0",
+    "oas-tools": "^2.1.8",
     "uuid": "^3.3.2",
     "vaultclient": "scality/vaultclient#478710c",
     "werelogs": "scality/werelogs#0a4c576"
@@ -33,8 +37,8 @@
     "eslint-config-airbnb-base": "13.1.0",
     "eslint-config-scality": "scality/Guidelines#7cc5ff1",
     "eslint-plugin-import": "2.14.0",
-    "express": "^4.17.1",
-    "mocha": "^3.0.2"
+    "mocha": "^3.0.2",
+    "nodemon": "^2.0.4"
   },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional",
@@ -42,9 +46,12 @@
     "ft_test:cron": "mocha --recursive tests/functional/cron",
     "ft_test:interval": "mocha --recursive tests/functional/interval",
     "ft_test:server": "mocha --recursive tests/functional/server",
+    "ft_test:v2": "mocha --recursive tests/functional/v2",
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
     "start": "node server.js",
-    "test": "mocha --recursive tests/unit"
+    "test": "mocha --recursive tests/unit",
+    "start_v2:server": "ENABLE_UTAPI_V2=1 node bin/server.js",
+    "start_v2:server:dev": "UTAPI_DEV_MODE=t ENABLE_UTAPI_V2=t yarn nodemon --watch './**/*.js' --watch './**/*.json' --watch './**/*.yaml' --exec node bin/server.js"
   }
 }
