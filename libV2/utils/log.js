@@ -1,9 +1,9 @@
 const werelogs = require('werelogs');
+const config = require('../config');
 
-// TODO Make these configurable
 const loggerConfig = {
-    level: 'trace',
-    dump: 'error',
+    level: config.logging.level,
+    dump: config.logging.dumpLevel,
 };
 
 werelogs.configure(loggerConfig);
@@ -40,10 +40,11 @@ class LoggerContext {
     }
 
     error(msg, data) {
+        let _data = data;
         if (data && data.error) {
-            data = { ...data, errmsg: data.error.message, stack: data.error.stack };
+            _data = { ...data, errmsg: data.error.message, stack: data.error.stack };
         }
-        return rootLogger.error(msg, { ...this.defaults, ...data });
+        return rootLogger.error(msg, { ...this.defaults, ..._data });
     }
 
     fatal(msg, data) {
