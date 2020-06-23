@@ -5,6 +5,36 @@ info:
   version: 0.0.1
 
 components:
+  schemas:
+    utapi-metric-v1:
+      type: array
+      items:
+        type: object
+        properties:
+          operationId:
+            type: string
+          uuid:
+            type: string
+          timestamp:
+            type: integer
+          bucket:
+            type: string
+          object:
+            type: string
+          versionId:
+            type: string
+          account:
+            type: string
+          user:
+            type: string
+          location:
+            type: string
+          count:
+            type: integer
+          bytesDelta:
+            type: integer
+          bytes:
+            type: integer
   responses:
     not-implemented:
       description: This operation has yet to be implemented.
@@ -36,3 +66,20 @@ paths:
           $ref: '#/components/responses/json-error'
         200:
           description: Service is healthy
+  /v2/ingest:
+    post:
+      x-router-controller: metrics
+      description: Ingest UTAPI metric
+      operationId: ingestMetric
+      responses:
+        default:
+          $ref: '#/components/responses/json-error'
+        200:
+          description: Successfully ingested metric
+      requestBody:
+        x-name: body
+        required: True
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/utapi-metric-v1'
