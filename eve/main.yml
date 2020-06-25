@@ -22,11 +22,20 @@ models:
       command: yarn install --frozen-lockfile
       haltOnFailure: True
 
+
+warp10io/warp10:2.6.0-ci
+
 stages:
   pre-merge:
     worker:
       type: local
     steps:
+    - MasterShellCommand:
+      name: Replace upstream image with `-ci` variant
+      command: sed '/^FROM/ s/$/-ci/' images/warp10/Dockerfile
+      workdir: "%(prop:master_builddir)s/build/"
+    - ShellCommand:
+      command: docker build -f images/warp10/Dockerfile -t warp10 .
     - TriggerStages:
         name: trigger all the tests
         stage_names:

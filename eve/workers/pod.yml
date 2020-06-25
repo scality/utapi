@@ -20,8 +20,18 @@ spec:
     volumeMounts:
     - mountPath: /var/run/docker.sock
       name: docker-socket
+  - name: warp10
+    image: warp10
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "3"
+        memory: 3Gi
   volumes:
   - name: docker-socket
     hostPath:
       path: /var/run/docker.sock
       type: Socket
+
