@@ -17,16 +17,23 @@ models:
       path: eve/workers/pod.yml
       images:
         aggressor: eve/workers/unit_and_feature_tests
+        warp10:
+          context: '.'
+          dockerfile: 'images/warp10/Dockerfile'
   - Install: &install
       name: install node modules
       command: yarn install --frozen-lockfile
       haltOnFailure: True
+
 
 stages:
   pre-merge:
     worker:
       type: local
     steps:
+    - MasterShellCommand:
+        name: Replace upstream image with `-ci` variant
+        command: "sed -i '/^FROM/ s/$/-ci/' %(prop:master_builddir)s/build/images/warp10/Dockerfile"
     - TriggerStages:
         name: trigger all the tests
         stage_names:
@@ -94,5 +101,11 @@ stages:
       - Git: *clone
       - ShellCommand: *install
       - ShellCommand:
+          name: Wait for Warp 10
+          command: |
+            bash -c "
+            set -ex
+            bash tests/utils/wait_for_local_port.bash 4802 60"
+      - ShellCommand:
           name: run v2 functional tests
-          command: SETUP_CMD=start_v2:server bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
+          command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:v2

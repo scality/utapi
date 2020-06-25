@@ -15,11 +15,25 @@ spec:
         cpu: 500m
         memory: 1Gi
       limits:
-        cpu: "3"
+        cpu: "2"
         memory: 3Gi
     volumeMounts:
     - mountPath: /var/run/docker.sock
       name: docker-socket
+  - name: warp10
+    image: "{{ images.warp10 }}"
+    env:
+      - name: standalone.port
+        value: '4802'
+      - name: warp.token.file
+        value: /opt/warp10/etc/ci.tokens
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: "2"
+        memory: 3Gi
   volumes:
   - name: docker-socket
     hostPath:
