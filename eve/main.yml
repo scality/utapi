@@ -34,6 +34,7 @@ stages:
         workdir: "%(prop:master_builddir)s/build/"
     - ShellCommand:
         command: docker build -f images/warp10/Dockerfile -t warp10 .
+        workdir: "%(prop:master_builddir)s/build/"
     - TriggerStages:
         name: trigger all the tests
         stage_names:
