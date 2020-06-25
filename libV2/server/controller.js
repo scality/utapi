@@ -49,7 +49,7 @@ class APIController {
             moduleLogger
                 .with({ method: 'APIController::_getOperationHandler' })
                 .error(`no handler for ${tag}:${operationId} found, using notImplemented handler`);
-            return APIController._notImplementedHandler(operationId);
+            return APIController._notImplementedHandler(tag, operationId);
         }
         return op;
     }
@@ -62,10 +62,11 @@ class APIController {
     }
 
     static _extractParams(req) {
-        return Object.keys(req.swagger.params).reduce((params, key) => {
-            params[key] = req.swagger.params[key].value;
-            return params;
-        }, {});
+        return Object.entries(req.swagger.params)
+            .reduce((params, [key, value]) => {
+                params[key] = value.value;
+                return params;
+            }, {});
     }
 
     static async _writeResult(results, response) {
@@ -80,7 +81,7 @@ class APIController {
         }
         // If we have a redirect, do it
         if (results.hasRedirect()) {
-            response.redirect(results.redirect());
+            response.redirect(results.redirect);
         // If we have both a body & status, send both
         } else if (results.hasBody() && results.hasStatusCode()) {
             response.status(results.statusCode).send(results.body);
@@ -103,13 +104,12 @@ class APIController {
      * Constructs the request context, extracts operation parameters, calls the
      * operation handler, and writes its result.
      *
-     * @param {string} operationId - Unique string identifying the operation.
      * @param {function} handler - Function returning a Promise implementing the operation
      * @param {Request} request - Express request object
      * @param {Response} response - Express response object
      * @returns {undefined} -
      */
-    static async _callOperation(operationId, handler, request, response) {
+    static async _callOperation(handler, request, response) {
         request.ctx = APIController._buildRequestContext(request);
         try {
             await handler(request.ctx, APIController._extractParams(request));
@@ -131,7 +131,7 @@ class APIController {
 
     static callOperation(operationId, handler, request, response, done) {
         request.logger.debug(`calling operation ${operationId}`);
-        APIController._callOperation(operationId, handler, request, response)
+        APIController._callOperation(handler, request, response)
             .then(
                 done,
                 done,
@@ -145,10 +145,10 @@ class APIController {
      * @returns {undefined}
      */
     buildMap() {
-        return Object.keys(this._handlers)
-            .reduce((ops, id) => {
+        return Object.entries(this._handlers)
+            .reduce((ops, [id, handler]) => {
                 ops[id] = (request, response, done) =>
-                    APIController.callOperation(id, this._handlers[id], request, response, done);
+                    APIController.callOperation(id, handler, request, response, done);
                 return ops;
             }, {});
     }

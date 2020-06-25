@@ -8,14 +8,13 @@ const apiTags = Object.keys(apiOperations);
 const apiOperationIds = Object.values(apiOperations)
     .reduce((ids, ops) => {
         ops.forEach(id => ids.add(id));
-        return ops;
+        return ids;
     }, new Set());
 
 const contextSchema = {
     host: Joi.string(),
     protocol: Joi.string().valid('http', 'https'),
     url: Joi.string().uri({ scheme: ['http', 'https'] }),
-    endpoint: Joi.alternatives(Joi.string().ip(), Joi.string().hostname()),
     operationId: Joi.string().valid(...apiOperationIds),
     tag: Joi.string().valid(...apiTags),
     logger: Joi.any(),
