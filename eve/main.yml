@@ -23,8 +23,6 @@ models:
       haltOnFailure: True
 
 
-warp10io/warp10:2.6.0-ci
-
 stages:
   pre-merge:
     worker:
