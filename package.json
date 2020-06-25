@@ -38,7 +38,9 @@
     "eslint-config-scality": "scality/Guidelines#7cc5ff1",
     "eslint-plugin-import": "2.14.0",
     "mocha": "^3.0.2",
-    "nodemon": "^2.0.4"
+    "needle": "^2.5.0",
+    "nodemon": "^2.0.4",
+    "sinon": "^9.0.2"
   },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional",

@@ -36,6 +36,7 @@ stages:
         - run-server-tests
         - run-cron-tests
         - run-interval-tests
+        - run-v2-functional-tests
   linting-coverage:
     worker: *workspace
     steps:
@@ -87,3 +88,11 @@ stages:
       - ShellCommand:
           name: run interval tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
+  run-v2-functional-tests:
+    worker: *workspace
+    steps:
+      - Git: *clone
+      - ShellCommand: *install
+      - ShellCommand:
+          name: run v2 functional tests
+          command: SETUP_CMD=start_v2:server bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval

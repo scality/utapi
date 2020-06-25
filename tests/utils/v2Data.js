@@ -1,6 +1,8 @@
 const uuid = require('uuid');
+
 const { UtapiMetric } = require('../../libV2/models');
 const { operations } = require('../../libV2/constants');
+const { ResponseContainer } = require('../../libV2/models');
 
 function range(n, step) {
     const vals = [...Array(n).keys()];
@@ -65,6 +67,75 @@ function generateFakeEvents(start, stop, count) {
     return range(count, eventsEvery).map(i => makeEvent(Math.floor(start + i)));
 }
 
+
+class ExpressResponseStub {
+    constructor() {
+        this._status = null;
+        this._body = null;
+        this._redirect = null;
+    }
+
+    status(code) {
+        this._status = code;
+        return this;
+    }
+
+    sendStatus(code) {
+        this._status = code;
+    }
+
+    send(body) {
+        this._body = body;
+        return this;
+    }
+
+    redirect(url) {
+        this._redirect = url;
+        return this;
+    }
+}
+
+const stubLogger = {
+    addDefaultFields: () => {},
+    debug: () => {},
+    info: () => {},
+    trace: () => {},
+    with: () => stubLogger,
+    warn: () => {},
+    fatal: () => {},
+    error: () => {},
+};
+
+
+function templateRequest(overrides) {
+    const results = new ResponseContainer();
+
+    return {
+        ip: '127.0.0.1',
+        socket: { remotePort: 12345 },
+        headers: { host: 'example.com' },
+        connection: { encrypted: false },
+        method: 'GET',
+        originalUrl: 'http://example.com/hello/world',
+        hostname: 'example.com',
+        url: '/hello/world',
+        swagger: {
+            operation: {
+                'x-router-controller': 'internal',
+                'operationId': 'healthcheck',
+            },
+            params: {},
+        },
+        logger: stubLogger,
+        results,
+        ...(overrides || {}),
+    };
+}
+
+
 module.exports = {
     generateFakeEvents,
+    templateRequest,
+    ExpressResponseStub,
+    stubLogger,
 };
