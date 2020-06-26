@@ -17,6 +17,9 @@ models:
       path: eve/workers/pod.yml
       images:
         aggressor: eve/workers/unit_and_feature_tests
+        warp10:
+          context: '.'
+          dockerfile: 'images/warp10/Dockerfile'
   - Install: &install
       name: install node modules
       command: yarn install --frozen-lockfile
