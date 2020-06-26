@@ -33,7 +33,7 @@ stages:
     steps:
     - MasterShellCommand:
         name: Replace upstream image with `-ci` variant
-        command: "sed '/^FROM/ s/$/-ci/' %(prop:master_builddir)s/build/images/warp10/Dockerfile"
+        command: "sed -i '/^FROM/ s/$/-ci/' %(prop:master_builddir)s/build/images/warp10/Dockerfile"
     - TriggerStages:
         name: trigger all the tests
         stage_names:
