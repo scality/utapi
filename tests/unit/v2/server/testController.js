@@ -28,9 +28,16 @@ describe('Test APIController', () => {
         assert(typeof handler === 'function');
     });
 
-    it('should patch a NotImplemented handler for MODULE_NOT_FOUND errors', () => {
+    it('should patch a NotImplemented handler for MODULE_NOT_FOUND errors', async () => {
         const handler = APIController._getOperationHandler('invalid', 'idontexist');
         assert(typeof handler === 'function');
+        assert.rejects(handler);
+        try {
+            await handler();
+        } catch (error) {
+            assert.strictEqual(error.code, 501);
+            assert(error.NotImplemented);
+        }
     });
 
     it('should load handlers for a tag', () => {
@@ -50,7 +57,7 @@ describe('Test APIController', () => {
                 },
             },
         };
-        assert(APIController._extractParams(req), { foo: 'bar' });
+        assert.deepStrictEqual(APIController._extractParams(req), { foo: 'bar' });
     });
 
     describe('Test APIController::_writeResult', () => {

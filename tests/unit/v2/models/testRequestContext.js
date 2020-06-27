@@ -13,13 +13,8 @@ const templateExpected = opts => ({
 });
 
 
-const testCases = [
+const validTestCases = [
     {
-        valid: true,
-        request: templateRequest(),
-    },
-    {
-        valid: true,
         request: templateRequest({
             connection: {
                 encrypted: true,
@@ -31,7 +26,6 @@ const testCases = [
         },
     },
     {
-        valid: true,
         request: templateRequest({
             headers: {
                 'host': 'example.com',
@@ -44,7 +38,6 @@ const testCases = [
         },
     },
     {
-        valid: true,
         request: templateRequest({
             headers: {
                 'host': 'example.com',
@@ -56,7 +49,6 @@ const testCases = [
         }),
     },
     {
-        valid: true,
         request: templateRequest({
             headers: {
                 'host': 'example.com',
@@ -69,8 +61,10 @@ const testCases = [
             url: 'https://example.com/hello/world',
         },
     },
+];
+
+const invalidTestCases = [
     {
-        valid: false,
         request: templateRequest({
             swagger: {
                 operation: {
@@ -81,7 +75,6 @@ const testCases = [
         }),
     },
     {
-        valid: false,
         request: templateRequest({
             swagger: {
                 operation: {
@@ -95,30 +88,25 @@ const testCases = [
 
 
 describe('Test RequestContext', () => {
-    testCases.forEach(testCase => {
-        let valid = true;
-        let ctx;
-        const expected = templateExpected({
-            request: testCase.request,
-            logger: testCase.request.logger,
-            results: testCase.request.results,
-            ...(testCase.expected || {}),
-        });
+    describe('Test valid cases', () => {
+        validTestCases.forEach(testCase =>
+            it('should create a RequestContext', () => {
+                const expected = templateExpected({
+                    request: testCase.request,
+                    logger: testCase.request.logger,
+                    results: testCase.request.results,
+                    ...(testCase.expected || {}),
+                });
 
-        try {
-            ctx = new RequestContext(testCase.request);
-        } catch (err) {
-            if (testCase.valid) {
-                // rethrow errors we don't expect
-                throw err;
-            }
-            valid = false;
-        }
+                const ctx = new RequestContext(testCase.request);
+                assert.deepStrictEqual(ctx.getValue(), expected);
+            }));
+    });
 
-        assert.strictEqual(valid, testCase.valid);
-
-        if (testCase.valid) {
-            assert.deepStrictEqual(ctx.getValue(), expected);
-        }
+    describe('Test invalid cases', () => {
+        invalidTestCases.forEach(testCase =>
+            it('should fail to create a RequestContext', () => {
+                assert.throws(() => new RequestContext(testCase.request));
+            }));
     });
 });
