@@ -38,7 +38,7 @@ class APIController {
         // eslint-disable-next-line no-unused-vars
         return async (ctx, params) => {
             throw errors.NotImplemented.customizeDescription(
-                `the operation "${tag}::${operationId}"  has not been implemented`,
+                `the operation "${tag}::${operationId}" has not been implemented`,
             );
         };
     }
@@ -141,7 +141,7 @@ class APIController {
     /**
      * buildMap
      *
-     * Constructs a object of `operationId`|`callOperation` pairs for use as a controller with oas-tools
+     * Constructs an object of `operationId`|`callOperation` pairs for use as a controller with oas-tools
      * @returns {undefined}
      */
     buildMap() {
