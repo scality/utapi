@@ -65,7 +65,7 @@ describe('Test middleware', () => {
             });
         });
 
-        it("should replace a error's message if it's internal and not in development mode", () => {
+        it("should replace an error's message if it's internal and not in development mode", () => {
             middleware.errorMiddleware({ code: 123, message: 'Hello World!' }, null, resp);
             assert.deepStrictEqual(resp._body, {
                 error: {
