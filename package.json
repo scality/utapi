@@ -25,6 +25,8 @@
     "express": "^4.17.1",
     "ioredis": "^4.9.5",
     "js-yaml": "^3.14.0",
+    "memdown": "^5.1.0",
+    "needle": "^2.5.0",
     "node-schedule": "1.2.0",
     "oas-tools": "^2.1.8",
     "uuid": "^3.3.2",
@@ -38,7 +40,6 @@
     "eslint-config-scality": "scality/Guidelines#7cc5ff1",
     "eslint-plugin-import": "2.14.0",
     "mocha": "^3.0.2",
-    "needle": "^2.5.0",
     "nodemon": "^2.0.4",
     "sinon": "^9.0.2"
   },
