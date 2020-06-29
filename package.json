@@ -25,6 +25,8 @@
     "express": "^4.17.1",
     "ioredis": "^4.9.5",
     "js-yaml": "^3.14.0",
+    "level-mem": "^5.0.1",
+    "needle": "^2.5.0",
     "node-schedule": "1.2.0",
     "oas-tools": "^2.1.8",
     "uuid": "^3.3.2",
