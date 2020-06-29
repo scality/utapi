@@ -31,13 +31,10 @@ describe('Test APIController', () => {
     it('should patch a NotImplemented handler for MODULE_NOT_FOUND errors', async () => {
         const handler = APIController._getOperationHandler('invalid', 'idontexist');
         assert(typeof handler === 'function');
-        assert.rejects(handler);
-        try {
-            await handler();
-        } catch (error) {
+        assert.rejects(handler, error => {
             assert.strictEqual(error.code, 501);
             assert(error.NotImplemented);
-        }
+        });
     });
 
     it('should load handlers for a tag', () => {
