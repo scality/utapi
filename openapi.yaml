@@ -29,12 +29,14 @@ components:
             type: string
           location:
             type: string
-          count:
+          objectDelta:
             type: integer
-          bytesDelta:
+          sizeDelta:
             type: integer
-          bytes:
+          incomingBytes:
             type: integer
+          outgoingBytes:
+              type: integer
   responses:
     not-implemented:
       description: This operation has yet to be implemented.
