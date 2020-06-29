@@ -3,8 +3,10 @@
 let toExport;
 
 if (process.env.ENABLE_UTAPI_V2) {
+    const { startServer } = require('./libV2/server');
     toExport = {
         version: 2,
+        startServer,
     };
 } else {
     toExport = {

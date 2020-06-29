@@ -11,8 +11,11 @@ const version1Exports = {
     UtapiReindex: require('../../lib/UtapiReindex'),
 };
 
+const { startServer } = require('../../libV2/server');
+
 const version2Exports = {
     version: 2,
+    startServer,
 };
 
 const versionToCheck = process.argv[2];

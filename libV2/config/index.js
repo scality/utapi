@@ -194,7 +194,7 @@ class Config {
         warp10Conf.port = _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int);
         parsedConfig.warp10 = warp10Conf;
 
-        parsedConfig.log = {
+        parsedConfig.logging = {
             level: parsedConfig.development
                 ? 'debug'
                 : _loadFromEnv('LOG_LEVEL', config.log.logLevel),
@@ -203,6 +203,8 @@ class Config {
                 config.log.dumpLevel,
             ),
         };
+
+        parsedConfig.cacheBackend = _loadFromEnv('CACHE_BACKEND', config.cacheBackend);
 
         return parsedConfig;
     }
