@@ -3,6 +3,7 @@ const path = require('path');
 const { promisify } = require('util');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
+const errors = require('../errors');
 
 const oasOptions = {
     controllers: path.join(__dirname, './API/'),
@@ -39,8 +40,16 @@ function loggerMiddleware(req, res, next) {
 // next is purposely not called as all error responses are handled here
 // eslint-disable-next-line no-unused-vars
 function errorMiddleware(err, req, res, next) {
-    const code = err.code || 500;
+    let code = err.code || 500;
     let message = err.message || 'Internal Error';
+
+    if (err.failedValidation) { // failed request validation by oas-tools
+        // You can't actually use destructing here
+        /* eslint-disable prefer-destructuring */
+        code = errors.InvalidRequest.code;
+        message = errors.InvalidRequest.message;
+        /* eslint-enable prefer-destructuring */
+    }
 
     if (!err.utapiError && !config.development) {
         // Make sure internal errors don't leak when not in development

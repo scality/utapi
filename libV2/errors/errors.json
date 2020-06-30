@@ -23,8 +23,12 @@
         "code": 500,
         "description": "The operation could not be completed within the permitted time."
     },
-    "ServerBusy": {
+    "ServiceUnavailable": {
         "code": 503,
         "description": "The server (or an internal component) is currently unavailable to receive requests. Please retry your request."
+    },
+    "InvalidRequest": {
+        "code": 400,
+        "description": "Request validation error"
     }
 }

@@ -36,7 +36,10 @@ class UtapiServer extends Process {
 
     static async _startServer(server) {
         moduleLogger
-            .with({ method: 'UtapiServer::_startServer' })
+            .with({
+                method: 'UtapiServer::_startServer',
+                cacheBackend: config.cacheBackend,
+            })
             .info(`Server listening on ${config.port}`);
         await server.listen(config.port);
     }
