@@ -16,12 +16,10 @@ const moduleLogger = new LoggerContext({
     module: 'client',
 });
 
-const _noOp = () => {};
-
 class Chunker extends Transform {
     constructor(options) {
         super({ objectMode: true, ...options });
-        this._chunkSize = options.chunksize || 100;
+        this._chunkSize = (options && options.chunkSize) || 100;
         this._currentChunk = [];
     }
 
@@ -72,7 +70,7 @@ class UtapiClient {
     constructor(config) {
         this._host = (config && config.host) || 'localhost';
         this._port = (config && config.port) || '8100';
-        this._logger = (config && config.port) || moduleLogger;
+        this._logger = (config && config.logger) || moduleLogger;
         this._maxCachedMetrics = (config && config.maxCachedMetrics) || 200000; // roughly 100MB
         this._numCachedMetrics = 0;
         this._retryCache = levelup(encode(memdown(), { valueEncoding: 'json' }));
@@ -119,22 +117,31 @@ class UtapiClient {
 
     async _drainRetryCache() {
         return new Promise((resolve, reject) => {
-            let success = true;
+            let empty = true;
             const toRemove = [];
 
             this._retryCache.createReadStream()
-                .pipe(new Chunker({ chunksize: 100 }))
+                .pipe(new Chunker())
                 .pipe(new Uploader({ ingest: this._pushToUtapi.bind(this) }))
                 .on('data', res => {
                     if (res.success) {
                         toRemove.push(...res.keys);
                     } else {
-                        success = false;
+                        empty = false;
                     }
                 })
                 .on('end', () => {
-                    this._retryCache.batch(toRemove.map(i => ({ type: 'del', key: i })));
-                    resolve(success);
+                    this._retryCache.batch(
+                        toRemove.map(key => ({ type: 'del', key })),
+                        error => {
+                            if (error) {
+                                this._logger.error('error removing events from retry cache', { error });
+                                reject(error);
+                                return;
+                            }
+                            resolve(empty);
+                        },
+                    );
                 })
                 .on('error', reject);
         });
@@ -155,7 +162,6 @@ class UtapiClient {
     }
 
     async _attemptDrain() {
-        this._drainTimer = null;
         if (await this._drainRetryCachePreflight()) {
             let empty = false;
 
@@ -170,6 +176,7 @@ class UtapiClient {
                 await this._scheduleDrain();
             }
         }
+        this._drainTimer = null;
     }
 
     async _scheduleDrain() {
@@ -204,8 +211,17 @@ class UtapiClient {
                     toRemove.push(entry.key);
                 })
                 .on('end', () => {
-                    this._retryCache.batch(toRemove.map(i => ({ type: 'del', key: i })));
-                    resolve();
+                    this._retryCache.batch(
+                        toRemove.map(key => ({ type: 'del', key })),
+                        error => {
+                            if (error) {
+                                this._logger.error('error removing events from retry cache', { error });
+                                reject(error);
+                                return;
+                            }
+                            resolve();
+                        },
+                    );
                 })
                 .on('error', err => reject(err));
         });
@@ -238,7 +254,7 @@ class UtapiClient {
 
     pushMetric(data, cb) {
         if (typeof cb === 'function') {
-            callbackify(this._pushMetric.bind(this))(data, cb || _noOp);
+            callbackify(this._pushMetric.bind(this))(data, cb);
             return undefined;
         }
         return this._pushMetric(data);
