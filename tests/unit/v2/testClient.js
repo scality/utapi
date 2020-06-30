@@ -25,27 +25,27 @@ describe('Test UtapiClient', function () {
         client = null;
     });
 
-    it('should push a metric', next => {
+    it('should push a metric', done => {
         sandbox.stub(UtapiClient.prototype, '_pushToUtapi').resolves();
         client.pushMetric(events[0], err => {
-            assert.strictEqual(err, null);
-            next();
+            assert.ifError(err);
+            done();
         });
     });
 
-    it('should add a metric to the retry cache if an error occurs during pushing', next => {
+    it('should add a metric to the retry cache if an error occurs during pushing', done => {
         sandbox.stub(UtapiClient.prototype, '_pushToUtapi').rejects();
         const spy = sandbox.spy(client, '_addToRetryCache');
         client.pushMetric(events[0], err => {
             assert.strictEqual(err, null);
             assert(spy.calledWith(events[0]));
-            assert(client._drainTimer !== undefined);
+            assert.strictEqual(client._drainTimer, undefined);
             assert.strictEqual(client._numCachedMetrics, 1);
-            next();
+            done();
         });
     });
 
-    it('should emit recovery log line if an error occurs when adding to memdown', next => {
+    it('should emit recovery log line if an error occurs when adding to memdown', done => {
         sandbox.stub(UtapiClient.prototype, '_pushToUtapi').rejects();
         sandbox.stub(client._retryCache, 'put').rejects();
         const spy = sandbox.spy(client, '_emitMetricLogLine');
@@ -57,11 +57,11 @@ describe('Test UtapiClient', function () {
             assert(spy.calledWith(...expects));
             assert.strictEqual(client._drainTimer, null);
             assert.strictEqual(client._numCachedMetrics, 0);
-            next();
+            done();
         });
     });
 
-    it('should emit recovery log line if at the max cached values', next => {
+    it('should emit recovery log line if at the max cached values', done => {
         client._numCachedMetrics = client._maxCachedMetrics;
         sandbox.stub(UtapiClient.prototype, '_pushToUtapi').rejects();
         const spy = sandbox.spy(client, '_emitMetricLogLine');
@@ -73,11 +73,11 @@ describe('Test UtapiClient', function () {
             assert(spy.calledWith(...expects));
             assert.strictEqual(client._drainTimer, null);
             assert.strictEqual(client._numCachedMetrics, client._maxCachedMetrics);
-            next();
+            done();
         });
     });
 
-    it('should schedule and attempt a drain', next => {
+    it('should schedule and attempt a drain', done => {
         sandbox.stub(UtapiClient.prototype, '_pushToUtapi').rejects();
         sandbox.stub(UtapiClient.prototype, '_drainRetryCachePreflight').resolves(true);
         const orig = UtapiClient.prototype._scheduleDrain;
@@ -86,19 +86,19 @@ describe('Test UtapiClient', function () {
             .callsFake(orig.bind(client));
         const stub = sandbox.stub(UtapiClient.prototype, '_attemptDrain').resolves().callsFake(() => {
             stub.restore();
-            next();
+            done();
         });
         client.pushMetric(events[0]);
     });
 
-    it('should begin a drain if preflight succeeds', next => {
+    it('should begin a drain if preflight succeeds', done => {
         sandbox.stub(UtapiClient.prototype, '_pushToUtapi').rejects();
         sandbox.stub(UtapiClient.prototype, '_drainRetryCachePreflight').resolves(true);
-        sandbox.stub(UtapiClient.prototype, '_drainRetryCache').resolves().callsFake(next);
+        sandbox.stub(UtapiClient.prototype, '_drainRetryCache').resolves().callsFake(done);
         client.pushMetric(events[0]);
     });
 
-    it('should reschedule a drain if all keys are not ingested', next => {
+    it('should reschedule a drain if all keys are not ingested', done => {
         sandbox.stub(UtapiClient.prototype, '_pushToUtapi').rejects();
         sandbox.stub(UtapiClient.prototype, '_drainRetryCachePreflight').resolves(true);
         sandbox.stub(UtapiClient.prototype, '_drainRetryCache').rejects();
@@ -108,7 +108,7 @@ describe('Test UtapiClient', function () {
             .callsFake(orig.bind(client))
             .resolves()
             .onSecondCall()
-            .callsFake(next);
+            .callsFake(done);
         client.pushMetric(events[0]);
     });
 

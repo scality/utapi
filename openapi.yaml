@@ -36,7 +36,7 @@ components:
           incomingBytes:
             type: integer
           outgoingBytes:
-              type: integer
+            type: integer
   responses:
     not-implemented:
       description: This operation has yet to be implemented.
