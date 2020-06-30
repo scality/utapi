@@ -2,7 +2,7 @@ const uuid = require('uuid');
 
 const { UtapiMetric } = require('../../libV2/models');
 const { operations } = require('../../libV2/constants');
-const { ResponseContainer } = require('../../libV2/models');
+const { ResponseContainer, RequestContext } = require('../../libV2/models');
 
 function range(n, step) {
     const vals = [...Array(n).keys()];
@@ -132,10 +132,15 @@ function templateRequest(overrides) {
     };
 }
 
+function templateContext(overrides) {
+    const request = templateRequest(overrides);
+    return new RequestContext(request);
+}
 
 module.exports = {
     generateFakeEvents,
     templateRequest,
+    templateContext,
     ExpressResponseStub,
     stubLogger,
 };
