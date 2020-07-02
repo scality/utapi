@@ -43,7 +43,8 @@ function errorMiddleware(err, req, res, next) {
     let code = err.code || 500;
     let message = err.message || 'Internal Error';
 
-    if (err.failedValidation) { // failed request validation by oas-tools
+    // failed request validation by oas-tools
+    if (err.failedValidation) {
         // You can't actually use destructing here
         /* eslint-disable prefer-destructuring */
         code = errors.InvalidRequest.code;
