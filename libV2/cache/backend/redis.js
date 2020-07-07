@@ -36,7 +36,7 @@ class RedisCache {
                 });
                 throw error;
             }
-            this._reds = null;
+            this._redis = null;
         } else {
             logger.debug('disconnect called but no connection to redis found');
         }
