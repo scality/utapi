@@ -1,9 +1,14 @@
 const { EventEmitter } = require('events');
 const os = require('os');
+const { Command } = require('commander');
 const { logger } = require('./utils');
 
-
 class Process extends EventEmitter {
+    constructor(...options) {
+        super(...options);
+        this._program = new Command();
+    }
+
     async setup() {
         const cleanUpFunc = this.join.bind(this);
         ['SIGINT', 'SIGQUIT', 'SIGTERM'].forEach(eventName => {
@@ -14,10 +19,12 @@ class Process extends EventEmitter {
                 { error, stack: error.stack.split(os.EOL) });
             cleanUpFunc();
         });
+        this._program = new Command();
         await this._setup();
     }
 
     async start() {
+        this._program.parse(process.argv);
         await this._start();
     }
 
