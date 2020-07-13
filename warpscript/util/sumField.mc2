@@ -1,0 +1,51 @@
+{
+  'name' 'util/sumField'
+  'desc'
+  <'
+Sums the passed value and the value of a map key
+sets results as key
+  '>
+  'sig' [ [ 'm:MAP' 'k:STRING' 'v:LONG' ] [ 'm:MAP' ]  ] // Signature
+  'params' {
+    'm' 'Map to modify'
+    'k' 'Key to read/set'
+    'v' 'Value to sum'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    // Code of the actual macro
+    'value' STORE
+    'key' STORE
+    'data' STORE
+    $data $key GET 'existing' STORE
+    <% $existing TYPEOF 'LONG' == %>
+    <% $data $existing $value + $key PUT %>
+    <% $data $value $key PUT %>
+    IFTE
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+{ 'key' 0 } 'key' 1 @macro
+'key' GET 1 == ASSERT
+
+{ 'foo' 0 } 'key' 1 @macro
+'key' GET 1 == ASSERT
+$macro

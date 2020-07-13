@@ -16,7 +16,9 @@ class Warp10Client {
         const proto = (config && config.tls) ? 'https' : 'http';
         const host = (config && config.host) || 'localhost';
         const port = (config && config.port) || 4802;
-        this._warp10 = new Warp10(`${proto}://${host}:${port}`);
+        const requestTimeout = (config && config.requestTimeout) || 10000;
+        const connectTimeout = (config && config.connectTimeout) || 10000;
+        this._warp10 = new Warp10(`${proto}://${host}:${port}`, requestTimeout, connectTimeout);
     }
 
     static _packEvent(event) {
