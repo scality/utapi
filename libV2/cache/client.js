@@ -30,6 +30,10 @@ class CacheClient {
     async shardExists(shard) {
         return this._backend.shardExists(shard);
     }
+
+    async getShards() {
+        return this._backend.getShards();
+    }
 }
 
 module.exports = CacheClient;

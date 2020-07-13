@@ -68,6 +68,7 @@ class RedisCache {
     async addToShard(shard, metric) {
         const metricKey = schema.getUtapiMetricKey(this._prefix, metric);
         const shardKey = schema.getShardKey(this._prefix, shard);
+        const shardMasterKey = schema.getShardMasterKey(this._prefix);
         const logger = moduleLogger.with({ method: 'addToShard' });
         logger.debug('adding metric to shard', { metricKey, shardKey });
 
@@ -78,6 +79,7 @@ class RedisCache {
                 .multi([
                     ['set', metricKey, JSON.stringify(metric.getValue())],
                     ['sadd', shardKey, metricKey],
+                    ['sadd', shardMasterKey, shardKey],
                 ])
                 .exec();
         } catch (error) {
@@ -135,9 +137,13 @@ class RedisCache {
 
     async deleteShardAndKeys(shard) {
         const shardKey = schema.getShardKey(this._prefix, shard);
+        const shardMasterKey = schema.getShardMasterKey(this._prefix);
         try {
             const keys = await this.getKeysInShard(shard);
-            return this._redis.del(shardKey, ...keys);
+            return this._redis.multi([
+                ['del', shardKey, ...keys],
+                ['srem', shardMasterKey, shardKey],
+            ]).exec();
         } catch (error) {
             moduleLogger
                 .with({ method: 'deleteShardAndKeys' })
@@ -155,6 +161,18 @@ class RedisCache {
             moduleLogger
                 .with({ method: 'shardExists' })
                 .error('error while checking shard', { shard, error });
+            throw error;
+        }
+    }
+
+    async getShards() {
+        try {
+            const shardMasterKey = schema.getShardMasterKey(this._prefix);
+            return this._redis.smembers(shardMasterKey);
+        } catch (error) {
+            moduleLogger
+                .with({ method: 'getShards' })
+                .error('error while fetching shards', { error });
             throw error;
         }
     }
