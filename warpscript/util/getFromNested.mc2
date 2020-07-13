@@ -1,0 +1,54 @@
+{
+  'name' 'getFromNested'
+  'desc'
+  <'
+Get a value from a nested map. returns null if either key does not exist.
+  '>
+  'sig' [ [ [ 'm"MAP' 'p:STRING' 'c:STRING' ] [ 'r:ANY' ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'm' 'Nested map input'
+    'p' 'First level key'
+    'c' 'Second level key'
+    'r' 'Value of second level key if it exists otherwise null'
+  }
+  'examples' [
+    <'
+{ 'a' { 'b'  4 } } 'a' 'b' getFromNested
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    [ 'parent' 'child' ] STORE
+
+    $parent GET
+    <% DUP ISNULL ! %>
+    <%
+        $child GET
+    %>
+    IFT
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit Tests
+{ 'a' { 'b'  4 } } 'a' 'b' @macro
+4 == ASSERT
+
+{ 'a' { 'c'  4 } } 'a' 'b' @macro
+ISNULL ASSERT
+
+{ 'c' { 'b'  4 } } 'a' 'b' @macro
+ISNULL ASSERT
+
+$macro
