@@ -144,6 +144,8 @@ class Config {
 
         parsedConfig.development = _loadFromEnv('DEV_MODE', config.development, _typeCasts.bool);
 
+        parsedConfig.nodeId = _loadFromEnv('NODE_ID', config.nodeId);
+
         parsedConfig.host = _loadFromEnv('HOST', config.host);
         parsedConfig.port = _loadFromEnv('PORT', config.port, _typeCasts.int);
 
@@ -205,6 +207,10 @@ class Config {
         };
 
         parsedConfig.cacheBackend = _loadFromEnv('CACHE_BACKEND', config.cacheBackend);
+
+        parsedConfig.ingestionSchedule = _loadFromEnv('INGESTION_SCHED', config.ingestionSchedule);
+        parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHED', config.checkpointSchedule);
+        parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHED', config.snapshotSchedule);
 
         return parsedConfig;
     }
