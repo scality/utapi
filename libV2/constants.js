@@ -66,7 +66,14 @@ module.exports = {
         incomingBytes: 'inB',
         outgoingBytes: 'outB',
     },
+    indexedEventFields: [
+        'loc',
+        'acc',
+        'usr',
+        'bck',
+    ],
     warp10ValueType: ':m:utapi/event:',
     truthy,
     shardIngestLagSecs: 30,
+    checkpointLagSecs: 300,
 };
