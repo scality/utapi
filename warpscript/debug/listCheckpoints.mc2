@@ -1,0 +1,16 @@
+"readTokenCI" 'rt' STORE
+"writeTokenCI" 'wt' STORE
+
+{
+  'token' $rt
+  'class' 'utapi.checkpoint'
+  'labels' { 'acc' 'myaccount0' }
+  'end' NOW
+  'count' 1000
+} FETCH
+
+0 GET
+VALUES
+<%
+ @utapi/decodeCheckpoint DUP ->JSON LOGMSG
+%> FOREACH

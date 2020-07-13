@@ -17,5 +17,5 @@ message Event {
 '>
 PROTOC 'proto' STORE
 <%
-  !$proto 'Event' ->PB ->HEX
+  HEX-> !$proto 'Event' PB->
 %>
