@@ -1,5 +1,4 @@
-ARG WARP10=warp10io/warp10:2.6.0
-FROM ${WARP10}
+FROM warp10io/warp10:2.6.0
 
 ENV S6_VERSION 2.0.0.1
 
