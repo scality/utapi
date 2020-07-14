@@ -1,3 +1,4 @@
+FROM scratch
 ARG WARP10=warp10io/warp10:2.6.0
 FROM ${WARP10}
 
