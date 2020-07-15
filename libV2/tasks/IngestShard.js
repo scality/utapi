@@ -24,7 +24,7 @@ class IngestShardTask extends BaseTask {
             .map(key => key.split(':')[2])
             .filter(key => parseInt(key, 10) <= endShard);
 
-        if (!toIngest.length) {
+        if (toIngest.length === 0) {
             logger.debug('no shard available to ingest');
             return;
         }
@@ -33,7 +33,7 @@ class IngestShardTask extends BaseTask {
             async shard => {
                 if (await this._cache.shardExists(shard)) {
                     const metrics = await this._cache.getMetricsForShard(shard);
-                    if (metrics.length) {
+                    if (metrics.length > 0) {
                         logger.info(`Ingesting ${metrics.length} events from shard`, { shard });
                         const records = metrics
                             .map(m => new UtapiMetric(JSON.parse(m)));

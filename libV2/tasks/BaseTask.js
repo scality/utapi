@@ -35,8 +35,12 @@ class BaseTask extends Process {
     }
 
     get schedule() {
-        if (this._program.now) return Now;
-        if (this._program.schedule) return this._program.schedule;
+        if (this._program.now) {
+            return Now;
+        }
+        if (this._program.schedule) {
+            return this._program.schedule;
+        }
         return this._defaultSchedule;
     }
 

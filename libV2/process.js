@@ -6,7 +6,7 @@ const { logger } = require('./utils');
 class Process extends EventEmitter {
     constructor(...options) {
         super(...options);
-        this._program = new Command();
+        this._program = null;
     }
 
     async setup() {

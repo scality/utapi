@@ -208,9 +208,9 @@ class Config {
 
         parsedConfig.cacheBackend = _loadFromEnv('CACHE_BACKEND', config.cacheBackend);
 
-        parsedConfig.ingestionSchedule = _loadFromEnv('INGESTION_SCHED', config.ingestionSchedule);
-        parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHED', config.checkpointSchedule);
-        parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHED', config.snapshotSchedule);
+        parsedConfig.ingestionSchedule = _loadFromEnv('INGESTION_SCHEDULE', config.ingestionSchedule);
+        parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHEDULE', config.checkpointSchedule);
+        parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHEDULE', config.snapshotSchedule);
 
         return parsedConfig;
     }
