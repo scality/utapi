@@ -1,0 +1,14 @@
+<'
+syntax = "proto3";
+message Checkpoint {
+  int64 sizeD = 1;
+  int64 objD = 2;
+  int64 inB = 3;
+  int64 outB = 4;
+  map<string, int64> ops = 5;
+}
+'>
+PROTOC 'proto' STORE
+<%
+  !$proto 'Checkpoint' ->PB ->HEX
+%>
