@@ -1,0 +1,21 @@
+<'
+syntax = "proto3";
+message Event {
+  string op = 1;
+  string id = 2;
+  string bck = 3;
+  string obj = 4;
+  string vid = 5;
+  string acc = 6;
+  string usr = 7;
+  string loc = 8;
+  int64 objD = 9;
+  int64 sizeD = 10;
+  int64 inB = 11;
+  int64 outB = 12;
+}
+'>
+PROTOC 'proto' STORE
+<%
+  !$proto 'Event' ->PB
+%>

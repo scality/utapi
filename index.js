@@ -7,6 +7,7 @@ if (process.env.ENABLE_UTAPI_V2) {
     toExport = {
         version: 2,
         startServer,
+        tasks: require('./libV2/tasks'),
     };
 } else {
     toExport = {

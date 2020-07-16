@@ -17,5 +17,9 @@
         "allowFrom": ["127.0.0.1/8", "::1"]
     },
     "cacheBackend": "memory",
-    "development": false
+    "development": false,
+    "nodeId": "single_node",
+    "ingestionSchedule": "*/5 * * * * *",
+    "checkpointSchedule": "*/30 * * * * *",
+    "snapshotSchedule": "* 0 * * * *"
 }

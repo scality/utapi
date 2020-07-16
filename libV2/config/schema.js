@@ -39,6 +39,11 @@ const schema = Joi.object({
     expireMetrics: Joi.boolean(),
     expireMetricsTTL: Joi.number(),
     cacheBackend: Joi.string().valid('memory', 'redis'),
+    nodeId: Joi.string(),
+    ingestionSchedule: Joi.string(),
+    checkpointSchedule: Joi.string(),
+    snapshotSchedule: Joi.string(),
 });
 
 module.exports = schema;
+

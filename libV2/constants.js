@@ -66,6 +66,7 @@ module.exports = {
         incomingBytes: 'inB',
         outgoingBytes: 'outB',
     },
-    warp10ValueType: ':utapi:event',
+    warp10ValueType: ':m:utapi/event:',
     truthy,
+    shardIngestLagSecs: 30,
 };

@@ -30,8 +30,8 @@ describe('Test Warp Client', () => {
         const parsed = JSON.parse(res.result[0])[0];
         assert.strictEqual(parsed.c, className);
         assert.deepStrictEqual(
-            parsed.v,
-            testValues.map(v => [v.timestamp, Warp10Client._packEvent(v)]),
+            parsed.v.map(v => v[0]),
+            testValues.map(v => v.timestamp),
         );
     });
 

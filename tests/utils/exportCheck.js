@@ -16,6 +16,8 @@ const { startServer } = require('../../libV2/server');
 const version2Exports = {
     version: 2,
     startServer,
+    tasks: require('../../libV2/tasks'),
+
 };
 
 const versionToCheck = process.argv[2];
