@@ -53,7 +53,7 @@ Fetches the latest checkpoint for the specified class and labels
         'ingress' 0
         'egress' 0
         'ops' {}
-      } @utapi/encodeCheckpoint 'value' STORE
+      } @utapi/encodeRecord 'value' STORE
       0 NaN NaN NaN $value ADDVALUE
     %> IFTE
   %>

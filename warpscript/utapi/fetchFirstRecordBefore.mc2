@@ -1,0 +1,70 @@
+{
+  'name' 'utapi/fetchFirstRecordBefore'
+  'desc'
+  <'
+Fetches the first record having the passed class and labels before the specified timestamp
+  '>
+  'sig' [ [ [ 'token:STRING' 'c:STRING' 'l:MAP' 't:LONG' ] [ 'v:GTS' ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'token' 'Read Token'
+    'c' 'Class name'
+    'l' 'Map of labels'
+    't' 'Most recent timestamp to search'
+    'v' 'GTS of record'
+  }
+  'examples' [
+    <'
+      $readToken 'my.warp10.class' { 'mylabel' 'hello' } 1595266485000000 @utapi/fetchFirstRecordBefore
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    'end' STORE
+    'labels' STORE
+    'class' STORE
+    'token' STORE
+    {
+      'token' $token
+      'class' $class
+      'labels' $labels
+      'end' $end
+      'count' 1
+    } FETCH
+    <% DUP SIZE 0 > %>
+    <% # then
+      0 GET
+    %>
+    <% #else
+      DROP # Drop our empty list from the stack
+      # Create an empty record at the beginning of time
+      NEWGTS $class RENAME
+      // Apply our passed labels
+      $labels RELABEL
+      // Add an empty value
+      {
+        'sizeD' 0
+        'objD' 0
+        'inB' 0
+        'outB' 0
+        'ops' {}
+      } @utapi/encodeRecord 'value' STORE
+      0 NaN NaN NaN $value ADDVALUE
+    %> IFTE
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+$macro

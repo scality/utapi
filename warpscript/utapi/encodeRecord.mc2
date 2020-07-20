@@ -1,0 +1,54 @@
+{
+  'name' 'encodeRecord'
+  'desc'
+  <'
+Encodes a internal UTAPI record as a hex formatted byte string using protobuf
+  '>
+  'sig' [ [ [ 'r:MAP' ] [ 'e:string'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'r' 'Record for encoding'
+    'e' 'Encoded record in hex format'
+  }
+  'examples' [
+    <'
+    { 'outB' 0 'ops' { 'putObject' 30 } 'sizeD' 30 'inB' 30 'objD' 30 }
+    @/utapi/encodeRecord
+    '>
+  ]
+} 'info' STORE
+
+<'
+syntax = "proto3";
+message Record {
+  int64 sizeD = 1;
+  int64 objD = 2;
+  int64 inB = 3;
+  int64 outB = 4;
+  map<string, int64> ops = 5;
+}
+'>
+PROTOC 'proto' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    !$proto 'Record' ->PB ->HEX
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+{ 'outB' 0 'ops' { 'putObject' 30 } 'sizeD' 30 'inB' 30 'objD' 30 }
+@macro
+
+'081e101e181e20002a0d0a097075744f626a656374101e' == ASSERT
+
+$macro

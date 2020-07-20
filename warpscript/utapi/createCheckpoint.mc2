@@ -46,7 +46,7 @@
     'utapi.checkpoint' 'checkpoint_class' STORE
     'utapi.event' 'metric_class' STORE
 
-    $read_token $master_checkpoint_class $filterLabels @utapi/fetchLatestCheckpoint // Fetch lastest master checkpoint
+    $read_token $master_checkpoint_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore // Fetch latest master checkpoint
     FIRSTTICK  'startTimestamp' STORE // Grab our starting timestamp from the last checkpoint (0 if no checkpoints)
 
     {} 'results' STORE # Create an empty map for results
@@ -125,7 +125,7 @@
       <%
         'fieldValue' STORE
         // Encode the results
-        $fieldResults $fieldValue GET @utapi/encodeCheckpoint 'value' STORE
+        $fieldResults $fieldValue GET @utapi/encodeRecord 'value' STORE
         // And create our GTS
         NEWGTS $checkpoint_class RENAME
         $endTimestamp NaN NaN NaN $value ADDVALUE
