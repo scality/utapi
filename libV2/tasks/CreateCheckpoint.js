@@ -2,7 +2,6 @@ const BaseTask = require('./BaseTask');
 const config = require('../config');
 const { checkpointLagSecs, indexedEventFields } = require('../constants');
 const { LoggerContext } = require('../utils');
-const Warp10Client = require('../warp10');
 
 const logger = new LoggerContext({
     module: 'IngestShard',
@@ -10,19 +9,24 @@ const logger = new LoggerContext({
 
 class CreateCheckpoint extends BaseTask {
     constructor(...options) {
-        super(...options);
-        this._warp10 = new Warp10Client({ requestTimeout: 30000, connectTimeout: 30000 });
+        super({
+            warp10: {
+                requestTimeout: 30000,
+                connectTimeout: 30000,
+            },
+            ...options,
+        });
         this._defaultSchedule = config.checkpointSchedule;
+        this._defaultLag = checkpointLagSecs;
     }
 
     async _execute(timestamp) {
-        const checkpointTimestamp = timestamp - (checkpointLagSecs * 1000000);
-        logger.debug('creating checkpoints', { checkpointTimestamp });
+        logger.debug('creating checkpoints', { checkpointTimestamp: timestamp });
 
         const params = {
             params: {
                 nodeId: config.nodeId,
-                end: checkpointTimestamp.toString(),
+                end: timestamp.toString(),
                 fields: indexedEventFields,
             },
             macro: 'utapi/createCheckpoint',

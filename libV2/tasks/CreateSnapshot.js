@@ -2,7 +2,6 @@ const BaseTask = require('./BaseTask');
 const config = require('../config');
 const { snapshotLagSecs } = require('../constants');
 const { LoggerContext } = require('../utils');
-const Warp10Client = require('../warp10');
 
 const logger = new LoggerContext({
     module: 'CreateSnapshot',
@@ -10,19 +9,24 @@ const logger = new LoggerContext({
 
 class CreateSnapshot extends BaseTask {
     constructor(...options) {
-        super(...options);
-        this._warp10 = new Warp10Client({ requestTimeout: 30000, connectTimeout: 30000 });
+        super({
+            warp10: {
+                requestTimeout: 30000,
+                connectTimeout: 30000,
+            },
+            ...options,
+        });
         this._defaultSchedule = config.snapshotSchedule;
+        this._defaultLag = snapshotLagSecs;
     }
 
     async _execute(timestamp) {
-        const snapshotTimestamp = timestamp - (snapshotLagSecs * 1000000);
-        logger.debug('creating snapshots', { snapshotTimestamp });
+        logger.debug('creating snapshots', { snapshotTimestamp: timestamp });
 
         const params = {
             params: {
                 nodeId: config.nodeId,
-                end: snapshotTimestamp.toString(),
+                end: timestamp.toString(),
             },
             macro: 'utapi/createSnapshot',
         };
