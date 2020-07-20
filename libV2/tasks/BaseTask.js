@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const cronparser = require('cron-parser');
 
+const config = require('../config');
 const { client: cacheClient } = require('../cache');
 const Process = require('../process');
 const { LoggerContext } = require('../utils');
@@ -13,12 +14,16 @@ const logger = new LoggerContext({
 class Now {}
 
 class BaseTask extends Process {
-    constructor() {
+    constructor(options) {
         super();
         this._cache = cacheClient;
-        this._warp10 = new Warp10Client();
+        this._warp10 = new Warp10Client({
+            ...config.warp10,
+            ...((options && options.warp10) || {}),
+        });
         this._scheduler = null;
         this._defaultSchedule = Now;
+        this._defaultLag = 0;
     }
 
     async _setup() {
@@ -31,7 +36,8 @@ class BaseTask extends Process {
                     cronparser.parseExpression(value);
                     return value;
                 },
-            );
+            )
+            .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10));
     }
 
     get schedule() {
@@ -42,6 +48,13 @@ class BaseTask extends Process {
             return this._program.schedule;
         }
         return this._defaultSchedule;
+    }
+
+    get lag() {
+        if (this._program.lag !== undefined) {
+            return this._program.lag;
+        }
+        return this._defaultLag;
     }
 
     async _start() {
@@ -67,7 +80,9 @@ class BaseTask extends Process {
 
     async execute() {
         try {
-            await this._execute(new Date() * 1000);
+            const timestamp = new Date() * 1000; // Timestamp in microseconds;
+            const laggedTimestamp = timestamp - (this.lag * 1000000);
+            await this._execute(laggedTimestamp);
         } catch (error) {
             logger.error('Error during task execution', { error });
         }
