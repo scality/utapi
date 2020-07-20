@@ -97,14 +97,14 @@
           %> IFTE
           // Consumes a map off the stack summing the specified field and the passed value
           // Leaves the modified map on the stack
-          'objD' $decoded 'objD' GET @utapi/sumField
-          'sizeD' $decoded 'sizeD' GET @utapi/sumField
-          'inB' $decoded 'inB' GET @utapi/sumField
-          'outB'  $decoded 'outB' GET @utapi/sumField
+          'objD' $decoded 'objD' GET @util/sumField
+          'sizeD' $decoded 'sizeD' GET @util/sumField
+          'inB' $decoded 'inB' GET @util/sumField
+          'outB'  $decoded 'outB' GET @util/sumField
 
           // Grab our op count map
           'ops' GET 'opsCount' STORE
-          $opsCount $operationId 1 @utapi/sumField
+          $opsCount $operationId 1 @util/sumField
           DROP // Drop the returned map from sumField
         %> FOREACH
       %> FOREACH
