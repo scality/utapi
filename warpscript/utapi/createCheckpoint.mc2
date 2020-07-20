@@ -1,0 +1,155 @@
+{
+  'name' 'utapi/createCheckPoint'
+  'desc'
+  <'
+ Scans recent events and generates multiple checkpoint GTS based on the value of the provided fields
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'c:LIST[GTS]'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'c' 'List of created checkpoints'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    JSON-> 'operation_info' STORE
+    JSON-> 'auth_info' STORE
+
+    $auth_info 'write' GET 'write_token' STORE
+    $auth_info 'read' GET 'read_token' STORE
+
+    // Raise the max operations for a executing script
+    $read_token AUTHENTICATE
+    // 10000000 MAXOPS // Investigate to find worst expected case
+
+    // Grab our passed nodeId, wrap in a map and store it as the variable `filterLabels`
+    $operation_info 'nodeId' GET  'nodeId' STORE
+    { 'node' $nodeId } 'filterLabels' STORE
+
+    // Grab our passed field names, convert them to a set, and store it as the variable `fieldsToIndex`
+    $operation_info 'fields' GET ->SET 'fieldsToIndex' STORE
+
+    // Grab our passed timestamp and store it as the variable `endTimestamp`
+    $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+
+    'utapi.checkpoint.master' 'master_checkpoint_class' STORE
+    'utapi.checkpoint' 'checkpoint_class' STORE
+    'utapi.event' 'metric_class' STORE
+
+    $read_token $master_checkpoint_class $filterLabels @utapi/fetchLatestCheckpoint // Fetch lastest master checkpoint
+    FIRSTTICK  'startTimestamp' STORE // Grab our starting timestamp from the last checkpoint (0 if no checkpoints)
+
+    {} 'results' STORE # Create an empty map for results
+
+    $fieldsToIndex
+    <% // For each field create an empty map in results
+      'field' STORE
+      $results {} $field PUT DROP
+    %> FOREACH
+
+    // Fetch all events since the last checkpoint
+    {
+      'token' $read_token
+      'class' $metric_class
+      'labels' $filterLabels
+      'start' $startTimestamp
+      'end' $endTimestamp
+    } FETCH
+    <% DUP SIZE 0 > %>
+    <%
+      0 GET
+      <% // Iter over events
+        'event' STORE // Store the event
+        $event 4 GET @utapi/decodeEvent 'decoded' STORE
+        $decoded KEYLIST 'eventFields' STORE // Extract and store available event fields
+        $decoded 'op' GET 'operationId' STORE
+
+        $decoded KEYLIST ->SET $fieldsToIndex INTERSECTION
+        <%
+          'field' STORE // Store the field
+          $decoded $field GET 'fieldValue' STORE // Store the fields value
+          $results $field GET 'fieldResults' STORE // Grad the corresponding field map from the results
+          <% $fieldResults $fieldValue CONTAINSKEY SWAP DROP %> // If we've see this fieldValue before
+          <%
+            $fieldResults $fieldValue GET // Grab the existing map for the checkpoint and leave it on the stack
+          %>
+          <%
+            // Push empty checkpoint onto stack
+            {
+              'objD' 0
+              'sizeD' 0
+              'inB' 0
+              'outB' 0
+              'ops' {}
+            } 'fieldValueResults' STORE
+            $fieldResults $fieldValueResults $fieldValue PUT DROP // Add it to our results
+            $fieldValueResults // Leave it on the stack
+          %> IFTE
+          // Consumes a map off the stack summing the specified field and the passed value
+          // Leaves the modified map on the stack
+          'objD' $decoded 'objD' GET @util/sumField
+          'sizeD' $decoded 'sizeD' GET @util/sumField
+          'inB' $decoded 'inB' GET @util/sumField
+          'outB'  $decoded 'outB' GET @util/sumField
+
+          // Grab our op count map
+          'ops' GET 'opsCount' STORE
+          $opsCount $operationId 1 @util/sumField
+          DROP // Drop the returned map from sumField
+        %> FOREACH
+      %> FOREACH
+     %>
+    <%
+       DROP STOP
+    %> IFTE
+
+
+    0 'checkpoints' STORE
+    // For each of our indexed fields
+    $results KEYLIST
+    <%
+      'field' STORE
+      $results $field GET 'fieldResults' STORE
+      // For each unique value seen
+      $fieldResults KEYLIST
+      <%
+        'fieldValue' STORE
+        // Encode the results
+        $fieldResults $fieldValue GET @utapi/encodeCheckpoint 'value' STORE
+        // And create our GTS
+        NEWGTS $checkpoint_class RENAME
+        $endTimestamp NaN NaN NaN $value ADDVALUE
+        { 'node' $nodeId $field $fieldValue } RELABEL
+        $write_token UPDATE
+        $checkpoints 1 + 'checkpoints' STORE
+      %> FOREACH
+    %> FOREACH
+
+    NEWGTS $master_checkpoint_class RENAME
+    $endTimestamp NaN NaN NaN 0 ADDVALUE
+    { 'node' $nodeId } RELABEL
+    $write_token UPDATE
+
+    $checkpoints // Leave the number of created checkpoints on the stack
+
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+$macro
