@@ -43,4 +43,9 @@ sets results as key
 
 // Unit tests
 
+{ 'key' 0 } 'key' 1 @macro
+'key' GET 1 == ASSERT
+
+{ 'foo' 0 } 'key' 1 @macro
+'key' GET 1 == ASSERT
 $macro
