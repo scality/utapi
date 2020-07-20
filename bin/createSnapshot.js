@@ -5,7 +5,6 @@ const logger = new LoggerContext({
     task: 'CreateSnapshot',
 });
 
-
 const task = new tasks.CreateSnapshot();
 
 task.setup()
