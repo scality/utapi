@@ -1,0 +1,184 @@
+{
+  'name' 'utapi/createSnapshot'
+  'desc'
+  <'
+ Aggregates checkpoints and repairs to speed metric calculation
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'c:LONG'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'c' 'Number of create snapshots'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    JSON-> 'operation_info' STORE
+    JSON-> 'auth_info' STORE
+
+    $auth_info 'write' GET 'write_token' STORE
+    $auth_info 'read' GET 'read_token' STORE
+
+    // Raise the max operations for a executing script
+    $read_token AUTHENTICATE
+    // 10000000 MAXOPS // Investigate to find worst expected case
+
+    // Grab our passed nodeId, wrap in a map and store it as the variable `filterLabels`
+    $operation_info 'nodeId' GET  'nodeId' STORE
+    { 'node' $nodeId } 'filterLabels' STORE
+
+    // Grab our passed timestamp and store it as the variable `endTimestamp`
+    $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+
+    'utapi.snapshot.master' 'master_snapshot_class' STORE
+    'utapi.snapshot' 'snapshot_class' STORE
+    'utapi.checkpoint' 'checkpoint_class' STORE
+
+    // Fetch latest master snapshot
+    $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
+
+    FIRSTTICK  'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
+    $masterSnapshotTimestamp TOSTRING LOGMSG
+
+    [
+      "node"
+      ".app"
+      ".producer"
+      ".owner"
+    ] ->SET 'ignoredLabels' STORE
+
+    // Search for available snapshots
+    [
+      $read_token
+      $snapshot_class
+      $filterLabels
+    ] FINDSETS
+    DROP SWAP DROP // Keep only the label results
+    // Extract unique labels
+    DUP KEYLIST ->SET
+    $ignoredLabels
+    DIFFERENCE SET->
+    SUBMAP 'availableSnapshots' STORE
+
+    {} 'previousSnapshots' STORE
+
+    $availableSnapshots KEYLIST
+    <%
+      'field' STORE
+
+      {} 'fieldSnapshots' STORE
+      // For each field create an empty map in previousSnapshots
+
+      $availableSnapshots $field GET
+      <%
+        'value' STORE
+
+        $read_token
+        $snapshot_class
+        {
+          'node' $nodeId
+          $field $value
+        }
+        $endTimestamp
+        @utapi/fetchFirstRecordBefore
+        VALUES 0 GET @utapi/decodeRecord 'record' STORE
+        $fieldSnapshots $record $value PUT DROP
+      %> FOREACH
+      $previousSnapshots $fieldSnapshots $field PUT DROP
+    %> FOREACH
+
+    // $previousSnapshots
+    // STOP
+
+    0 'createdSnapshots' STORE
+
+    $endTimestamp TOSTRING LOGMSG
+    // Fetch all checkpoints since last master snapshot til passed time
+    {
+      'token' $read_token
+      'class' $checkpoint_class
+      'labels' $filterLabels
+      'start' $masterSnapshotTimestamp
+      'end' $endTimestamp
+    } FETCH
+    <%
+      // Push our labels and and a list of label keys onto the stack
+      DUP LABELS DUP KEYLIST
+      // Filter the labels
+      ->SET  $ignoredLabels DIFFERENCE SET->
+      // Grab our label name
+      0 GET 'labelName' STORE
+      // Get our label value
+      $labelName GET 'labelValue' STORE
+
+      // Try to grab the previous snapshot
+      $previousSnapshots $labelName $labelValue @util/getFromNested
+      'created' STORE
+      <% $created ISNULL %>
+      <%
+        {
+          'objD' 0
+          'sizeD' 0
+          'inB' 0
+          'outB' 0
+          'ops' {}
+        } 'created' STORE
+      %> IFT
+
+      VALUES
+      <%
+        @utapi/decodeRecord 'checkpoint' STORE
+        $created
+        'objD' $checkpoint 'objD' GET @util/sumField
+        'sizeD' $checkpoint 'sizeD' GET @util/sumField
+        'inB' $checkpoint 'inB' GET @util/sumField
+        'outB'  $checkpoint 'outB' GET @util/sumField
+
+        'ops' GET 'createdOps' STORE
+        $checkpoint 'ops' GET 'checkpointOps' STORE
+
+        $createdOps // Push createdOps onto the stack for sumField
+        $checkpointOps KEYLIST
+        <%
+          'key' STORE
+          $key $checkpointOps $key GET @util/sumField
+        %> FOREACH
+        // Drop the remaining map returned by sumField from the stack
+        DROP
+      %> FOREACH
+
+      $created @utapi/encodeRecord 'value' STORE
+      NEWGTS $snapshot_class RENAME
+      $endTimestamp NaN NaN NaN $value ADDVALUE
+      { 'node' $nodeId $labelName $labelValue } RELABEL
+      $write_token UPDATE
+      $createdSnapshots 1 + 'createdSnapshots' STORE
+    %> FOREACH
+
+  NEWGTS $master_snapshot_class RENAME
+  $endTimestamp NaN NaN NaN 0 ADDVALUE
+  { 'node' $nodeId } RELABEL
+  $write_token UPDATE
+
+  $createdSnapshots // Leave the number of created snapshot on the stack
+
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+$macro

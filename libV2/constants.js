@@ -76,4 +76,5 @@ module.exports = {
     truthy,
     shardIngestLagSecs: 30,
     checkpointLagSecs: 300,
+    snapshotLagSecs: 900,
 };
