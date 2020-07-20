@@ -25,6 +25,8 @@ function execShim(version, env, callback) {
 }
 
 describe('Test v2 Feature Toggle', () => {
+    this.timeout(5000);
+
     it('should import v1 when ENABLE_UTAPI_V2 is not set', done => {
         execShim(1, {}, results => {
             assert(results);
