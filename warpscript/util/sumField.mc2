@@ -1,5 +1,5 @@
 {
-  'name' 'utapi/sumField'
+  'name' 'util/sumField'
   'desc'
   <'
 Sums the passed value and the value of a map key
