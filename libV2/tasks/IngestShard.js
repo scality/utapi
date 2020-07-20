@@ -13,10 +13,11 @@ class IngestShardTask extends BaseTask {
     constructor(...options) {
         super(...options);
         this._defaultSchedule = config.ingestionSchedule;
+        this._defaultLag = shardIngestLagSecs;
     }
 
     async _execute(timestamp) {
-        const endShard = shardFromTimestamp(timestamp - (shardIngestLagSecs * 1000000));
+        const endShard = shardFromTimestamp(timestamp);
         logger.debug('ingesting shards', { endShard });
 
         const available = await this._cache.getShards();
