@@ -4,14 +4,14 @@
 let toExport;
 
 if (process.env.ENABLE_UTAPI_V2) {
-    const { startServer } = require('./libV2/server');
     toExport = {
-        version: 2,
-        startServer,
-        tasks: require('./libV2/tasks'),
+        utapiVersion: 2,
+        startUtapiServer: require('./libV2/server').startServer,
+        UtapiClient: require('./libV2/client'),
     };
 } else {
     toExport = {
+        utapiVersion: 1,
         UtapiServer: require('./lib/server'),
         UtapiClient: require('./lib/UtapiClient'),
         UtapiReplay: require('./lib/UtapiReplay'),
