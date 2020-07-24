@@ -46,8 +46,8 @@
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
 
-    FIRSTTICK  'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
-    $masterSnapshotTimestamp TOSTRING LOGMSG
+    FIRSTTICK 1 + 'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
+    // $masterSnapshotTimestamp TOSTRING LOGMSG
 
     [
       "node"
@@ -96,12 +96,9 @@
       $previousSnapshots $fieldSnapshots $field PUT DROP
     %> FOREACH
 
-    // $previousSnapshots
-    // STOP
-
     0 'createdSnapshots' STORE
 
-    $endTimestamp TOSTRING LOGMSG
+    // $endTimestamp TOSTRING LOGMSG
     // Fetch all checkpoints since last master snapshot til passed time
     {
       'token' $read_token
@@ -157,6 +154,7 @@
       %> FOREACH
 
       $created @utapi/encodeRecord 'value' STORE
+      // 'Created new snapshot ' { 'node' $nodeId $labelName $labelValue } ->JSON + ' ' + $created ->JSON + LOGMSG
       NEWGTS $snapshot_class RENAME
       $endTimestamp NaN NaN NaN $value ADDVALUE
       { 'node' $nodeId $labelName $labelValue } RELABEL
