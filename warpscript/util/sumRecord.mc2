@@ -1,0 +1,94 @@
+// @endpoint http://localhost:4802/api/v0/exec
+
+
+{
+  'name' 'util/sumRecord'
+  'desc'
+  <'
+Sums 2 internal UTAPI records returning a new record containing the result
+  '>
+  'sig' [ [ [ 'a:MAP' 'b:MAP' ] [ 'r:MAP'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'First record'
+    'b' 'Second record'
+    'r' 'Summed record'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    'b' STORE
+    CLONE [ 'a' 'result' ] STORE
+
+    $a 'ops' GET CLONE SWAP DROP 'resultOps' STORE
+    $result $resultOps 'ops' PUT
+
+    'objD' $b 'objD' GET @util/sumField
+    'sizeD' $b 'sizeD' GET @util/sumField
+    'inB' $b 'inB' GET @util/sumField
+    'outB'  $b 'outB' GET @util/sumField
+
+    $b 'ops' GET 'bOps' STORE
+    $resultOps
+    $bOps KEYLIST
+    <%
+      'key' STORE
+      $key $bOps $key GET @util/sumField
+    %> FOREACH
+    DROP
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+{
+  'objD' 1
+  'sizeD' 1
+  'inB' 1
+  'outB' 0
+  'ops' {
+    'putObject' 1
+    'headObject' 1
+  }
+} 'a' STORE
+
+{
+  'objD' 1
+  'sizeD' 1
+  'inB' 0
+  'outB' 1
+  'ops' {
+    'putObject' 1
+    'getObject' 1
+  }
+} 'b' STORE
+
+
+$a $b @macro
+
+DUP 'objD' GET 2 == ASSERT
+DUP 'sizeD' GET 2 == ASSERT
+DUP 'inB' GET 1 == ASSERT
+DUP 'outB' GET 1 == ASSERT
+
+'ops' GET
+DUP 'putObject' GET 2 == ASSERT
+DUP 'headObject' GET 1 == ASSERT
+'getObject' GET 1 == ASSERT
+
+$macro
