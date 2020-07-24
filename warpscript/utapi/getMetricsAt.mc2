@@ -1,0 +1,216 @@
+// @endpoint http://localhost:4802/api/v0/exec
+{
+  'name' 'utapi/getMetricsAt'
+  'desc'
+  <'
+
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'm:LIST[GTS]'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'm' 'Calculated metrics'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    'getMetrics' SECTION
+
+    'endTimestamp' STORE
+    'labels' STORE
+    'read_token' STORE
+
+    // Raise the max operations for a executing script
+    // $read_token AUTHENTICATE
+    // 10000000 MAXOPS
+
+    'utapi.event' 'event_class' STORE
+    'utapi.checkpoint' 'checkpoint_class' STORE
+    'utapi.snapshot' 'snapshot_class' STORE
+
+    {} 'snapshots' STORE
+
+    {
+      'objD' 0
+      'sizeD' 0
+      'inB' 0
+      'outB' 0
+      'ops' {}
+    } 'results' STORE
+
+    // Find all nodes containing snapshots
+    'load_snapshots' SECTION
+    [
+      $read_token
+      $snapshot_class
+      $labels
+    ] FINDSETS
+    DROP SWAP DROP
+    'node' GET
+    <% DUP ISNULL %>
+    <% DROP [] %> IFT
+    // Load the latest snapshot from each node
+    <%
+      'value' STORE
+      // Adds the `node` label to the map
+      $labels UNMAP 'node' $value } 'filterLabels' STORE
+
+      $read_token $snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
+      DUP FIRSTTICK $snapshots SWAP $value PUT DROP
+      VALUES 0 GET @utapi/decodeRecord
+      $results @util/sumRecord 'results' STORE
+    %> FOREACH
+
+    // $snapshots ->JSON LOGMSG
+    // $results ->JSON LOGMSG
+
+    {} 'checkpoints' STORE
+
+    // Find all nodes containing checkpoints
+    'load_checkpoints' SECTION
+    [
+      $read_token
+      $snapshot_class
+      $labels
+    ] FINDSETS
+    DROP SWAP DROP
+    'node' GET
+    <% DUP ISNULL %>
+    <% DROP [] %> IFT
+    // Load checkpoints from each node
+    <%
+      'key' STORE
+      // Adds the `node` label to the map
+      $labels UNMAP 'node' $key } 'filterLabels' STORE
+
+      -1 'checkpointTimestamp' STORE
+
+      // Get the timestamp of the corresponding snapshot if it exists otherwise use 0
+      $snapshots $key GET
+      <% DUP TYPEOF 'LONG' == %>
+      <% 1 + %> // We want the next tick after the snapshot
+      <% DROP 0 %> IFTE
+      'startTimestamp' STORE
+      {
+        'token' $read_token
+        'class' $checkpoint_class
+        'labels' $filterLabels
+        'end' $endTimestamp
+        'start' $startTimestamp
+      } FETCH
+
+      <% // Handle multiple GTS
+
+        DUP LASTTICK
+        <% DUP $checkpointTimestamp > %>
+        <% 'checkpointTimestamp' STORE %>
+        <% DROP %> IFTE
+
+
+        DUP ->JSON LOGMSG
+        VALUES
+        <% // For each checkpoint
+          @utapi/decodeRecord
+          // DUP 'Loaded checkpoint ' SWAP ->JSON + LOGMSG
+          $results @util/sumRecord 'results' STORE
+        %> FOREACH
+      %> FOREACH
+
+      // Only add an entry if a checkpoint is found
+      <% $checkpointTimestamp -1 > %>
+      <%
+        $checkpoints $checkpointTimestamp $key PUT DROP
+      %> IFT
+    %> FOREACH
+
+    // $checkpoints ->JSON LOGMSG
+    // $results ->JSON LOGMSG
+
+    // Find all nodes containing events
+    'load_events' SECTION
+    [
+      $read_token
+      $event_class
+      {}
+    ] FINDSETS
+    DROP SWAP DROP
+    'node' GET
+    <% DUP ISNULL %>
+    <% DROP [] %> IFT
+    // Load events from each node
+    <%
+      'key' STORE
+
+      // Get the timestamp of the latest checkpoint for the node if it exists
+      // otherwise look for a snapshot
+      // If all else fails use 0
+      $checkpoints $key GET
+      <% DUP TYPEOF 'LONG' == %>
+      <% 1 + %> // We want the next tick after the checkpoint
+      <%
+        DROP
+        $snapshots $key GET
+        <% DUP TYPEOF 'LONG' == %>
+        <% 1 + %> // We want the next tick after the snapshot
+        <% DROP 0 %> IFTE
+      %> IFTE
+      'startTimestamp' STORE
+      {
+        'token' $read_token
+        'class' $event_class
+        'labels' { 'node' $key }
+        'end' $endTimestamp
+        'start' $startTimestamp
+      } FETCH
+      <% // Handle multiple GTS
+        VALUES
+        <%
+          @utapi/decodeEvent 'event' STORE
+          // $event ->JSON LOGMSG
+          true 'passed' STORE
+          $labels KEYLIST
+          <%
+            'labelKey' STORE
+            <% $labels $labelKey GET $event $labelKey GET != %>
+            <%
+              false 'passed' STORE
+              BREAK
+            %> IFT
+          %> FOREACH
+
+          <% $passed %>
+          <%
+            $results
+            'objD' $event 'objD' 0 @util/getDefault @util/sumField
+            'sizeD' $event 'sizeD' 0 @util/getDefault @util/sumField
+            'inB' $event 'inB' 0 @util/getDefault @util/sumField
+            'outB'  $event 'outB' 0 @util/getDefault @util/sumField
+
+            'ops' GET 'resultOps' STORE
+            $resultOps $event 'op' GET 1 @util/sumField
+            DROP
+          %> IFT
+        %> FOREACH
+      %> FOREACH
+    %> FOREACH
+    $results
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+$macro
