@@ -1,0 +1,102 @@
+// @endpoint http://localhost:4802/api/v0/exec
+
+{
+  'name' 'utapi/getMetrics'
+  'desc'
+  <'
+
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'm:LIST[GTS]'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'm' 'Calculated metrics'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    'getMetrics' SECTION
+
+    JSON-> 'operation_info' STORE
+    JSON-> 'auth_info' STORE
+
+    $auth_info 'read' GET 'read_token' STORE
+
+    // Raise the max operations for a executing script
+
+    $operation_info 'labels' GET 'labels' STORE
+    $operation_info 'start' GET TOLONG 'startTimestamp' STORE
+    $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+
+    // 'Fetching metrics for ' $labels ->JSON + LOGMSG
+    // 'Time Range: ' $startTimestamp TOSTRING + ' ' + $endTimestamp TOSTRING + LOGMSG
+
+    $read_token $labels $startTimestamp @utapi/getMetricsAt 'startResults' STORE
+
+    $read_token $labels $endTimestamp @utapi/getMetricsAt 'endResults' STORE
+
+    // $startResults ->JSON LOGMSG
+    // $endResults ->JSON LOGMSG
+
+    {} // Push an empty map for our results
+
+    [
+      $startResults 'sizeD' GET
+      $endResults 'sizeD' GET
+    ] 'storageUtilized' PUT
+
+    [
+      $startResults 'objD' GET
+      $endResults 'objD' GET
+    ] 'numberOfObjects' PUT
+
+    $endResults 'inB' GET $startResults 'inB' GET -
+    'incomingBytes' PUT
+
+    $endResults 'outB' GET $startResults 'outB' GET -
+    'outgoingBytes' PUT
+
+    'results' STORE
+
+    $endResults 'ops' GET 'endOps' STORE
+    $startResults 'ops' GET 'startOps' STORE
+    {} 'opsResults' STORE
+
+    $endOps KEYLIST
+    <%
+      'op' STORE
+      $startOps $op GET 'startValue' STORE
+      $endOps $op GET 'endValue' STORE
+
+      <% $startValue TYPEOF 'LONG' == %>
+      <% $endValue $startValue - %>
+      <% $endValue %>
+      IFTE
+
+      $opsResults SWAP $op PUT DROP
+    %> FOREACH
+
+    $results $opsResults 'operations' PUT
+    $results ->JSON
+    // DUP LOGMSG
+
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+$macro
