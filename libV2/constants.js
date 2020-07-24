@@ -20,6 +20,7 @@ const constants = {
         'deleteBucket',
         'deleteBucketCors',
         'deleteBucketReplication',
+        'deleteBucketReplication',
         'deleteBucketWebsite',
         'deleteObject',
         'deleteObjectTagging',
