@@ -1,7 +1,7 @@
 {
   "name": "utapi",
   "engines": {
-    "node": ">=6.9.5"
+    "node": ">=10.19.0"
   },
   "version": "7.5.0",
   "description": "API for tracking resource utilization and reporting metrics",

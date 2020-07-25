@@ -1,18 +1,21 @@
 FROM buildpack-deps:jessie-curl
 
 #
-# Install apt packages needed by backbeat and buildbot_worker
+# Install apt packages needed by utapi and buildbot_worker
 #
 ENV LANG C.UTF-8
+ENV NODE_VERSION 10.22.0
 COPY utapi_packages.list buildbot_worker_packages.list /tmp/
 
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
+RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz \
+    && tar -xf node-v${NODE_VERSION}-linux-x64.tar.gz --directory /usr/local --strip-components 1 \ 
     && apt-get update -qq \
     && cat /tmp/*packages.list | xargs apt-get install -y \
     && pip install pip==9.0.1 \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /tmp/*packages.list \
-    && rm -f /etc/supervisor/conf.d/*.conf
+    && rm -f /etc/supervisor/conf.d/*.conf \
+    && rm -f node-v${NODE_VERSION}-linux-x64.tar.gz
 
 
 #
