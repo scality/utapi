@@ -1,6 +1,6 @@
 const { Warp10 } = require('@senx/warp10/dist');
 const { eventFieldsToWarp10, warp10ValueType } = require('./constants');
-const config = require('./config');
+const _config = require('./config');
 
 function _stringify(value) {
     if (typeof value === 'number') {
@@ -13,6 +13,7 @@ class Warp10Client {
     constructor(config) {
         this._writeToken = (config && config.token) || 'writeTokenCI';
         this._readToken = (config && config.token) || 'readTokenCI';
+        this._nodeId = (config && config.nodeId) || _config.nodeId;
         const proto = (config && config.tls) ? 'https' : 'http';
         const host = (config && config.host) || 'localhost';
         const port = (config && config.port) || 4802;
@@ -30,7 +31,7 @@ class Warp10Client {
     }
 
     _buildGTSEntry(className, event) {
-        const labels = this._warp10.formatLabels({ node: config.nodeId });
+        const labels = this._warp10.formatLabels({ node: this._nodeId });
         const packed = Warp10Client._packEvent(event);
         return `${event.timestamp}// ${className}${labels} ${packed}`;
     }
@@ -82,5 +83,5 @@ class Warp10Client {
 
 module.exports = {
     Warp10Client,
-    client: new Warp10Client(config.warp10),
+    client: new Warp10Client(_config.warp10),
 };
