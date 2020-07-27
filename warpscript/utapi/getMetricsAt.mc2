@@ -116,7 +116,7 @@
         <% DROP %> IFTE
 
 
-        DUP ->JSON LOGMSG
+        // DUP ->JSON LOGMSG
         VALUES
         <% // For each checkpoint
           @utapi/decodeRecord
