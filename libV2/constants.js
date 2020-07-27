@@ -73,7 +73,6 @@ const constants = {
         outgoingBytes: 'outB',
     },
     indexedEventFields: [
-        'loc',
         'acc',
         'usr',
         'bck',

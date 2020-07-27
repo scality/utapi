@@ -4,11 +4,11 @@ const { checkpointLagSecs, indexedEventFields } = require('../constants');
 const { LoggerContext } = require('../utils');
 
 const logger = new LoggerContext({
-    module: 'IngestShard',
+    module: 'CreateCheckpoint',
 });
 
 class CreateCheckpoint extends BaseTask {
-    constructor(...options) {
+    constructor(options) {
         super({
             warp10: {
                 requestTimeout: 30000,
@@ -25,7 +25,7 @@ class CreateCheckpoint extends BaseTask {
 
         const params = {
             params: {
-                nodeId: config.nodeId,
+                nodeId: this.nodeId,
                 end: timestamp.toString(),
                 fields: indexedEventFields,
             },

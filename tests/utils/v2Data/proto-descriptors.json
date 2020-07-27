@@ -71,7 +71,8 @@
           "id": 4
         },
         "ops": {
-          "type": "map<string, int64>",
+          "keyType": "string",
+          "type": "int64",
           "id": 5
         }
       }

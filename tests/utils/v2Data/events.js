@@ -42,7 +42,7 @@ const eventTemplates = {
             if (params.versioning) {
                 return 0;
             }
-            return -1 * Math.floor((params.currentSize / params.versions));
+            return -1 * params.currentSize;
         },
         objectDelta: params => (params.versioning ? 0 : -1),
     },
@@ -52,7 +52,7 @@ const eventTemplates = {
             if (params.versioning) {
                 return 0;
             }
-            return Math.floor((params.currentSize / params.versions)) * -2;
+            return -2 * params.currentSize;
         },
         objectDelta: params => (params.versioning ? 0 : -2),
         object: () => undefined,
@@ -288,7 +288,6 @@ function generateCustomEvents(start, stop, count, accounts, versioning = true) {
             if (event.bucket) {
                 totals.buckets[event.bucket] = updateTotal(totals.buckets[event.bucket], event);
             }
-
             return new UtapiMetric(event);
         });
 

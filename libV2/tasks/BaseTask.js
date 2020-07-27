@@ -24,6 +24,7 @@ class BaseTask extends Process {
         this._scheduler = null;
         this._defaultSchedule = Now;
         this._defaultLag = 0;
+        this._nodeId = config.nodeId;
     }
 
     async _setup() {
@@ -37,7 +38,8 @@ class BaseTask extends Process {
                     return value;
                 },
             )
-            .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10));
+            .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10))
+            .option('-n, --node-id <id>', 'Set a custom node id');
     }
 
     get schedule() {
@@ -55,6 +57,13 @@ class BaseTask extends Process {
             return this._program.lag;
         }
         return this._defaultLag;
+    }
+
+    get nodeId() {
+        if (this._program.nodeId) {
+            return this._program.nodeId;
+        }
+        return this._nodeId;
     }
 
     async _start() {
