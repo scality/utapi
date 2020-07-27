@@ -14,6 +14,7 @@ async function ingestMetric(ctx, params) {
     } catch (error) {
         throw errors.ServiceUnavailable;
     }
+    // eslint-disable-next-line no-param-reassign
     ctx.results.statusCode = 200;
 }
 
