@@ -80,4 +80,7 @@ class Warp10Client {
     }
 }
 
-module.exports = Warp10Client;
+module.exports = {
+    Warp10Client,
+    client: new Warp10Client(config.warp10),
+};

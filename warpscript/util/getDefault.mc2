@@ -1,0 +1,50 @@
+{
+  'name' 'util/getDefault'
+  'desc'
+  <'
+Gets the specified key from the map if it exists, otherwise the default is returned
+  '>
+  'sig' [ [ [ 'm:MAP' 'k:STRING' 'd:ANY'  ] [ 'v:ANY' ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'm' 'Input map'
+    'k' 'Map key'
+    'd' 'Default value'
+    'v' 'Returned value'
+  }
+  'examples' [
+    <'
+{ 'a' 1 } 'a' 0 @util/getDefault // 1
+{ 'a' 1 } 'b' 0 @util/getDefault // 0
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    'default' STORE
+    'key' STORE
+    'data' STORE
+    // Code of the actual macro
+    <% $data $key CONTAINSKEY SWAP DROP %>
+    <% $data $key GET %>
+    <% $default %>
+    IFTE
+    // STOP
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+// { 'a' 1 } 'a' 0 @macro 1 == ASSERT
+// { 'a' 1 } 'b' 0 @macro 0 == ASSERT
+
+$macro
