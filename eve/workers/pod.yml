@@ -8,7 +8,7 @@ spec:
   terminationGracePeriodSeconds: 10
   containers:
   - name: aggressor
-    image: {{ images.aggressor }}
+    image: "{{ images.aggressor }}"
     imagePullPolicy: IfNotPresent
     resources:
       requests:
@@ -20,13 +20,22 @@ spec:
     volumeMounts:
     - mountPath: /var/run/docker.sock
       name: docker-socket
+    - name: artifacts
+      readOnly: false
+      mountPath: /artifacts
   - name: warp10
     image: "{{ images.warp10 }}"
+    command:
+      - sh
+      - -ce
+      - /init | tee -a /artifacts/warp10.log
     env:
       - name: standalone.port
         value: '4802'
       - name: warp.token.file
         value: /opt/warp10/etc/ci.tokens
+      - name: warpscript.maxops
+        value: '10000000'
     resources:
       requests:
         cpu: 500m
@@ -34,8 +43,14 @@ spec:
       limits:
         cpu: "2"
         memory: 3Gi
+    volumeMounts:
+    - name: artifacts
+      readOnly: false
+      mountPath: /artifacts
   volumes:
   - name: docker-socket
     hostPath:
       path: /var/run/docker.sock
       type: Socket
+  - name: artifacts
+    emptyDir: {}
