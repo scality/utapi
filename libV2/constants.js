@@ -10,7 +10,7 @@ const truthy = new Set([
     '1',
 ]);
 
-module.exports = {
+const constants = {
     envNamespace: 'UTAPI',
     operations: [
         'abortMultipartUpload',
@@ -78,9 +78,24 @@ module.exports = {
         'usr',
         'bck',
     ],
+    serviceToWarp10Label: {
+        locations: 'loc',
+        accounts: 'acc',
+        users: 'usr',
+        buckets: 'bck',
+    },
+
     warp10ValueType: ':m:utapi/event:',
     truthy,
     shardIngestLagSecs: 30,
     checkpointLagSecs: 300,
     snapshotLagSecs: 900,
 };
+
+constants.operationToResponse = constants.operations
+    .reduce((prev, opId) => {
+        prev[opId] = `s3:${opId.charAt(0).toUpperCase() + opId.slice(1)}`;
+        return prev;
+    }, {});
+
+module.exports = constants;
