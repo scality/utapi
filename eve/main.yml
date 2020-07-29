@@ -24,6 +24,10 @@ models:
       name: install node modules
       command: yarn install --frozen-lockfile
       haltOnFailure: True
+  - Upload: &upload_artifacts
+      source: /artifacts
+      urls:
+        - "*"
 
 
 stages:
@@ -106,6 +110,20 @@ stages:
             bash -c "
             set -ex
             bash tests/utils/wait_for_local_port.bash 4802 60"
+          logfiles:
+            warp10:
+              filename: "/artifacts/warp10.log"
+              follow: true
       - ShellCommand:
           name: run v2 functional tests
           command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:v2
+          env:
+            UTAPI_CACHE_BACKEND: redis
+          logfiles:
+            warp10:
+              filename: "/artifacts/warp10.log"
+              follow: true
+            utapi:
+              filename: "/artifacts/setup_ft_test:v2.log"
+              follow: true
+      - Upload: *upload_artifacts

@@ -37,6 +37,32 @@ components:
             type: integer
           outgoingBytes:
             type: integer
+    utapi-request-v1:
+      type: object
+      required:
+        - timeRange
+      properties:
+        timeRange:
+          type: array
+          items:
+            type: integer
+        buckets:
+          type: array
+          items:
+            type: string
+        accounts:
+          type: array
+          items:
+            type: string
+        users:
+          type: array
+          items:
+            type: string
+        locations:
+          type: array
+          items:
+            type: string
+
   responses:
     not-implemented:
       description: This operation has yet to be implemented.
@@ -58,6 +84,13 @@ components:
                     type: string
                   message:
                     type: string
+  parameters:
+    resource:
+        in: path
+        name: resource
+        required: True
+        schema:
+          type: string
 paths:
   /_/healthcheck:
     get:
@@ -85,3 +118,24 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/utapi-metric-v1'
+
+  /{resource}:
+    parameters:
+      - $ref: '#/components/parameters/resource'
+    post:
+      x-router-controller: metrics
+      description: List UTAPI metrics
+      operationId: listMetrics
+      responses:
+        default:
+          $ref: '#/components/responses/json-error'
+        200:
+          description: Success
+      requestBody:
+        x-name: body
+        required: True
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/utapi-request-v1'
+

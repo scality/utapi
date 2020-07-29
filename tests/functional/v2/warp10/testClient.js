@@ -1,7 +1,7 @@
 const uuid = require('uuid');
 const assert = require('assert');
 
-const Warp10Client = require('../../../../libV2/warp10');
+const { Warp10Client } = require('../../../../libV2/warp10');
 const { generateFakeEvents } = require('../../../utils/v2Data');
 
 const warp10 = new Warp10Client();
