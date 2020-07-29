@@ -5,7 +5,7 @@ const config = require('../config');
 const { client: cacheClient } = require('../cache');
 const Process = require('../process');
 const { LoggerContext } = require('../utils');
-const Warp10Client = require('../warp10');
+const { Warp10Client } = require('../warp10');
 
 const logger = new LoggerContext({
     module: 'BaseTask',

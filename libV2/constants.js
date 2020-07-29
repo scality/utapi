@@ -10,7 +10,7 @@ const truthy = new Set([
     '1',
 ]);
 
-module.exports = {
+const constants = {
     envNamespace: 'UTAPI',
     operations: [
         'abortMultipartUpload',
@@ -26,11 +26,14 @@ module.exports = {
         'getBucketAcl',
         'getBucketCors',
         'getBucketLocation',
+        'getBucketObjectLock',
         'getBucketReplication',
         'getBucketVersioning',
         'getBucketWebsite',
         'getObject',
         'getObjectAcl',
+        'getObjectLegalHold',
+        'getObjectRetention',
         'getObjectTagging',
         'headBucket',
         'headObject',
@@ -41,6 +44,7 @@ module.exports = {
         'multiObjectDelete',
         'putBucketAcl',
         'putBucketCors',
+        'PutBucketObjectLock',
         'putBucketReplication',
         'putBucketVersioning',
         'putBucketWebsite',
@@ -48,6 +52,8 @@ module.exports = {
         'putDeleteMarkerObject',
         'putObject',
         'putObjectAcl',
+        'putObjectLegalHold',
+        'putObjectRetention',
         'putObjectTagging',
         'uploadPart',
         'uploadPartCopy',
@@ -72,9 +78,24 @@ module.exports = {
         'usr',
         'bck',
     ],
+    serviceToWarp10Label: {
+        locations: 'loc',
+        accounts: 'acc',
+        users: 'usr',
+        buckets: 'bck',
+    },
+
     warp10ValueType: ':m:utapi/event:',
     truthy,
     shardIngestLagSecs: 30,
     checkpointLagSecs: 300,
     snapshotLagSecs: 900,
 };
+
+constants.operationToResponse = constants.operations
+    .reduce((prev, opId) => {
+        prev[opId] = `s3:${opId.charAt(0).toUpperCase() + opId.slice(1)}`;
+        return prev;
+    }, {});
+
+module.exports = constants;
