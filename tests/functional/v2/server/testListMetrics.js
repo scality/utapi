@@ -39,7 +39,6 @@ async function listMetrics(level, resources, start, end) {
     );
 }
 
-
 async function ingestEvents(events) {
     return events.length === await warp10.ingest('utapi.event', events);
 }
@@ -51,7 +50,6 @@ function opsToResp(operations) {
             return prev;
         }, { ...emptyOperationsResponse });
 }
-
 
 const testCases = [
     {

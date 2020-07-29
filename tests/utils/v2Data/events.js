@@ -99,7 +99,6 @@ const eventTemplateToOperation = {
         'deleteBucket',
         'deleteBucketCors',
         'deleteBucketReplication',
-        'deleteBucketReplication',
         'deleteBucketWebsite',
         'getBucketAcl',
         'getBucketCors',
