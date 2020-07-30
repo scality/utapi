@@ -26,8 +26,7 @@ async function listMetric(ctx, params) {
     // A separate request will be made to warp 10 per requested resource
     const results = await Promise.all(
         resources.map(async resource => {
-            const labels = {};
-            labels[labelName] = resource;
+            const labels = { [labelName]: resource };
             const options = {
                 params: {
                     start,

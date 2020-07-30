@@ -42,7 +42,7 @@ const eventTemplates = {
             if (params.versioning) {
                 return 0;
             }
-            return Math.floor((params.currentSize / params.versions)) * -1;
+            return -1 * Math.floor((params.currentSize / params.versions));
         },
         objectDelta: params => (params.versioning ? 0 : -1),
     },
