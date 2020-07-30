@@ -1,0 +1,80 @@
+{
+  "nested": {
+    "Event": {
+      "fields": {
+        "op": {
+          "type": "string",
+          "id": 1
+        },
+        "id": {
+          "type": "string",
+          "id": 2
+        },
+        "bck": {
+          "type": "string",
+          "id": 3
+        },
+        "obj": {
+          "type": "string",
+          "id": 4
+        },
+        "vid": {
+          "type": "string",
+          "id": 5
+        },
+        "acc": {
+          "type": "string",
+          "id": 6
+        },
+        "usr": {
+          "type": "string",
+          "id": 7
+        },
+        "loc": {
+          "type": "string",
+          "id": 8
+        },
+        "objD": {
+          "type": "int64",
+          "id": 9
+        },
+        "sizeD": {
+          "type": "int64",
+          "id": 10
+        },
+        "inB": {
+          "type": "int64",
+          "id": 11
+        },
+        "outB": {
+          "type": "int64",
+          "id": 12
+        }
+      }
+    },
+    "Record": {
+      "fields": {
+        "sizeD": {
+          "type": "int64",
+          "id": 1
+        },
+        "objD": {
+          "type": "int64",
+          "id": 2
+        },
+        "inB": {
+          "type": "int64",
+          "id": 3
+        },
+        "outB": {
+          "type": "int64",
+          "id": 4
+        },
+        "ops": {
+          "type": "map<string, int64>",
+          "id": 5
+        }
+      }
+    }
+  }
+}
