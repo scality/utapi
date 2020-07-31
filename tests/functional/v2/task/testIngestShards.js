@@ -21,7 +21,6 @@ const getClient = prefix => new CacheClient({
 });
 
 function eventToWarp10(event) {
-    // console.log(Object.entries(event.getValue()).filter(([key]) => eventFieldsToWarp10[key]))
     return Object.entries(event.getValue())
         .filter(([key]) => eventFieldsToWarp10[key])
         .reduce((e, [k, v]) => {
@@ -31,9 +30,9 @@ function eventToWarp10(event) {
 }
 
 function assertResults(events, results) {
-    assert(results.result.length === 1);
+    assert.strictEqual(results.result.length, 1);
     const series = JSON.parse(results.result[0]);
-    assert(series.length === 1);
+    assert.strictEqual(series.length, 1);
     const gts = series[0];
     const decoded = gts.v.map(v => protobuf.decode('Event', v[1]));
 
