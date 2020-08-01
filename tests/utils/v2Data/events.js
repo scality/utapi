@@ -117,7 +117,6 @@ const eventTemplateToOperation = {
         'putBucketWebsite',
     ],
 
-
     obj: [
         'deleteObjectTagging',
         'getObjectAcl',
