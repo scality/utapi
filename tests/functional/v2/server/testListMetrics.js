@@ -28,8 +28,8 @@ const emptyOperationsResponse = Object.values(operationToResponse)
 async function listMetrics(level, resources, start, end) {
     const body = {
         timeRange: [start, end],
+        [level] = resources,
     };
-    body[level] = resources;
 
     return needle(
         'post',
@@ -93,7 +93,6 @@ describe('Test listMetric', function () {
                 totals = _totals;
                 assert(await ingestEvents(events));
             });
-
 
             const accounts = [];
             const users = [];
