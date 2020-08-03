@@ -22,6 +22,7 @@
   !$info INFO
   SAVE 'context' STORE
   <%
+    // 'Creating checkpoints' LOGMSG
     JSON-> 'operation_info' STORE
     JSON-> 'auth_info' STORE
 
@@ -47,8 +48,8 @@
     'utapi.event' 'metric_class' STORE
 
     $read_token $master_checkpoint_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore // Fetch latest master checkpoint
-    FIRSTTICK 1 + 'startTimestamp' STORE // Grab our starting timestamp from the last checkpoint (0 if no checkpoints)
-
+    FIRSTTICK 'startTimestamp' STORE // Grab our starting timestamp from the last checkpoint (0 if no checkpoints)
+    // 'Using ' $startTimestamp TOSTRING + ' as startTimestamp' + LOGMSG
     {} 'results' STORE # Create an empty map for results
 
     $fieldsToIndex
@@ -71,6 +72,7 @@
       <% // Iter over events
         'event' STORE // Store the event
         $event 4 GET @utapi/decodeEvent 'decoded' STORE
+        // 'Including event ' $decoded 'id' GET + LOGMSG
         $decoded KEYLIST 'eventFields' STORE // Extract and store available event fields
         $decoded 'op' GET 'operationId' STORE
 
@@ -97,10 +99,10 @@
           %> IFTE
           // Consumes a map off the stack summing the specified field and the passed value
           // Leaves the modified map on the stack
-          'objD' $decoded 'objD' GET @util/sumField
-          'sizeD' $decoded 'sizeD' GET @util/sumField
-          'inB' $decoded 'inB' GET @util/sumField
-          'outB'  $decoded 'outB' GET @util/sumField
+          'objD' $decoded 'objD' 0 @util/getDefault  @util/sumField
+          'sizeD' $decoded 'sizeD' 0 @util/getDefault @util/sumField
+          'inB' $decoded 'inB' 0 @util/getDefault @util/sumField
+          'outB'  $decoded 'outB' 0 @util/getDefault @util/sumField
 
           // Grab our op count map
           'ops' GET 'opsCount' STORE
@@ -110,9 +112,8 @@
       %> FOREACH
      %>
     <%
-       DROP
+       DROP 0 STOP
     %> IFTE
-
 
     0 'checkpoints' STORE
     // For each of our indexed fields

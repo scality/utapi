@@ -34,7 +34,7 @@ function assertResults(events, results) {
     const series = JSON.parse(results.result[0]);
     assert.strictEqual(series.length, 1);
     const gts = series[0];
-    const decoded = gts.v.map(v => protobuf.decode('Event', v[1]));
+    const decoded = gts.v.map(v => protobuf.decode('Event', v[1], false));
 
     const expected = events
         .reduce((prev, event) => {
