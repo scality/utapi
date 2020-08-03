@@ -8,7 +8,7 @@ const logger = new LoggerContext({
 });
 
 class CreateSnapshot extends BaseTask {
-    constructor(...options) {
+    constructor(options) {
         super({
             warp10: {
                 requestTimeout: 30000,
@@ -25,7 +25,7 @@ class CreateSnapshot extends BaseTask {
 
         const params = {
             params: {
-                nodeId: config.nodeId,
+                nodeId: this.nodeId,
                 end: timestamp.toString(),
             },
             macro: 'utapi/createSnapshot',

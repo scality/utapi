@@ -62,15 +62,12 @@ const testCases = [
             [uuid.v4()]: {
                 [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
                 [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
             },
             [uuid.v4()]: {
                 [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
                 [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
             },
             [uuid.v4()]: {
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
                 [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
                 [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
             },

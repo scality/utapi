@@ -46,7 +46,7 @@
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
 
-    FIRSTTICK 1 + 'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
+    FIRSTTICK 'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
     // $masterSnapshotTimestamp TOSTRING LOGMSG
 
     [
