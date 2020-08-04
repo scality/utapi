@@ -1,7 +1,7 @@
 {
-    "AuthenticationFailed": {
+    "AccessDenied": {
         "code": 403,
-        "description": "Authentication failed."
+        "description": "Access denied"
     },
     "InternalError": {
         "code": 500,
