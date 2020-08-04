@@ -1,5 +1,5 @@
 {
-    "AuthenticationFailed": {
+    "AccessDenied": {
         "code": 403,
         "description": "Authentication failed."
     },

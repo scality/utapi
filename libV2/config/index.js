@@ -212,6 +212,11 @@ class Config {
         parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHEDULE', config.checkpointSchedule);
         parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHEDULE', config.snapshotSchedule);
 
+        const vaultConf = {};
+        vaultConf.host = _loadFromEnv('VAULT_HOST', config.vaultd.host);
+        vaultConf.port = _loadFromEnv('VAULT_PORT', config.vaultd.port);
+        parsedConfig.vaultd = vaultConf;
+
         return parsedConfig;
     }
 
