@@ -2,6 +2,7 @@ const oasTools = require('oas-tools');
 const path = require('path');
 const { promisify } = require('util');
 const config = require('../config');
+const { legacyApiVersion } = require('../constants');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');
 const { authenticateRequest } = require('../vault');
@@ -84,7 +85,7 @@ async function initializeOasTools(spec, app) {
 // eslint-disable-next-line no-unused-vars
 async function authV4Middleware(request, response, params) {
     const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('AWS4')) {
+    if (!authHeader || !authHeader.startsWith('AWS4-')) {
         request.log.error('missing auth header for v4 auth');
         throw errors.InvalidRequest.customizeDescription('Must use Auth V4 for this request.');
     }
