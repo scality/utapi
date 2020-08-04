@@ -91,6 +91,13 @@ components:
         required: True
         schema:
           type: string
+    action:
+      in: query
+      name: Action
+      required: True
+      schema:
+        type: string
+        enum: [ ListMetrics ]
 paths:
   /_/healthcheck:
     get:
@@ -122,8 +129,10 @@ paths:
   /{resource}:
     parameters:
       - $ref: '#/components/parameters/resource'
+      - $ref: '#/components/parameters/action'
     post:
       x-router-controller: metrics
+      x-authv4: true
       description: List UTAPI metrics
       operationId: listMetrics
       responses:

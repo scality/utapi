@@ -13,8 +13,12 @@
         "host": "127.0.0.1",
         "port": 4802
     },
-    "healthChecks" : {
+    "healthChecks": {
         "allowFrom": ["127.0.0.1/8", "::1"]
+    },
+    "vaultd": {
+        "host": "127.0.0.1",
+        "port": 8500
     },
     "cacheBackend": "memory",
     "development": false,
