@@ -9,6 +9,7 @@ const templateExpected = opts => ({
     url: 'http://example.com/hello/world',
     operationId: 'healthcheck',
     tag: 'internal',
+    encrypted: false,
     ...(opts || {}),
 });
 
@@ -23,6 +24,7 @@ const validTestCases = [
         expected: {
             protocol: 'https',
             url: 'https://example.com/hello/world',
+            encrypted: true,
         },
     },
     {
@@ -35,6 +37,7 @@ const validTestCases = [
         expected: {
             protocol: 'https',
             url: 'https://example.com/hello/world',
+            encrypted: true,
         },
     },
     {
@@ -47,6 +50,9 @@ const validTestCases = [
                 encrypted: true,
             },
         }),
+        expected: {
+            encrypted: false,
+        },
     },
     {
         request: templateRequest({
@@ -59,6 +65,7 @@ const validTestCases = [
         expected: {
             protocol: 'https',
             url: 'https://example.com/hello/world',
+            encrypted: true,
         },
     },
 ];

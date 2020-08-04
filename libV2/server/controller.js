@@ -85,7 +85,6 @@ class APIController {
 
     static async _writeResult(results, response) {
         // If no results have been set return a 500
-        // console.log(results.getValue())
         if (
             !results.hasRedirect()
             && !results.hasBody()
