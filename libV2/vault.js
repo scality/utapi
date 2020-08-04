@@ -117,10 +117,10 @@ async function authenticateRequest(request, params) {
                                 // arn:scality:utapi:::resourcetype/resource
                                 assert(typeof result.arn === 'string');
                                 assert(result.arn.indexOf('/') > -1);
+                                const resource = result.arn.split('/')[1];
+                                authed.push(resource);
+                                request.logger.trace('access granted for resource', { resource });
                             }
-                            const resource = result.arn.split('/')[1];
-                            authed.push(resource);
-                            request.logger.trace('access granted for resource', { resource });
                             return authed;
                         }, []);
                     resolve([
