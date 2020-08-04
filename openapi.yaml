@@ -98,6 +98,12 @@ components:
       schema:
         type: string
         enum: [ ListMetrics ]
+    version:
+      in: query
+      name: Version
+      required: True
+      schema:
+        type: string
 paths:
   /_/healthcheck:
     get:

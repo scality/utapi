@@ -90,6 +90,8 @@ const constants = {
     checkpointLagSecs: 300,
     snapshotLagSecs: 900,
     repairLagSecs: 5,
+    legacyApiVersion: '2016-08-15',
+    currentApiVersion: '2020-09-01',
 };
 
 constants.operationToResponse = constants.operations
