@@ -83,7 +83,6 @@ async function initializeOasTools(spec, app) {
 
 // eslint-disable-next-line no-unused-vars
 async function authV4Middleware(request, response, params) {
-    // const { params } = request.swagger;
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('AWS4')) {
         request.log.error('missing auth header for v4 auth');

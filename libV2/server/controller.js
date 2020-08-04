@@ -129,7 +129,6 @@ class APIController {
             await handler(request.ctx, params);
         } catch (err) {
             request.logger.error('error during operation', { err });
-            console.log(err);
             throw err;
         }
         request.logger.debug('writing operation result');
