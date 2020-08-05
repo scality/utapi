@@ -2,6 +2,7 @@
 const assert = require('assert');
 const needle = require('needle');
 const uuid = require('uuid');
+const aws4 = require('aws4');
 
 const { client: warp10 } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
@@ -31,11 +32,33 @@ async function listMetrics(level, resources, start, end) {
         [level]: resources,
     };
 
+    const headers = {
+        host: 'localhost',
+        port: 8100,
+        method: 'POST',
+        service: 's3',
+        path: `/${level}?Action=ListMetrics`,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    };
+
+    const credentials = {
+        accessKeyId: 'accessKey1',
+        secretAccessKey: 'verySecretKey1',
+    };
+
+    const sig = aws4.sign(headers, credentials);
+
     return needle(
         'post',
-        `http://localhost:8100/${level}`,
+        `http://localhost:8100/${level}?Action=ListMetrics`,
+
         body,
-        { json: true },
+        {
+            json: true,
+            headers: sig.headers,
+        },
     );
 }
 
@@ -115,7 +138,6 @@ describe('Test listMetric', function () {
                     const [level, resources] = query;
                     it(`should get metrics for ${level}`, async () => {
                         const resp = await listMetrics(...query, getTs(-500), getTs(0));
-
                         if (resources.length === 1) {
                             // If only one resource is requested the response is an object
                             assert(!Array.isArray(resp.body));
