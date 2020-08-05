@@ -6,15 +6,15 @@ const MAX_RANGE_MS = (((1000 * 60) * 60) * 24) * 30; // One month.
 
 describe('Request ranges', function test() {
     this.timeout((1000 * 60) * 2);
-    const vault = new Vault();
+    // const vault = new Vault();
 
-    before(() => {
-        vault.start();
-    });
+    // before(() => {
+    //     vault.start();
+    // });
 
-    after(() => {
-        vault.end();
-    });
+    // after(() => {
+    //     vault.end();
+    // });
 
     const tests = [
         {

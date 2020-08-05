@@ -12,7 +12,7 @@ const utils = require('../../utils/utils');
 const REINDEX_LOCK_KEY = 's3:utapireindex:lock';
 
 describe('UtapiReindex', () => {
-    const vault = new mock.Vault();
+    // const vault = new mock.Vault();
     const bucketD = new mock.BucketD();
     let reindex;
     let redis;
@@ -55,12 +55,12 @@ describe('UtapiReindex', () => {
 
     before(() => {
         bucketD.start();
-        vault.start();
+        // vault.start();
     });
 
     after(() => {
         bucketD.end();
-        vault.end();
+        // vault.end();
     });
 
     beforeEach(done => {
