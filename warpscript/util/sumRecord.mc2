@@ -28,7 +28,14 @@ Sums 2 internal UTAPI records returning a new record containing the result
     'b' STORE
     CLONE [ 'a' 'result' ] STORE
 
-    $a 'ops' GET CLONE SWAP DROP 'resultOps' STORE
+    $a 'ops' GET
+
+    <% DUP ISNULL ! %>
+    <% CLONE SWAP DROP %>
+    <% DROP {} %>
+    IFTE
+
+    'resultOps' STORE
     $result $resultOps 'ops' PUT
 
     'objD' $b 'objD' GET @util/sumField

@@ -4,6 +4,7 @@ const { promisify } = require('util');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');
+const { authenticateRequest } = require('../vault');
 
 const oasOptions = {
     controllers: path.join(__dirname, './API/'),
@@ -80,11 +81,40 @@ async function initializeOasTools(spec, app) {
     return promisify(oasTools.initialize)(spec, app);
 }
 
+// eslint-disable-next-line no-unused-vars
+async function authV4Middleware(request, response, params) {
+    const authHeader = request.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('AWS4-')) {
+        request.log.error('missing auth header for v4 auth');
+        throw errors.InvalidRequest.customizeDescription('Must use Auth V4 for this request.');
+    }
+
+    let passed;
+    let authorizedResources;
+
+    try {
+        [passed, authorizedResources] = await authenticateRequest(request, params);
+    } catch (error) {
+        request.logger.error('error during authentication', { error });
+        throw errors.InternalError;
+    }
+
+    if (!passed) {
+        request.logger.trace('not authorized to access any requested resources');
+        throw errors.AccessDenied;
+    }
+
+    if (authorizedResources !== undefined) {
+        params.body[params.resource.value] = authorizedResources;
+    }
+}
+
 module.exports = {
     initializeOasTools,
     middleware: {
         loggerMiddleware,
         errorMiddleware,
         responseLoggerMiddleware,
+        authV4Middleware,
     },
 };

@@ -100,6 +100,7 @@ describe('Test APIController', () => {
         APIController.callOperation(
             'healthcheck',
             healthcheck,
+            [],
             templateRequest(),
             response,
             err => {
