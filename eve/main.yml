@@ -20,6 +20,7 @@ models:
         warp10:
           context: '.'
           dockerfile: 'images/warp10/Dockerfile'
+        vault: eve/workers/mocks/vault
   - Install: &install
       name: install node modules
       command: yarn install --frozen-lockfile

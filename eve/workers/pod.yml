@@ -47,6 +47,15 @@ spec:
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
+  - name: vault
+    image: "{{ images.vault }}"
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 50m
+        memory: 128Mi
   volumes:
   - name: docker-socket
     hostPath:
