@@ -4,15 +4,15 @@ const { makeUtapiGenericClientRequest } = require('../../utils/utils');
 const Vault = require('../../utils/mock/Vault');
 
 describe('Invalid requests', () => {
-    const vault = new Vault();
+    // const vault = new Vault();
 
-    before(() => {
-        vault.start();
-    });
+    // before(() => {
+    //     vault.start();
+    // });
 
-    after(() => {
-        vault.end();
-    });
+    // after(() => {
+    //     vault.end();
+    // });
 
     const tests = [
         {

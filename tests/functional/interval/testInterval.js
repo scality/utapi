@@ -45,15 +45,15 @@ describe('UtapiClient: Across time intervals', function test() {
         }
     }
 
-    const vault = new mock.Vault();
+    // const vault = new mock.Vault();
 
-    before(() => {
-        vault.start();
-    });
+    // before(() => {
+    //     vault.start();
+    // });
 
-    after(() => {
-        vault.end();
-    });
+    // after(() => {
+    //     vault.end();
+    // });
 
     afterEach(() => redis.flushdb());
 
