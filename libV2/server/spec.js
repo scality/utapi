@@ -42,7 +42,8 @@ function _getApiOperationMiddleware(routes) {
         .reduce((optIds, ops) => {
             Object.entries(ops)
                 .filter(([method]) => httpMethods.includes(method))
-                .forEach(([__, op]) => {
+                // eslint-disable-next-line no-unused-vars
+                .forEach(([_, op]) => {
                     const middleware = {};
 
                     const tag = op['x-router-controller'];

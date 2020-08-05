@@ -101,7 +101,10 @@ stages:
           name: run interval tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
   run-v2-functional-tests:
-    worker: *workspace
+    worker:
+      << : *workspace
+      vars:
+        vault: enabled
     steps:
       - Git: *clone
       - ShellCommand: *install

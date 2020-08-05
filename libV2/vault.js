@@ -86,7 +86,6 @@ const handler = new Vault(config);
 auth.setHandler(handler);
 
 async function authenticateRequest(request, params) {
-
     const policyContext = new policies.RequestContext(
         request.headers,
         params.resource,

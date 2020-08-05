@@ -47,6 +47,7 @@ spec:
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
+{% if vars.vault is defined and vars.vault == 'enabled' -%}
   - name: vault
     image: "{{ images.vault }}"
     resources:
@@ -56,6 +57,7 @@ spec:
       limits:
         cpu: 50m
         memory: 128Mi
+{%- endif %}
   volumes:
   - name: docker-socket
     hostPath:
