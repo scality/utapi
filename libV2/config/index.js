@@ -212,6 +212,11 @@ class Config {
         parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHEDULE', config.checkpointSchedule);
         parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHEDULE', config.snapshotSchedule);
 
+        parsedConfig.vaultd = {
+            host: _loadFromEnv('VAULT_HOST', config.vaultd.host),
+            port: _loadFromEnv('VAULT_PORT', config.vaultd.port),
+        };
+
         return parsedConfig;
     }
 
@@ -227,4 +232,3 @@ class Config {
     }
 }
 module.exports = new Config();
-

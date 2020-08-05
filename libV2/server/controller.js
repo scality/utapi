@@ -1,5 +1,6 @@
 /* eslint-disable no-param-reassign */
-const { apiOperations } = require('./spec');
+const { apiOperations, apiOperationMiddleware } = require('./spec');
+const { middleware: utapiMiddleware } = require('./middleware');
 const RequestContext = require('../models/RequestContext');
 const errors = require('../errors');
 const { LoggerContext } = require('../utils');
@@ -17,6 +18,7 @@ const moduleLogger = new LoggerContext({
 class APIController {
     constructor(tag) {
         this._handlers = APIController._collectHandlers(tag);
+        this._middleware = APIController._collectHandlerMiddleware(tag);
     }
 
     static _safeRequire(path) {
@@ -61,6 +63,18 @@ class APIController {
         }, {});
     }
 
+    static _collectHandlerMiddleware(tag) {
+        return Object.entries(apiOperationMiddleware[tag])
+            .reduce((handlers, [id, handler]) => {
+                const middleware = [];
+                if (handler.authv4) {
+                    middleware.push(utapiMiddleware.authV4Middleware);
+                }
+                handlers[id] = middleware;
+                return handlers;
+            }, {});
+    }
+
     static _extractParams(req) {
         return Object.entries(req.swagger.params)
             .reduce((params, [key, value]) => {
@@ -71,7 +85,6 @@ class APIController {
 
     static async _writeResult(results, response) {
         // If no results have been set return a 500
-        // console.log(results.getValue())
         if (
             !results.hasRedirect()
             && !results.hasBody()
@@ -107,12 +120,12 @@ class APIController {
      * @param {function} handler - Function returning a Promise implementing the operation
      * @param {Request} request - Express request object
      * @param {Response} response - Express response object
+     * @param {Object} params - Extracted request parameters
      * @returns {undefined} -
      */
-    static async _callOperation(handler, request, response) {
-        request.ctx = APIController._buildRequestContext(request);
+    static async _callOperation(handler, request, response, params) {
         try {
-            await handler(request.ctx, APIController._extractParams(request));
+            await handler(request.ctx, params);
         } catch (err) {
             request.logger.error('error during operation', { err });
             throw err;
@@ -129,9 +142,24 @@ class APIController {
         }
     }
 
-    static callOperation(operationId, handler, request, response, done) {
-        request.logger.debug(`calling operation ${operationId}`);
-        APIController._callOperation(handler, request, response)
+    static async _callMiddleware(middleware, request, response, params) {
+        await middleware.reduce(
+            (chain, mw) => (chain
+                ? chain.then(() => mw(request, response, params))
+                : mw(request, response, params)),
+            null,
+        );
+    }
+
+    static callOperation(operationId, handler, middleware, request, response, done) {
+        request.ctx = APIController._buildRequestContext(request);
+        const requestParams = APIController._extractParams(request);
+        request.logger.debug(`calling middleware for ${operationId}`);
+        APIController._callMiddleware(middleware, request, response, requestParams)
+            .then(() => {
+                request.logger.debug(`calling operation ${operationId}`);
+                return APIController._callOperation(handler, request, response, requestParams);
+            })
             .then(
                 done,
                 done,
@@ -148,7 +176,7 @@ class APIController {
         return Object.entries(this._handlers)
             .reduce((ops, [id, handler]) => {
                 ops[id] = (request, response, done) =>
-                    APIController.callOperation(id, handler, request, response, done);
+                    APIController.callOperation(id, handler, this._middleware[id], request, response, done);
                 return ops;
             }, {});
     }

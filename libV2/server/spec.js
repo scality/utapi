@@ -37,10 +37,43 @@ function _getApiOperationIds(routes) {
         }, {});
 }
 
+function _getApiOperationMiddleware(routes) {
+    return Object.values(routes)
+        .reduce((optIds, ops) => {
+            Object.entries(ops)
+                .filter(([method]) => httpMethods.includes(method))
+                // eslint-disable-next-line no-unused-vars
+                .forEach(([_, op]) => {
+                    const middleware = {};
+
+                    const tag = op['x-router-controller'];
+                    if (optIds[tag] === undefined) {
+                        optIds[tag] = {};
+                    }
+
+                    if (op['x-authv4'] === true) {
+                        middleware.authv4 = true;
+                    }
+                    optIds[tag][op.operationId] = middleware;
+
+                    moduleLogger
+                        .with({ method: '_getApiOperationMiddleware' })
+                        .trace('Registering middleware for handler', {
+                            tag,
+                            operationId: op.operationId,
+                            middleware: Object.keys(middleware),
+                        });
+                });
+            return optIds;
+        }, {});
+}
+
 const spec = _loadOpenApiSpec();
 const apiOperations = _getApiOperationIds(spec.paths);
+const apiOperationMiddleware = _getApiOperationMiddleware(spec.paths);
 
 module.exports = {
     spec,
     apiOperations,
+    apiOperationMiddleware,
 };

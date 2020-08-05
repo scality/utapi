@@ -17,6 +17,7 @@ const contextSchema = {
     url: Joi.string().uri({ scheme: ['http', 'https'] }),
     operationId: Joi.string().valid(...apiOperationIds),
     tag: Joi.string().valid(...apiTags),
+    encrypted: Joi.boolean(),
     logger: Joi.any(),
     request: Joi.any(),
     results: Joi.any(),
@@ -28,6 +29,7 @@ class RequestContext extends RequestContextModel {
     constructor(request) {
         const host = request.headers.host || 'localhost';
         const protocol = RequestContext._determineProtocol(request);
+        const encrypted = protocol === 'https';
         const url = `${protocol}://${host}${request.url}`;
         const tag = request.swagger.operation['x-router-controller'];
         const { operationId } = request.swagger.operation;
@@ -45,6 +47,7 @@ class RequestContext extends RequestContextModel {
             protocol,
             operationId,
             tag,
+            encrypted,
             results: new ResponseContainer(),
             logger: request.logger,
         });
