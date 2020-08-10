@@ -7,6 +7,7 @@ if (process.env.ENABLE_UTAPI_V2) {
         utapiVersion: 2,
         startUtapiServer: require('./libV2/server').startServer,
         UtapiClient: require('./libV2/client'),
+        tasks: require('./libV2/tasks'),
     };
 } else {
     toExport = {
