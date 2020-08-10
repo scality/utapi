@@ -28,6 +28,8 @@ const schema = Joi.object({
     warp10: Joi.object({
         host: Joi.alternatives(Joi.string().hostname(), Joi.string().ip()),
         port: Joi.number().port(),
+        readToken: Joi.string(),
+        writeToken: Joi.string(),
     }),
     healthChecks: Joi.object({
         allowFrom: Joi.array().items(Joi.string()),

@@ -191,10 +191,12 @@ class Config {
         }
         parsedConfig.redis = redisConf;
 
-        const warp10Conf = {};
-        warp10Conf.host = _loadFromEnv('WARP10_HOST', config.warp10.host);
-        warp10Conf.port = _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int);
-        parsedConfig.warp10 = warp10Conf;
+        parsedConfig.warp10 = {
+            host: _loadFromEnv('WARP10_HOST', config.warp10.host),
+            port: _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int),
+            readToken: _loadFromEnv('WARP10_READ_TOKEN', config.warp10.readToken),
+            writeToken: _loadFromEnv('WARP10_WRITE_TOKEN', config.warp10.writeToken),
+        };
 
         parsedConfig.logging = {
             level: parsedConfig.development
