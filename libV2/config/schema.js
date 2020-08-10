@@ -1,15 +1,18 @@
 const Joi = require('@hapi/joi');
 
 const redisServerSchema = Joi.object({
-    name: Joi.string(),
     host: Joi.string(),
     port: Joi.number(),
-    password: Joi.string(),
+    password: Joi.string().allow(''),
 });
 
 const redisSentinelSchema = Joi.object({
-    name: Joi.string().default('jabba'),
-    sentinels: Joi.array().items(Joi.string()),
+    name: Joi.string().default('utapi'),
+    sentinels: Joi.array().items(Joi.object({
+        host: Joi.alternatives(Joi.string().hostname(), Joi.string().ip()),
+        port: Joi.number().port(),
+    })),
+    password: Joi.string().default('').allow(''),
     sentinelPassword: Joi.string().default('').allow(''),
 });
 
@@ -25,6 +28,7 @@ const schema = Joi.object({
             .try('error', 'warn', 'info', 'debug', 'trace'),
     }),
     redis: Joi.alternatives().try(redisServerSchema, redisSentinelSchema),
+    localCache: Joi.alternatives().try(redisServerSchema, redisSentinelSchema),
     warp10: Joi.object({
         host: Joi.alternatives(Joi.string().hostname(), Joi.string().ip()),
         port: Joi.number().port(),
