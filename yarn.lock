@@ -148,10 +148,10 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@senx/warp10@^1.0.7":
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/@senx/warp10/-/warp10-1.0.7.tgz#6e9787effbd7358cbd0ff7a93192fd8e66fced26"
-  integrity sha512-J6HqX2aivh+r1/ju+xDcqP6brdMUsv3Xwkj2jpY0sjEWpzTQr2kgPK9EoFlS3h3HK69Ju7POaT5j9HwG0ODHiA==
+"@senx/warp10@^1.0.10":
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/@senx/warp10/-/warp10-1.0.10.tgz#4cc7c112ed6834f2bbd7ca516ca47ec70803c063"
+  integrity sha512-9ObNk6tWgl0RJwjbZMa+LfdfZDqiy1gmVUotT9yGQHSa2vQk32XpTelMpQUL2E6ZSd2USqgxEInpwJ0azZ7WLA==
   dependencies:
     got "^9.6.0"
     moment "^2.24.0"
