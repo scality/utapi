@@ -17,6 +17,7 @@ const version2Exports = {
     utapiVersion: 2,
     startUtapiServer: require('../../libV2/server').startServer,
     UtapiClient: require('../../libV2/client'),
+    tasks: require('../../libV2/tasks'),
 };
 
 const versionToCheck = process.argv[2];
