@@ -11,8 +11,8 @@ function _stringify(value) {
 
 class Warp10Client {
     constructor(config) {
-        this._writeToken = (config && config.token) || 'writeTokenCI';
-        this._readToken = (config && config.token) || 'readTokenCI';
+        this._writeToken = (config && config.writeToken) || 'writeTokenCI';
+        this._readToken = (config && config.readToken) || 'readTokenCI';
         this._nodeId = (config && config.nodeId) || _config.nodeId;
         const proto = (config && config.tls) ? 'https' : 'http';
         const host = (config && config.host) || 'localhost';
