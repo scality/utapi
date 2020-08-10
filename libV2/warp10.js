@@ -1,4 +1,4 @@
-const { Warp10 } = require('@senx/warp10/dist');
+const { Warp10 } = require('@senx/warp10');
 const { eventFieldsToWarp10, warp10ValueType } = require('./constants');
 const _config = require('./config');
 
