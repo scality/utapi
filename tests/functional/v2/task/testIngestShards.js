@@ -15,7 +15,7 @@ const getTs = delta => convertTimestamp(_now + delta);
 
 const getClient = prefix => new CacheClient({
     backend: new cacheBackends.RedisCache(
-        config.redis,
+        config.cache,
         prefix,
     ),
 });
