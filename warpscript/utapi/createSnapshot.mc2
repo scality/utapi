@@ -42,6 +42,7 @@
     'utapi.snapshot.master' 'master_snapshot_class' STORE
     'utapi.snapshot' 'snapshot_class' STORE
     'utapi.checkpoint' 'checkpoint_class' STORE
+    'utapi.repair.correction' 'correction_class' STORE
 
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
@@ -96,13 +97,13 @@
       $previousSnapshots $fieldSnapshots $field PUT DROP
     %> FOREACH
 
-    0 'createdSnapshots' STORE
+    // Store a map for our created snapshots
+    {} 'createdSnapshots' STORE
 
-    // $endTimestamp TOSTRING LOGMSG
-    // Fetch all checkpoints since last master snapshot til passed time
+    // Fetch all corrections since last master snapshot til passed time
     {
       'token' $read_token
-      'class' $checkpoint_class
+      'class' $correction_class
       'labels' $filterLabels
       'start' $masterSnapshotTimestamp
       'end' $endTimestamp
@@ -133,6 +134,80 @@
 
       VALUES
       <%
+        @utapi/decodeRecord 'correction' STORE
+        // 'Including correction ' $correction ->JSON + LOGMSG
+        $created
+        'objD' $correction 'objD' GET @util/sumField
+        'sizeD' $correction 'sizeD' GET @util/sumField
+        'inB' $correction 'inB' GET @util/sumField
+        'outB'  $correction 'outB' GET @util/sumField
+
+        'ops' GET 'createdOps' STORE
+        $correction 'ops' GET 'correctionOps' STORE
+
+        $createdOps // Push createdOps onto the stack for sumField
+        $correctionOps KEYLIST
+        <%
+          'key' STORE
+          $key $correctionOps $key GET @util/sumField
+        %> FOREACH
+        // Drop the remaining map returned by sumField from the stack
+        DROP
+      %> FOREACH
+
+      $createdSnapshots $labelName GET 'labelSnapshots' STORE
+      <% $labelSnapshots ISNULL %>
+      <%
+        {} 'labelSnapshots' STORE
+        $createdSnapshots $labelSnapshots $labelName PUT DROP
+      %> IFT
+      $labelSnapshots $created $labelValue PUT DROP
+    %> FOREACH
+
+    // $createdSnapshots ->JSON LOGMSG
+
+    // $endTimestamp TOSTRING LOGMSG
+    // Fetch all checkpoints since last master snapshot til passed time
+    {
+      'token' $read_token
+      'class' $checkpoint_class
+      'labels' $filterLabels
+      'start' $masterSnapshotTimestamp
+      'end' $endTimestamp
+    } FETCH
+    <%
+      // Push our labels and and a list of label keys onto the stack
+      DUP LABELS DUP KEYLIST
+      // Filter the labels
+      ->SET  $ignoredLabels DIFFERENCE SET->
+      // Grab our label name
+      0 GET 'labelName' STORE
+      // Get our label value
+      $labelName GET 'labelValue' STORE
+
+      // Check created snapshots in case any repairs were applied
+      $createdSnapshots $labelName $labelValue @util/getFromNested
+      'created' STORE
+      <% $created ISNULL %>
+      <%
+        // If no new snapshot is found, try to grab the previous one
+        $previousSnapshots $labelName $labelValue @util/getFromNested
+        'created' STORE
+        <% $created ISNULL %>
+        <%
+          // If no previous snapshot, use an empty record
+          {
+            'objD' 0
+            'sizeD' 0
+            'inB' 0
+            'outB' 0
+            'ops' {}
+          } 'created' STORE
+        %> IFT
+      %> IFT
+
+      VALUES
+      <%
         @utapi/decodeRecord 'checkpoint' STORE
         $created
         'objD' $checkpoint 'objD' GET @util/sumField
@@ -153,13 +228,35 @@
         DROP
       %> FOREACH
 
-      $created @utapi/encodeRecord 'value' STORE
-      // 'Created new snapshot ' { 'node' $nodeId $labelName $labelValue } ->JSON + ' ' + $created ->JSON + LOGMSG
-      NEWGTS $snapshot_class RENAME
-      $endTimestamp NaN NaN NaN $value ADDVALUE
-      { 'node' $nodeId $labelName $labelValue } RELABEL
-      $write_token UPDATE
-      $createdSnapshots 1 + 'createdSnapshots' STORE
+      $createdSnapshots $labelName GET 'labelSnapshots' STORE
+      <% $labelSnapshots ISNULL %>
+      <%
+        {} 'labelSnapshots' STORE
+        $createdSnapshots $labelSnapshots $labelName PUT DROP
+      %> IFT
+      $labelSnapshots $created $labelValue PUT DROP
+    %> FOREACH
+
+    // $createdSnapshots ->JSON LOGMSG
+    0 'snapshots' STORE
+    // For each of our indexed fields
+    $createdSnapshots KEYLIST
+    <%
+      'field' STORE
+      $createdSnapshots $field GET 'fieldResults' STORE
+      // For each unique value seen
+      $fieldResults KEYLIST
+      <%
+        'fieldValue' STORE
+        // Encode the results
+        $fieldResults $fieldValue GET @utapi/encodeRecord 'value' STORE
+        // 'Created new snapshot ' { 'node' $nodeId $field $fieldValue } ->JSON + ' ' + $value ->JSON + LOGMSG
+        NEWGTS $snapshot_class RENAME
+        $endTimestamp NaN NaN NaN $value ADDVALUE
+        { 'node' $nodeId $field $fieldValue } RELABEL
+        $write_token UPDATE
+        $snapshots 1 + 'snapshots' STORE
+      %> FOREACH
     %> FOREACH
 
   NEWGTS $master_snapshot_class RENAME
@@ -167,7 +264,7 @@
   { 'node' $nodeId } RELABEL
   $write_token UPDATE
 
-  $createdSnapshots // Leave the number of created snapshot on the stack
+  $snapshots // Leave the number of created snapshot on the stack
 
   %>
   <% // catch any exception

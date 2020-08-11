@@ -3,7 +3,7 @@ const uuid = require('uuid');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
-const { CreateCheckpoint, CreateSnapshot } = require('../../../../libV2/tasks');
+const { CreateCheckpoint, CreateSnapshot, RepairTask } = require('../../../../libV2/tasks');
 
 const { generateCustomEvents, protobuf } = require('../../../utils/v2Data');
 
@@ -44,6 +44,7 @@ describe('Test CreateSnapshot', function () {
     let prefix;
     let warp10;
     let checkpointTask;
+    let repairTask;
     let snapshotTask;
 
     beforeEach(async () => {
@@ -53,6 +54,9 @@ describe('Test CreateSnapshot', function () {
 
         snapshotTask = new CreateSnapshot({ warp10: { nodeId: prefix } });
         snapshotTask._program = { lag: 0, nodeId: prefix };
+
+        repairTask = new RepairTask({ warp10: { nodeId: prefix } });
+        repairTask._program = { lag: 0, nodeId: prefix };
 
         warp10 = new Warp10Client({ nodeId: prefix });
     });
@@ -135,6 +139,25 @@ describe('Test CreateSnapshot', function () {
         await warp10.ingest('utapi.event', newEvents);
         await checkpointTask._execute(getTs(100));
 
+        await snapshotTask._execute(getTs(0));
+
+        const results = await warp10.fetch({
+            className: 'utapi.snapshot', labels: { node: prefix }, start: getTs(1), stop: -1,
+        });
+
+        const series = JSON.parse(results.result[0]);
+        assert.strictEqual(series.length, 3);
+        assertResults(totals, series);
+    });
+
+    it('should include any corrections', async () => {
+        const start = getTs(-300);
+        const stop = getTs(-120);
+        const { events, totals } = generateCustomEvents(start, stop, 100,
+            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
+
+        await warp10.ingest('utapi.repair.event', events);
+        await repairTask._execute(getTs(-1));
         await snapshotTask._execute(getTs(0));
 
         const results = await warp10.fetch({
