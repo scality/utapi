@@ -139,6 +139,41 @@ class Config {
         return this._recursiveUpdateObject(defaultConf, userConf);
     }
 
+    static _parseRedisConfig(config) {
+        const redisConf = {};
+        if (config.sentinels || _definedInEnv('REDIS_SENTINELS')) {
+            redisConf.name = _loadFromEnv('REDIS_NAME', config.name);
+            const sentinels = _loadFromEnv(
+                'REDIS_SENTINELS',
+                config.sentinels,
+                _typeCasts.list,
+            );
+            redisConf.sentinels = sentinels.map(v => {
+                const [host, port] = v.split(':');
+                return { host, port: Number.parseInt(port, 10) };
+            });
+            redisConf.sentinelPassword = _loadFromEnv(
+                'REDIS_SENTINEL_PASSWORD',
+                config.sentinelPassword,
+            );
+        } else {
+            redisConf.host = _loadFromEnv(
+                'REDIS_HOST',
+                config.host,
+            );
+            redisConf.port = _loadFromEnv(
+                'REDIS_PORT',
+                config.port,
+                _typeCasts.int,
+            );
+            redisConf.password = _loadFromEnv(
+                'REDIS_PASSWORD',
+                config.password,
+            );
+        }
+        return redisConf;
+    }
+
     static _parseConfig(config) {
         const parsedConfig = {};
 
@@ -158,38 +193,10 @@ class Config {
             allowFrom: healthCheckFromEnv.concat(config.healthChecks.allowFrom),
         };
 
-        const redisConf = {};
-        if (config.redis.sentinels || _definedInEnv('REDIS_SENTINELS')) {
-            redisConf.name = _loadFromEnv('REDIS_NAME', config.redis.name);
-            const sentinels = _loadFromEnv(
-                'REDIS_SENTINELS',
-                config.redis.sentinels,
-                _typeCasts.list,
-            );
-            redisConf.sentinels = sentinels.map(v => {
-                const [host, port] = v.split(':');
-                return { host, port: Number.parseInt(port, 10) };
-            });
-            redisConf.sentinelPassword = _loadFromEnv(
-                'REDIS_SENTINEL_PASSWORD',
-                config.redis.sentinelPassword,
-            );
-        } else {
-            redisConf.host = _loadFromEnv(
-                'REDIS_HOST',
-                config.redis.host,
-            );
-            redisConf.port = _loadFromEnv(
-                'REDIS_PORT',
-                config.redis.port,
-                _typeCasts.int,
-            );
-            redisConf.password = _loadFromEnv(
-                'REDIS_PASSWORD',
-                config.redis.password,
-            );
-        }
-        parsedConfig.redis = redisConf;
+        parsedConfig.redis = Config._parseRedisConfig(config.redis);
+
+        parsedConfig.cache = Config._parseRedisConfig(config.localCache);
+        parsedConfig.cache.backend = _loadFromEnv('CACHE_BACKEND', config.cacheBackend);
 
         parsedConfig.warp10 = {
             host: _loadFromEnv('WARP10_HOST', config.warp10.host),
@@ -208,7 +215,6 @@ class Config {
             ),
         };
 
-        parsedConfig.cacheBackend = _loadFromEnv('CACHE_BACKEND', config.cacheBackend);
 
         parsedConfig.ingestionSchedule = _loadFromEnv('INGESTION_SCHEDULE', config.ingestionSchedule);
         parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHEDULE', config.checkpointSchedule);
@@ -233,4 +239,5 @@ class Config {
         return new Config(newConfig);
     }
 }
+
 module.exports = new Config();
