@@ -36,6 +36,7 @@
     'utapi.event' 'event_class' STORE
     'utapi.checkpoint' 'checkpoint_class' STORE
     'utapi.snapshot' 'snapshot_class' STORE
+    'utapi.repair.correction' 'correction_class' STORE
 
     {} 'snapshots' STORE
 
@@ -79,7 +80,7 @@
     'load_checkpoints' SECTION
     [
       $read_token
-      $snapshot_class
+      $checkpoint_class
       $labels
     ] FINDSETS
     DROP SWAP DROP
@@ -96,9 +97,8 @@
 
       // Get the timestamp of the corresponding snapshot if it exists otherwise use 0
       $snapshots $key GET
-      <% DUP TYPEOF 'LONG' == %>
-      <% 1 + %> // We want the next tick after the snapshot
-      <% DROP 0 %> IFTE
+      <% DUP TYPEOF 'LONG' != %>
+      <% DROP 0 %> IFT
       'startTimestamp' STORE
       {
         'token' $read_token
@@ -154,15 +154,13 @@
       // otherwise look for a snapshot
       // If all else fails use 0
       $checkpoints $key GET
-      <% DUP TYPEOF 'LONG' == %>
-      <% 1 + %> // We want the next tick after the checkpoint
+      <% DUP TYPEOF 'LONG' != %>
       <%
         DROP
         $snapshots $key GET
-        <% DUP TYPEOF 'LONG' == %>
-        <% 1 + %> // We want the next tick after the snapshot
-        <% DROP 0 %> IFTE
-      %> IFTE
+        <% DUP TYPEOF 'LONG' != %>
+        <% DROP 0 %> IFT
+      %> IFT
       'startTimestamp' STORE
       {
         'token' $read_token
@@ -202,7 +200,56 @@
         %> FOREACH
       %> FOREACH
     %> FOREACH
-    $results
+
+    // Find all nodes containing corrections
+    'load_corrections' SECTION
+    [
+      $read_token
+      $correction_class
+      $labels
+    ] FINDSETS
+    DROP SWAP DROP
+    'node' GET
+    <% DUP ISNULL %>
+    <% DROP [] %> IFT
+    // Load corrections from each node
+    <%
+      'key' STORE
+      // Adds the `node` label to the map
+      $labels UNMAP 'node' $key } 'filterLabels' STORE
+
+      -1 'correctionTimestamp' STORE
+
+      // Get the timestamp of the corresponding snapshot if it exists otherwise use 0
+      $snapshots $key GET
+      <% DUP TYPEOF 'LONG' != %>
+      <% DROP 0 %> IFT
+      'startTimestamp' STORE
+      {
+        'token' $read_token
+        'class' $correction_class
+        'labels' $filterLabels
+        'end' $endTimestamp
+        'start' $startTimestamp
+      } FETCH
+
+      <% // Handle multiple GTS
+        DUP LASTTICK
+        <% DUP $correctionTimestamp > %>
+        <% 'correctionTimestamp' STORE %>
+        <% DROP %> IFTE
+
+        VALUES
+        <% // For each correction
+          @utapi/decodeRecord
+          // DUP 'Loaded correction ' SWAP ->JSON + LOGMSG
+          $results @util/sumRecord 'results' STORE
+        %> FOREACH
+      %> FOREACH
+    %> FOREACH
+
+    $results // Leave results on the stack
+
   %>
   <% // catch any exception
     RETHROW
