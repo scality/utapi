@@ -100,5 +100,18 @@ describe('Test IngestShards', function () {
         });
         assertResults(events, results);
     });
+
+    it('should ingest old metrics as repair', async () => {
+        const start = shardFromTimestamp(getTs(-720));
+        const stop = start + 9000000;
+        const events = generateFakeEvents(start, stop, 100);
+
+        await Promise.all(events.map(e => cacheClient.pushMetric(e)));
+        await ingestTask.execute();
+        const results = await warp10.fetch({
+            className: 'utapi.repair.event', labels: { node: prefix }, start: getTs(1), stop: -100,
+        });
+        assertResults(events, results);
+    });
 });
 

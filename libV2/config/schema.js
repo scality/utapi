@@ -49,6 +49,7 @@ const schema = Joi.object({
     ingestionSchedule: Joi.string(),
     checkpointSchedule: Joi.string(),
     snapshotSchedule: Joi.string(),
+    repairSchedule: Joi.string(),
 });
 
 module.exports = schema;
