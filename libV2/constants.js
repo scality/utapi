@@ -89,6 +89,7 @@ const constants = {
     shardIngestLagSecs: 30,
     checkpointLagSecs: 300,
     snapshotLagSecs: 900,
+    repairLagSecs: 5,
 };
 
 constants.operationToResponse = constants.operations

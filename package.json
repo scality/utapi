@@ -61,6 +61,7 @@
     "start_v2:task:ingest": "ENABLE_UTAPI_V2=1 node bin/ingestShards.js",
     "start_v2:task:checkpoint": "ENABLE_UTAPI_V2=1 node bin/createCheckpoint.js",
     "start_v2:task:snapshot": "ENABLE_UTAPI_V2=1 node bin/createSnapshot.js",
+    "start_v2:task:repair": "ENABLE_UTAPI_V2=1 node bin/repair.js",
     "start_v2:server": "ENABLE_UTAPI_V2=1 node bin/server.js",
     "start_v2:server:dev": "UTAPI_DEV_MODE=t ENABLE_UTAPI_V2=t yarn nodemon --watch './**/*.js' --watch './**/*.json' --watch './**/*.yaml' --exec node bin/server.js"
   }

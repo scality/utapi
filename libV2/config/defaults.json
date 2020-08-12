@@ -25,5 +25,6 @@
     "nodeId": "single_node",
     "ingestionSchedule": "*/5 * * * * *",
     "checkpointSchedule": "*/30 * * * * *",
-    "snapshotSchedule": "* 0 * * * *"
+    "snapshotSchedule": "* 0 * * * *",
+    "repairSchedule": "* */5 * * * *"
 }
