@@ -2,7 +2,8 @@ const assert = require('assert');
 const sinon = require('sinon');
 const ingestMetric = require('../../../../../libV2/server/API/metrics/ingestMetric');
 const { client: cacheClient } = require('../../../../../libV2/cache');
-
+const { convertTimestamp } = require('../../../../../libV2/utils');
+const { UtapiMetric } = require('../../../../../libV2/models');
 const { generateFakeEvents, templateContext } = require('../../../../utils/v2Data');
 
 const events = generateFakeEvents(1, 50, 50);
@@ -19,7 +20,14 @@ describe('Test ingestMetric', () => {
         const spy = sinon.spy(cacheClient, 'pushMetric');
         await ingestMetric(ctx, { body: events.map(ev => ev.getValue()) });
         assert.strictEqual(ctx.results.statusCode, 200);
-        events.forEach(ev => assert(spy.calledWith(ev)));
+        events.forEach(ev => {
+            assert(spy.calledWith(
+                new UtapiMetric({
+                    ...ev.getValue(),
+                    timestamp: convertTimestamp(ev.timestamp),
+                }),
+            ));
+        });
     });
 
     it('should throw InvalidRequest if metric data is invalid',
