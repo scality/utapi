@@ -9,8 +9,25 @@
         "dumpLevel": "error"
     },
     "redis": {
-        "host": "127.0.0.1",
-        "port": 6379
+        "name": "scality-s3",
+        "password": "",        "sentinels": [
+            {
+                "host": "10.10.16.1",
+                "port": 16379
+            },            {
+                "host": "10.10.16.2",
+                "port": 16379
+            },            {
+                "host": "10.10.16.3",
+                "port": 16379
+            },            {
+                "host": "10.10.16.4",
+                "port": 16379
+            },            {
+                "host": "10.10.16.5",
+                "port": 16379
+            }                    ],
+        "sentinelPassword": ""
     },
     "vaultd": {
         "host": "127.0.0.1",
