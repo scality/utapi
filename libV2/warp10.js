@@ -46,7 +46,7 @@ class Warp10Client {
                 // eslint-disable-next-line no-await-in-loop
                 return await func(client, ...params);
             } catch (error) {
-                moduleLogger.error('error during warp10 operation, failing over to next host', { error });
+                moduleLogger.debug('error during warp10 operation, failing over to next host', { error });
             }
         }
         moduleLogger.error('no remaining warp10 hosts to try, unable to complete request');
