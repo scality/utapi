@@ -1,6 +1,12 @@
 const { Warp10 } = require('@senx/warp10');
 const { eventFieldsToWarp10, warp10ValueType } = require('./constants');
 const _config = require('./config');
+const { LoggerContext } = require('./utils');
+const errors = require('./errors');
+
+const moduleLogger = new LoggerContext({
+    module: 'warp10',
+});
 
 function _stringify(value) {
     if (typeof value === 'number') {
@@ -15,11 +21,36 @@ class Warp10Client {
         this._readToken = (config && config.readToken) || 'readTokenCI';
         this._nodeId = (config && config.nodeId) || _config.nodeId;
         const proto = (config && config.tls) ? 'https' : 'http';
-        const host = (config && config.host) || 'localhost';
-        const port = (config && config.port) || 4802;
         const requestTimeout = (config && config.requestTimeout) || 10000;
         const connectTimeout = (config && config.connectTimeout) || 10000;
-        this._warp10 = new Warp10(`${proto}://${host}:${port}`, requestTimeout, connectTimeout);
+        if (config && config.hosts) {
+            this._clients = config.hosts.map(h => {
+                const { host, port } = h;
+                return new Warp10(
+                    `${proto}://${host}:${port}`,
+                    requestTimeout,
+                    connectTimeout,
+                );
+            });
+        } else {
+            const host = (config && config.host) || 'localhost';
+            const port = (config && config.port) || 4802;
+            this._clients = [new Warp10(`${proto}://${host}:${port}`, requestTimeout, connectTimeout)];
+        }
+    }
+
+    async _wrapCall(func, params) {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const client of this._clients) {
+            try {
+                // eslint-disable-next-line no-await-in-loop
+                return await func(client, ...params);
+            } catch (error) {
+                moduleLogger.error('error during warp10 operation, failing over to next host', { error });
+            }
+        }
+        moduleLogger.error('no remaining warp10 hosts to try, unable to complete request');
+        throw errors.InternalError;
     }
 
     static _packEvent(event) {
@@ -31,15 +62,22 @@ class Warp10Client {
     }
 
     _buildGTSEntry(className, event) {
-        const labels = this._warp10.formatLabels({ node: this._nodeId });
+        const labels = this._clients[0].formatLabels({ node: this._nodeId });
         const packed = Warp10Client._packEvent(event);
         return `${event.timestamp}// ${className}${labels} ${packed}`;
     }
 
-    async ingest(className, events) {
+    async _ingest(warp10, className, events) {
         const payload = events.map(ev => this._buildGTSEntry(className, ev));
-        const res = await this._warp10.update(this._writeToken, payload);
+        const res = await warp10.update(this._writeToken, payload);
         return res.count;
+    }
+
+    ingest(...params) {
+        return this._wrapCall(
+            this._ingest.bind(this),
+            params,
+        );
     }
 
     _buildScriptEntry(params) {
@@ -61,14 +99,21 @@ class Warp10Client {
         return payload.join('\n');
     }
 
-    async exec(params) {
+    async _exec(warp10, params) {
         const payload = this._buildExecPayload(params);
-        const resp = await this._warp10.exec(payload);
+        const resp = await warp10.exec(payload);
         return resp;
     }
 
-    async fetch(params) {
-        const resp = await this._warp10.fetch(
+    exec(...params) {
+        return this._wrapCall(
+            this._exec.bind(this),
+            params,
+        );
+    }
+
+    async _fetch(warp10, params) {
+        const resp = await warp10.fetch(
             this._readToken,
             params.className,
             params.labels || {},
@@ -78,6 +123,13 @@ class Warp10Client {
             false,
         );
         return resp;
+    }
+
+    fetch(...params) {
+        return this._wrapCall(
+            this._fetch.bind(this),
+            params,
+        );
     }
 }
 
