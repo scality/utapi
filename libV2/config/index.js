@@ -161,8 +161,11 @@ class Config {
                 _typeCasts.list,
             );
             redisConf.sentinels = sentinels.map(v => {
-                const [host, port] = v.split(':');
-                return { host, port: Number.parseInt(port, 10) };
+                if (typeof v === 'string') {
+                    const [host, port] = v.split(':');
+                    return { host, port: Number.parseInt(port, 10) };
+                }
+                return v;
             });
             redisConf.sentinelPassword = _loadFromEnv(
                 'REDIS_SENTINEL_PASSWORD',
