@@ -7,7 +7,7 @@ const { truthy, envNamespace } = require('../constants');
 const configSchema = require('./schema');
 
 function _splitServer(text) {
-    assert(text.indexOf(':') !== -1);
+    assert.notStrictEqual(text.indexOf(':'), -1);
     const [host, port] = text.split(':').map(v => v.trim());
     return {
         host,
