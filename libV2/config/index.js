@@ -1,14 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 const Joi = require('@hapi/joi');
+const assert = require('assert');
 
 const { truthy, envNamespace } = require('../constants');
 const configSchema = require('./schema');
+
+function _splitServer(text) {
+    assert.notStrictEqual(text.indexOf(':'), -1);
+    const [host, port] = text.split(':').map(v => v.trim());
+    return {
+        host,
+        port: Number.parseInt(port, 10),
+    };
+}
 
 const _typeCasts = {
     bool: val => truthy.has(val.toLowerCase()),
     int: val => parseInt(val, 10),
     list: val => val.split(',').map(v => v.trim()),
+    serverList: val => val.split(',').map(v => v.trim()).map(_splitServer),
 };
 
 
@@ -27,6 +38,7 @@ function _loadFromEnv(key, defaultValue, type) {
     }
     return defaultValue;
 }
+
 
 const defaultConfigPath = path.join(__dirname, '../../config.json');
 
@@ -198,12 +210,19 @@ class Config {
         parsedConfig.cache = Config._parseRedisConfig(config.localCache);
         parsedConfig.cache.backend = _loadFromEnv('CACHE_BACKEND', config.cacheBackend);
 
-        parsedConfig.warp10 = {
-            host: _loadFromEnv('WARP10_HOST', config.warp10.host),
-            port: _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int),
+        const warp10Conf = {
             readToken: _loadFromEnv('WARP10_READ_TOKEN', config.warp10.readToken),
             writeToken: _loadFromEnv('WARP10_WRITE_TOKEN', config.warp10.writeToken),
         };
+
+        parsedConfig.warp10 = warp10Conf;
+
+        if (Array.isArray(config.warp10.hosts) || _definedInEnv('WARP10_HOSTS')) {
+            warp10Conf.hosts = _loadFromEnv('WARP10_HOSTS', config.warp10.hosts, _typeCasts.serverList);
+        } else {
+            warp10Conf.host = _loadFromEnv('WARP10_HOST', config.warp10.host);
+            warp10Conf.port = _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int);
+        }
 
         parsedConfig.logging = {
             level: parsedConfig.development
