@@ -1,14 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 const Joi = require('@hapi/joi');
-const asert = require('assert');
+const assert = require('assert');
 
 const { truthy, envNamespace } = require('../constants');
 const configSchema = require('./schema');
 
 function _splitServer(text) {
     assert(text.indexOf(':') !== -1);
-    const [host, port] = text.split(',').map(v => v.trim());
+    const [host, port] = text.split(':').map(v => v.trim());
     return {
         host,
         port: Number.parseInt(port, 10),
@@ -217,6 +217,8 @@ class Config {
             readToken: _loadFromEnv('WARP10_READ_TOKEN', config.warp10.readToken),
             writeToken: _loadFromEnv('WARP10_WRITE_TOKEN', config.warp10.writeToken),
         };
+
+        parsedConfig.warp10 = warp10Conf;
 
         if (Array.isArray(config.warp10.hosts) || _definedInEnv('WARP10_HOSTS')) {
             warp10Conf.hosts = _loadFromEnv('WARP10_HOSTS', config.warp10.hosts, _typeCasts.serverList);
