@@ -16,6 +16,24 @@ const redisSentinelSchema = Joi.object({
     sentinelPassword: Joi.string().default('').allow(''),
 });
 
+const warp10SingleHost = Joi.object({
+    host: Joi.alternatives(Joi.string().hostname(), Joi.string().ip()),
+    port: Joi.number().port(),
+    readToken: Joi.string(),
+    writeToken: Joi.string(),
+});
+
+const warp10MultiHost = Joi.object({
+    hosts: Joi.array().items(Joi.object({
+        host: Joi.alternatives(Joi.string().hostname(), Joi.string().ip()),
+        port: Joi.number().port(),
+    })),
+    readToken: Joi.string(),
+    writeToken: Joi.string(),
+});
+
+Joi.array().items(warp10SingleHost);
+
 const schema = Joi.object({
     host: Joi.string(),
     port: Joi.number().port(),
@@ -29,12 +47,7 @@ const schema = Joi.object({
     }),
     redis: Joi.alternatives().try(redisServerSchema, redisSentinelSchema),
     localCache: Joi.alternatives().try(redisServerSchema, redisSentinelSchema),
-    warp10: Joi.object({
-        host: Joi.alternatives(Joi.string().hostname(), Joi.string().ip()),
-        port: Joi.number().port(),
-        readToken: Joi.string(),
-        writeToken: Joi.string(),
-    }),
+    warp10: Joi.alternatives().try(warp10SingleHost, warp10MultiHost),
     healthChecks: Joi.object({
         allowFrom: Joi.array().items(Joi.string()),
     }),
