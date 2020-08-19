@@ -8,6 +8,7 @@ const { initializeOasTools, middleware } = require('./middleware');
 const { spec: apiSpec } = require('./spec');
 const { client: cacheClient } = require('../cache');
 const { LoggerContext } = require('../utils');
+const LegacyServer = require('./legacy');
 
 const moduleLogger = new LoggerContext({
     module: 'server',
@@ -24,6 +25,7 @@ class UtapiServer extends Process {
         const app = express();
         app.use(bodyParser.json({ strict: false }));
         app.use(middleware.loggerMiddleware);
+        app.use(middleware.apiVersionMiddleware);
         await initializeOasTools(spec, app);
         app.use(middleware.errorMiddleware);
         app.use(middleware.responseLoggerMiddleware);
@@ -47,6 +49,7 @@ class UtapiServer extends Process {
     async _setup() {
         this._app = await UtapiServer._createApp(apiSpec);
         this._server = await UtapiServer._createServer(this._app);
+        LegacyServer.setup();
     }
 
     async _start() {
