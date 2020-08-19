@@ -7,6 +7,10 @@
         "code": 500,
         "description": "The server encountered an internal error. Please retry the request."
     },
+    "InvalidQueryParameter" : {
+        "code": 400,
+        "description": "The query string is malformed."
+    },
     "InvalidUri": {
         "code": 400,
         "description": "The requested URI does not represent any resource on the server."

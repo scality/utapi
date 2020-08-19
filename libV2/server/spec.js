@@ -54,6 +54,7 @@ function _getApiOperationMiddleware(routes) {
                     if (op['x-authv4'] === true) {
                         middleware.authv4 = true;
                     }
+
                     optIds[tag][op.operationId] = middleware;
 
                     moduleLogger
