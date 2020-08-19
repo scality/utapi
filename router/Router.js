@@ -47,8 +47,17 @@ class Router {
         const reqData = {
             resource,
         };
+
         // assign query params
         Object.assign(reqData, query);
+
+        // This is a redirected request from v2
+        // Reuse the previously parsed body
+        if (req.body) {
+            cb(null, Object.assign(reqData, req.body));
+            return;
+        }
+
         req.on('data', data => body.push(data))
             .on('error', cb)
             .on('end', () => {
@@ -118,7 +127,7 @@ class Router {
         const validator = route.getValidator()(data);
         const validationResult = validator.validate();
         if (!validationResult) {
-            log.trace('input parameters are not well formated or missing', {
+            log.trace('input parameters are not well formatted or missing', {
                 method: 'Router._validateRoute',
             });
             return cb(validator.getValidationError());
@@ -222,8 +231,12 @@ class Router {
         );
         auth.setHandler(this._vault);
         const request = utapiRequest.getRequest();
-        request.path = utapiRequest.getRequestPathname();
-        request.query = utapiRequest.getRequestQuery();
+        // These properties are already defined on a v2 request
+        // And are unable to be overwritten
+        if (!process.env.ENABLE_UTAPI_V2) {
+            request.path = utapiRequest.getRequestPathname();
+            request.query = utapiRequest.getRequestQuery();
+        }
         return auth.server.doAuth(request, log, (err, authResults) => {
             if (err) {
                 return cb(err);
