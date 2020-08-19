@@ -45,7 +45,8 @@ describe('Test middleware', () => {
         });
 
         it('should set a default code and message', () => {
-            middleware.errorMiddleware({}, null, resp);
+            const req = templateRequest();
+            middleware.errorMiddleware({}, req, resp);
             assert.strictEqual(resp._status, 500);
             assert.deepStrictEqual(resp._body, {
                 error: {
@@ -56,7 +57,8 @@ describe('Test middleware', () => {
         });
 
         it('should set the correct info from an error', () => {
-            middleware.errorMiddleware({ code: 123, message: 'Hello World!', utapiError: true }, null, resp);
+            const req = templateRequest();
+            middleware.errorMiddleware({ code: 123, message: 'Hello World!', utapiError: true }, req, resp);
             assert.deepStrictEqual(resp._body, {
                 error: {
                     code: '123',
@@ -66,7 +68,8 @@ describe('Test middleware', () => {
         });
 
         it("should replace an error's message if it's internal and not in development mode", () => {
-            middleware.errorMiddleware({ code: 123, message: 'Hello World!' }, null, resp);
+            const req = templateRequest();
+            middleware.errorMiddleware({ code: 123, message: 'Hello World!' }, req, resp);
             assert.deepStrictEqual(resp._body, {
                 error: {
                     code: '123',
