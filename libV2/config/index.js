@@ -262,5 +262,4 @@ class Config {
         return new Config(newConfig);
     }
 }
-
 module.exports = new Config();
