@@ -1,6 +1,8 @@
 const http = require('http');
+const https = require('https');
 const express = require('express');
 const bodyParser = require('body-parser');
+const { ciphers, dhparam } = require('arsenal').https;
 
 const Process = require('../process');
 const config = require('../config');
@@ -30,7 +32,25 @@ class UtapiServer extends Process {
         return app;
     }
 
+    static _createHttpsAgent() {
+        const conf = {
+            ciphers: ciphers.ciphers,
+            dhparam,
+            cert: config.tls.cert,
+            key: config.tls.key,
+            ca: config.tls.ca ? [config.tls.ca] : null,
+            requestCert: false,
+            rejectUnauthorized: true,
+        };
+        const agent = new https.Agent(conf);
+        conf.agent = agent;
+        return conf;
+    }
+
     static async _createServer(app) {
+        if (config.tls) {
+            return https.createServer(UtapiServer._createHttpsAgent(), app);
+        }
         return http.createServer(app);
     }
 
