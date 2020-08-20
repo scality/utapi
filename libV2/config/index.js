@@ -66,33 +66,41 @@ class Config {
 
         // read config automatically
         const loadedConfig = this._loadConfig();
-        let parsedConfig = Config._parseConfig(loadedConfig);
+        let parsedConfig = this._parseConfig(loadedConfig);
         if (typeof overrides === 'object') {
             parsedConfig = this._recursiveUpdate(parsedConfig, overrides);
         }
         Object.assign(this, parsedConfig);
     }
 
-    static _readFile(path) {
+    static _readFile(path, encoding = 'utf-8') {
         try {
-            const data = fs.readFileSync(path, {
-                encoding: 'utf-8',
-            });
+            return fs.readFileSync(path, { encoding });
+        } catch (error) {
+            // eslint-disable-next-line no-console
+            console.error({ message: `error reading file at ${path}`, error });
+            throw error;
+        }
+    }
+
+    static _readJSON(path) {
+        const data = Config._readFile(path);
+        try {
             return JSON.parse(data);
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error({ message: `error reading config file at ${path}`, error });
+            console.error({ message: `error parsing JSON from file at ${path}`, error });
             throw error;
         }
     }
 
     _loadDefaults() {
-        return Config._readFile(this._defaultsPath);
+        return Config._readJSON(this._defaultsPath);
     }
 
     _loadUserConfig() {
         return Joi.attempt(
-            Config._readFile(this._configPath),
+            Config._readJSON(this._configPath),
             configSchema,
             'invalid Utapi config',
         );
@@ -189,7 +197,26 @@ class Config {
         return redisConf;
     }
 
-    static _parseConfig(config) {
+    _loadCertificates(config) {
+        const { key, cert, ca } = config;
+
+        const keyPath = path.isAbsolute(key) ? key : path.join(this._basePath, key);
+        const certPath = path.isAbsolute(cert) ? cert : path.join(this._basePath, cert);
+
+        const certs = {
+            cert: Config._readFile(certPath, 'ascii'),
+            key: Config._readFile(keyPath, 'ascii'),
+        };
+
+        if (ca) {
+            const caPath = path.isAbsolute(ca) ? ca : path.join(this._basePath, ca);
+            certs.ca = Config._readFile(caPath, 'ascii');
+        }
+
+        return certs;
+    }
+
+    _parseConfig(config) {
         const parsedConfig = {};
 
         parsedConfig.development = _loadFromEnv('DEV_MODE', config.development, _typeCasts.bool);
@@ -207,6 +234,17 @@ class Config {
         parsedConfig.healthChecks = {
             allowFrom: healthCheckFromEnv.concat(config.healthChecks.allowFrom),
         };
+
+        const certPaths = {
+            cert: _loadFromEnv('TLS_CERT', config.certFilePaths.cert),
+            key: _loadFromEnv('TLS_KEY', config.certFilePaths.key),
+            ca: _loadFromEnv('TLS_CA', config.certFilePaths.ca),
+        };
+        if (certPaths.key && certPaths.cert) {
+            parsedConfig.tls = this._loadCertificates(certPaths);
+        } else if (certPaths.key || certPaths.cert) {
+            throw new Error('bad config: both certFilePaths.key and certFilePaths.cert must be defined');
+        }
 
         parsedConfig.redis = Config._parseRedisConfig(config.redis);
 
@@ -236,7 +274,6 @@ class Config {
                 config.log.dumpLevel,
             ),
         };
-
 
         parsedConfig.ingestionSchedule = _loadFromEnv('INGESTION_SCHEDULE', config.ingestionSchedule);
         parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHEDULE', config.checkpointSchedule);
