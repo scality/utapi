@@ -2,6 +2,7 @@ const errors = require('../../../errors');
 const { serviceToWarp10Label, operationToResponse } = require('../../../constants');
 const { convertTimestamp } = require('../../../utils');
 const { client: warp10 } = require('../../../warp10');
+const config = require('../../../config');
 
 const emptyOperationsResponse = Object.values(operationToResponse)
     .reduce((prev, key) => {
@@ -32,6 +33,7 @@ async function listMetric(ctx, params) {
                     start,
                     end,
                     labels,
+                    node: config.nodeId,
                 },
                 macro: 'utapi/getMetrics',
             };
