@@ -7,14 +7,15 @@ const { models, constants } = require('arsenal');
 const { CANONICAL_ID, BUCKET_NAME, OBJECT_KEY } = require('./values');
 
 const { ObjectMD } = models;
-const app = express();
 
 class BucketD {
-    constructor() {
+    constructor(isV2 = false) {
         this._server = null;
         this._bucketCount = 0;
         this._bucketContent = {};
         this._buckets = [];
+        this._isV2 = isV2;
+        this._app = express();
     }
 
     clearBuckets() {
@@ -61,14 +62,14 @@ class BucketD {
             CommonPrefixes: [],
         };
         const maxKeys = parseInt(req.query.maxKeys, 10);
-        if (req.query.marker) {
+        if (req.query.marker || req.query.gt) {
             body.IsTruncated = false;
             body.Contents = this._buckets.slice(maxKeys);
         } else {
             body.IsTruncated = maxKeys < this._bucketCount;
             body.Contents = this._buckets.slice(0, maxKeys);
         }
-        return JSON.stringify(body);
+        return body;
     }
 
     _getShadowBucketResponse(bucketName) {
@@ -77,7 +78,7 @@ class BucketD {
             IsTruncated: false,
             Contents: this._bucketContent[bucketName] || [],
         };
-        return JSON.stringify(body);
+        return body;
     }
 
     _getBucketResponse(bucketName) {
@@ -86,7 +87,7 @@ class BucketD {
             IsTruncated: false,
             Contents: this._bucketContent[bucketName] || [],
         };
-        return JSON.stringify(body);
+        return body;
     }
 
     _getShadowBucketOverviewResponse(bucketName) {
@@ -99,11 +100,11 @@ class BucketD {
             IsTruncated: false,
             Uploads: mpus,
         };
-        return JSON.stringify(body);
+        return body;
     }
 
     _initiateRoutes() {
-        app.param('bucketName', (req, res, next, bucketName) => {
+        this._app.param('bucketName', (req, res, next, bucketName) => {
             /* eslint-disable no-param-reassign */
             if (bucketName === constants.usersBucket) {
                 req.body = this._getUsersBucketResponse(req);
@@ -115,25 +116,54 @@ class BucketD {
             ) {
                 req.body = this._getBucketResponse(bucketName);
             }
+
+            // v2 reindex uses `Basic` listing type for everything
+            if (this._isV2) {
+                if (req.body && req.body.Contents) {
+                    req.body = req.body.Contents;
+                }
+            }
+
             /* eslint-enable no-param-reassign */
             next();
         });
 
-        app.get('/default/bucket/:bucketName', (req, res) => {
-            res.writeHead(200);
-            res.write(req.body);
-            res.end();
+        this._app.get('/default/attributes/:bucketName', (req, res) => {
+            const key = req.params.bucketName;
+            const bucket = this._bucketContent[key];
+            if (bucket) {
+                res.status(200).send({
+                    name: key,
+                    owner: CANONICAL_ID,
+                    ownerDisplayName: 'steve',
+                    creationDate: new Date(),
+                });
+                return;
+            }
+            res.statusMessage = 'DBNotFound';
+            res.status(404).end();
+        });
+
+
+        this._app.get('/default/bucket/:bucketName', (req, res) => {
+            res.status(200).send(req.body);
         });
     }
 
     start() {
         this._initiateRoutes();
         const port = 9000;
-        this._server = http.createServer(app).listen(port);
+        this._server = http.createServer(this._app).listen(port);
     }
 
     end() {
         this._server.close();
+    }
+
+    reset() {
+        this._bucketCount = 0;
+        this._bucketContent = {};
+        this._buckets = [];
     }
 }
 

@@ -36,13 +36,14 @@
     $operation_info 'labels' GET 'labels' STORE
     $operation_info 'start' GET TOLONG 'startTimestamp' STORE
     $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+    $operation_info 'node' GET 'nodeID' STORE
 
     // 'Fetching metrics for ' $labels ->JSON + LOGMSG
     // 'Time Range: ' $startTimestamp TOSTRING + ' ' + $endTimestamp TOSTRING + LOGMSG
 
-    $read_token $labels $startTimestamp @utapi/getMetricsAt 'startResults' STORE
+    $read_token $labels $startTimestamp $nodeID @utapi/getMetricsAt 'startResults' STORE
 
-    $read_token $labels $endTimestamp @utapi/getMetricsAt 'endResults' STORE
+    $read_token $labels $endTimestamp $nodeID @utapi/getMetricsAt 'endResults' STORE
 
     // $startResults ->JSON LOGMSG
     // $endResults ->JSON LOGMSG

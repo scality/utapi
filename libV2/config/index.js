@@ -285,6 +285,8 @@ class Config {
             port: _loadFromEnv('VAULT_PORT', config.vaultd.port),
         };
 
+        parsedConfig.bucketd = _loadFromEnv('BUCKETD_BOOTSTRAP', config.bucketd, _typeCasts.serverList);
+
         return parsedConfig;
     }
 

@@ -32,7 +32,6 @@ const warp10MultiHost = Joi.object({
     writeToken: Joi.string(),
 });
 
-Joi.array().items(warp10SingleHost);
 
 const tlsSchema = Joi.object({
     key: Joi.string(),
@@ -62,6 +61,11 @@ const schema = Joi.object({
         host: Joi.string().hostname(),
         port: Joi.number().port(),
     }),
+    reindex: Joi.object({
+        enabled: Joi.boolean(),
+        schedule: Joi.string(),
+    }),
+    bucketd: Joi.array().items(Joi.string()),
     expireMetrics: Joi.boolean(),
     expireMetricsTTL: Joi.number(),
     cacheBackend: Joi.string().valid('memory', 'redis'),
