@@ -19,13 +19,13 @@ describe('Test Warp Client', () => {
     });
 
     it('should ingest records', async () => {
-        const res = await warp10.ingest(className, testValues);
+        const res = await warp10.ingest({ className }, testValues);
         assert.strictEqual(res, testValues.length);
     });
 
     // TODO after the macro encoder is written this will need to be updated
     it('should fetch records', async () => {
-        await warp10.ingest(className, testValues);
+        await warp10.ingest({ className }, testValues);
         const res = await warp10.fetch({ className, start: `${new Date().getTime()}000`, stop: -100 });
         const parsed = JSON.parse(res.result[0])[0];
         assert.strictEqual(parsed.c, className);
