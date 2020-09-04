@@ -84,12 +84,14 @@ const constants = {
         buckets: 'bck',
     },
 
-    warp10ValueType: ':m:utapi/event:',
+    warp10EventType: ':m:utapi/event:',
+    warp10RecordType: ':m:utapi/record:',
     truthy,
     shardIngestLagSecs: 30,
     checkpointLagSecs: 300,
     snapshotLagSecs: 900,
     repairLagSecs: 5,
+    keyVersionSplitter: String.fromCharCode(0),
 };
 
 constants.operationToResponse = constants.operations
