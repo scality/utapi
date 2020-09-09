@@ -4,11 +4,12 @@ const CacheClient = require('./client');
 const { MemoryCache, RedisCache } = require('./backend');
 
 const cacheTypes = {
-    redis: () => new RedisCache(config.cache),
+    redis: conf => new RedisCache(conf),
     memory: () => new MemoryCache(),
 };
 
-const backend = cacheTypes[config.cache.backend]();
+const cacheBackend = cacheTypes[config.cache.backend](config.cache);
+const counterBackend = cacheTypes[config.cache.backend](config.redis);
 
 module.exports = {
     CacheClient,
@@ -16,5 +17,5 @@ module.exports = {
         MemoryCache,
         RedisCache,
     },
-    client: new CacheClient({ backend }),
+    client: new CacheClient({ cacheBackend, counterBackend }),
 };
