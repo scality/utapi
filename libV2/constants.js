@@ -92,6 +92,7 @@ const constants = {
     checkpointLagSecs: 300,
     snapshotLagSecs: 900,
     repairLagSecs: 5,
+    counterBaseValueExpiration: 86400, // 24hrs
 };
 
 constants.operationToResponse = constants.operations
