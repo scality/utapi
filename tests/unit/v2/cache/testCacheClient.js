@@ -17,14 +17,17 @@ const sortEvent = (a, b) => (a.uuid > b.uuid ? 1 : -1);
 describe('Test high level cache client', () => {
     let client;
     beforeEach(() => {
-        client = new CacheClient({ backend: new cacheBackends.MemoryCache() });
+        client = new CacheClient({
+            cacheBackend: new cacheBackends.MemoryCache(),
+            counterBackend: new cacheBackends.MemoryCache(),
+        });
     });
 
     it('should push a metric', async () => {
         const res = await Promise.all(testValues.map(event => client.pushMetric(event)));
         assert(res.every(v => v));
         const keys = testValues.map(e => schema.getUtapiMetricKey('utapi', e));
-        const events = await Promise.all(keys.map(k => client._backend.getKey(k)));
+        const events = await Promise.all(keys.map(k => client._cacheBackend.getKey(k)));
         assert.deepStrictEqual(events, testValues);
     });
 
@@ -66,5 +69,20 @@ describe('Test high level cache client', () => {
         await Promise.all(shardKeys.map(k => client.deleteShard(k)));
         const res = await Promise.all(shardKeys.map(k => client.shardExists(k)));
         assert(res.every(v => !v));
+    });
+
+    it('should update the account size counter', async () => {
+        const res = await Promise.all(testValues.map(event => client.pushMetric(event)));
+        assert(res.every(v => v));
+        const expectedValue = testValues.reduce((prev, event) => prev + (event.sizeDelta || 0), 0);
+        const [counterValue] = await client.fetchAccountSizeCounter(testValues[0].account);
+        assert.strictEqual(counterValue, expectedValue);
+    });
+
+    it('should update the account size counter base', async () => {
+        await client.updateAccountCounterBase('imanaccount', 1);
+        // eslint-disable-next-line no-unused-vars
+        const [_, baseValue] = await client.fetchAccountSizeCounter('imanaccount', testValues[0].account);
+        assert.strictEqual(baseValue, 1);
     });
 });

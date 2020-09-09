@@ -23,23 +23,23 @@ class LoggerContext {
         return new LoggerContext({ ...this.defaults, ...extraDefaults });
     }
 
-    info(msg, data) {
+    info(msg, data = {}) {
         return rootLogger.info(msg, { ...this.defaults, ...data });
     }
 
-    debug(msg, data) {
+    debug(msg, data = {}) {
         return rootLogger.debug(msg, { ...this.defaults, ...data });
     }
 
-    trace(msg, data) {
+    trace(msg, data = {}) {
         return rootLogger.trace(msg, { ...this.defaults, ...data });
     }
 
-    warn(msg, data) {
+    warn(msg, data = {}) {
         return rootLogger.warn(msg, { ...this.defaults, ...data });
     }
 
-    error(msg, data) {
+    error(msg, data = {}) {
         let _data = data;
         if (data && data.error) {
             _data = { ...data, errmsg: data.error.message, stack: data.error.stack };
@@ -47,8 +47,17 @@ class LoggerContext {
         return rootLogger.error(msg, { ...this.defaults, ..._data });
     }
 
-    fatal(msg, data) {
+    fatal(msg, data = {}) {
         return rootLogger.fatal(msg, { ...this.defaults, ...data });
+    }
+
+    async logAsyncError(func, msg, data = {}) {
+        try {
+            return await func();
+        } catch (error) {
+            this.error(msg, { error, ...data });
+            throw error;
+        }
     }
 }
 
