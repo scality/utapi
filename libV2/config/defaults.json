@@ -5,6 +5,10 @@
         "logLevel": "info",
         "dumpLevel": "error"
     },
+    "redis": {
+        "host": "127.0.0.1",
+        "port": 6379
+    },
     "localCache": {
         "host": "127.0.0.1",
         "port": 6379

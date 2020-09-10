@@ -2,6 +2,7 @@ const IORedis = require('ioredis');
 const schema = require('../schema');
 
 const { LoggerContext } = require('../../utils');
+const constants = require('../../constants');
 
 const moduleLogger = new LoggerContext({
     module: 'cache.backend.redis.RedisCache',
@@ -175,6 +176,44 @@ class RedisCache {
                 .error('error while fetching shards', { error });
             throw error;
         }
+    }
+
+    async updateCounters(metric) {
+        if (metric.sizeDelta) {
+            try {
+                const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, metric.account);
+                await this._redis.incrby(accountSizeKey, metric.sizeDelta);
+            } catch (error) {
+                moduleLogger
+                    .with({ method: 'updateCounter' })
+                    .error('error while updating metric counters', { error });
+                throw error;
+            }
+        }
+    }
+
+    async updateAccountCounterBase(account, size) {
+        try {
+            const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, account);
+            const accountSizeBaseKey = schema.getAccountSizeCounterBaseKey(this._prefix, account);
+            await this._redis.mset(accountSizeKey, 0, accountSizeBaseKey, size);
+            await this._redis.expire(accountSizeBaseKey, constants.counterBaseValueExpiration);
+        } catch (error) {
+            moduleLogger
+                .with({ method: 'updateAccountCounterBase' })
+                .error('error while updating metric counter base', { error });
+            throw error;
+        }
+    }
+
+    async fetchAccountSizeCounter(account) {
+        const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, account);
+        const accountSizeBaseKey = schema.getAccountSizeCounterBaseKey(this._prefix, account);
+        const [counter, base] = await this._redis.mget(accountSizeKey, accountSizeBaseKey);
+        return [
+            counter !== null ? parseInt(counter, 10) : null,
+            base !== null ? parseInt(base, 10) : null,
+        ];
     }
 }
 
