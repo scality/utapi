@@ -53,7 +53,6 @@ class RedisCache {
     async setKey(key, value) {
         return moduleLogger
             .with({ method: 'setKey' })
-            .error()
             .logAsyncError(async () => {
                 const res = await this._redis.set(key, value);
                 return res === 'OK';
