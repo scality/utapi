@@ -50,6 +50,15 @@ class LoggerContext {
     fatal(msg, data) {
         return rootLogger.fatal(msg, { ...this.defaults, ...data });
     }
+
+    async logAsyncError(func, msg) {
+        try {
+            return await func();
+        } catch (error) {
+            this.error(msg, { error });
+            throw error;
+        }
+    }
 }
 
 rootLogger.debug('logger initialized', { loggerConfig });
