@@ -51,11 +51,11 @@ class LoggerContext {
         return rootLogger.fatal(msg, { ...this.defaults, ...data });
     }
 
-    async logAsyncError(func, msg) {
+    async logAsyncError(func, msg, data) {
         try {
             return await func();
         } catch (error) {
-            this.error(msg, { error });
+            this.error(msg, { error, ...data });
             throw error;
         }
     }
