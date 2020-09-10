@@ -118,7 +118,7 @@ describe('Test cache memory backend', () => {
         assert.deepStrictEqual(mem._data, { [baseKey]: 1, [counterKey]: 0 });
     });
 
-    it('should fetch the account size counter  and base', async () => {
+    it('should fetch the account size counter and base', async () => {
         const { account } = testValues[0];
         await mem.updateAccountCounterBase(account, 1);
         await Promise.all(testValues.map(event => mem.updateCounters(event)));

@@ -6,7 +6,7 @@ const constants = require('../../constants');
  * Returns the passed value otherwise.
  *
  * @param {*} value - Any value
- * @returns {*} - PAssed value or null
+ * @returns {*} - Passed value or null
  */
 function orNull(value) {
     return value === undefined ? null : value;
