@@ -46,18 +46,18 @@ class RedisCache {
     async getKey(key) {
         return moduleLogger
             .with({ method: 'getKey' })
-            .error('error fetching key from redis', { key })
-            .logAsyncError(() => this._redis.get(key));
+            .logAsyncError(() => this._redis.get(key),
+                'error fetching key from redis', { key });
     }
 
     async setKey(key, value) {
         return moduleLogger
             .with({ method: 'setKey' })
-            .error('error setting key in redis', { key })
+            .error()
             .logAsyncError(async () => {
                 const res = await this._redis.set(key, value);
                 return res === 'OK';
-            });
+            }, 'error setting key in redis', { key });
     }
 
     async addToShard(shard, metric) {
