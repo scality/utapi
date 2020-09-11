@@ -1,10 +1,23 @@
 const schema = require('../schema');
+const constants = require('../../constants');
+
+/**
+ * Returns null iff the value is undefined.
+ * Returns the passed value otherwise.
+ *
+ * @param {*} value - Any value
+ * @returns {*} - Passed value or null
+ */
+function orNull(value) {
+    return value === undefined ? null : value;
+}
 
 class MemoryCache {
     constructor() {
         this._data = {};
         this._shards = {};
         this._prefix = 'utapi';
+        this._expirations = {};
     }
 
     // eslint-disable-next-line class-methods-use-this
@@ -14,7 +27,15 @@ class MemoryCache {
 
     // eslint-disable-next-line class-methods-use-this
     async disconnect() {
+        Object.values(this._expirations).forEach(clearTimeout);
         return true;
+    }
+
+    _expireKey(key, delay) {
+        if (this._expirations[key]) {
+            clearTimeout(this._expirations[key]);
+        }
+        this._expirations[key] = setTimeout(() => delete this._data[key], delay * 1000);
     }
 
     async getKey(key) {
@@ -62,6 +83,27 @@ class MemoryCache {
 
     async shardExists(shard) {
         return this._shards[shard.toString()] !== undefined;
+    }
+
+    async updateCounters(metric) {
+        if (metric.sizeDelta) {
+            const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, metric.account);
+            this._data[accountSizeKey] = (this._data[accountSizeKey] || 0) + metric.sizeDelta;
+        }
+    }
+
+    async updateAccountCounterBase(account, size) {
+        const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, account);
+        const accountSizeBaseKey = schema.getAccountSizeCounterBaseKey(this._prefix, account);
+        this._data[accountSizeKey] = 0;
+        this._data[accountSizeBaseKey] = size;
+        this._expireKey(accountSizeBaseKey, constants.counterBaseValueExpiration);
+    }
+
+    async fetchAccountSizeCounter(account) {
+        const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, account);
+        const accountSizeBaseKey = schema.getAccountSizeCounterBaseKey(this._prefix, account);
+        return [orNull(this._data[accountSizeKey]), orNull(this._data[accountSizeBaseKey])];
     }
 }
 

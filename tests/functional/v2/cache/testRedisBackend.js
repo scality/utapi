@@ -73,4 +73,31 @@ describe('Test cache redis backend', () => {
             assert(res, true);
         });
     });
+
+    it('should update the account size counter', async () => {
+        await Promise.all(testValues.map(event => cache.updateCounters(event)));
+        const expectedKey = schema.getAccountSizeCounterKey(prefix, testValues[0].account);
+        const expectedValue = testValues.reduce((prev, event) => prev + (event.sizeDelta || 0), 0);
+        const actualValue = parseInt(await cache.getKey(expectedKey), 10);
+        assert.strictEqual(actualValue, expectedValue);
+    });
+
+    it('should update the account size counter base', async () => {
+        await cache.updateAccountCounterBase('imanaccount', 1);
+        const baseKey = schema.getAccountSizeCounterBaseKey(prefix, 'imanaccount');
+        const counterKey = schema.getAccountSizeCounterKey(prefix, 'imanaccount');
+        const baseValue = parseInt(await cache.getKey(baseKey), 10);
+        const counterValue = parseInt(await cache.getKey(counterKey), 10);
+        assert.strictEqual(counterValue, 0);
+        assert.strictEqual(baseValue, 1);
+    });
+
+    it('should fetch the account size counter  and base', async () => {
+        const { account } = testValues[0];
+        await cache.updateAccountCounterBase(account, 1);
+        await Promise.all(testValues.map(event => cache.updateCounters(event)));
+        const counterValue = testValues.reduce((prev, event) => prev + (event.sizeDelta || 0), 0);
+        const res = await cache.fetchAccountSizeCounter(account);
+        assert.deepStrictEqual(res, [counterValue, 1]);
+    });
 });
