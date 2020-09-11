@@ -126,19 +126,19 @@ class APIController {
     static async _callOperation(handler, request, response, params) {
         try {
             await handler(request.ctx, params);
-        } catch (err) {
-            request.logger.error('error during operation', { err });
-            throw err;
+        } catch (error) {
+            request.logger.error('error during operation', { error });
+            throw error;
         }
         request.logger.debug('writing operation result');
         try {
             await APIController._writeResult(request.ctx.results, response);
-        } catch (err) {
+        } catch (error) {
             request.logger.error(
                 'error while writing operation result',
-                { err },
+                { error },
             );
-            throw err;
+            throw error;
         }
     }
 

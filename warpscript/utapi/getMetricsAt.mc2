@@ -25,10 +25,16 @@
   <%
     'getMetricsAt' SECTION
 
-    'nodeID' STORE
-    'endTimestamp' STORE
-    'labels' STORE
-    'read_token' STORE
+    JSON-> 'operation_info' STORE
+    JSON-> 'auth_info' STORE
+
+  // $operation_info ->JSON LOGMSG
+
+    $auth_info 'read' GET 'read_token' STORE
+
+    $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+    $operation_info 'labels' GET 'labels' STORE
+    $operation_info 'node' GET 'nodeID' STORE
 
     // Raise the max operations for a executing script
     // $read_token AUTHENTICATE
@@ -175,7 +181,6 @@
         VALUES
         <%
           @utapi/decodeEvent 'event' STORE
-          // $event ->JSON LOGMSG
           true 'passed' STORE
           $labels KEYLIST
           <%
@@ -189,6 +194,7 @@
 
           <% $passed %>
           <%
+            // $event ->JSON LOGMSG
             $results
             'objD' $event 'objD' 0 @util/getDefault @util/sumField
             'sizeD' $event 'sizeD' 0 @util/getDefault @util/sumField
@@ -202,6 +208,8 @@
         %> FOREACH
       %> FOREACH
     %> FOREACH
+
+    // $results ->JSON LOGMSG
 
     // Find all nodes containing corrections
     'load_corrections' SECTION
