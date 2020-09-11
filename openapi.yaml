@@ -85,6 +85,13 @@ components:
                   message:
                     type: string
   parameters:
+    level:
+      in: path
+      name: path
+      required: true
+      schema:
+        type: string
+        enum: [ 'accounts' ]
     resource:
         in: path
         name: resource
