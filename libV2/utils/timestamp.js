@@ -32,7 +32,18 @@ class InterpolatedClock {
     }
 }
 
+/**
+ * Returns the current time as
+ * the number of microseconds since the epoch
+ *
+ * @returns {Number} - current timestamp
+ */
+function now() {
+    return new Date().getTime() * 1000;
+}
+
 module.exports = {
     convertTimestamp,
     InterpolatedClock,
+    now,
 };
