@@ -87,7 +87,7 @@ components:
   parameters:
     level:
       in: path
-      name: path
+      name: level
       required: true
       schema:
         type: string
@@ -132,6 +132,29 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/utapi-metric-v1'
+  /v2/storage/{level}/{resource}:
+    parameters:
+      - $ref: '#/components/parameters/resource'
+      - $ref: '#/components/parameters/level'
+    get:
+      x-router-controller: metrics
+      x-authv4: true
+      description: Get current storage utilized
+      operationId: getStorage
+      responses:
+        default:
+          $ref: '#/components/responses/json-error'
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - storageUtilized
+                properties:
+                  storageUtilized:
+                    type: integer
 
   /{resource}:
     parameters:
