@@ -41,9 +41,13 @@
     // 'Fetching metrics for ' $labels ->JSON + LOGMSG
     // 'Time Range: ' $startTimestamp TOSTRING + ' ' + $endTimestamp TOSTRING + LOGMSG
 
-    $read_token $labels $startTimestamp $nodeID @utapi/getMetricsAt 'startResults' STORE
+    { 'labels' $labels 'node' $nodeID } 'opInfo' STORE
 
-    $read_token $labels $endTimestamp $nodeID @utapi/getMetricsAt 'endResults' STORE
+    $auth_info $opInfo UNMAP 'end' $startTimestamp } ->JSON @utapi/getMetricsAt 'startResults' STORE
+    $auth_info $opInfo UNMAP 'end' $endTimestamp } ->JSON @utapi/getMetricsAt 'endResults' STORE
+
+    // $read_token $labels $startTimestamp $nodeID @utapi/getMetricsAt 'startResults' STORE
+    // $read_token $labels $endTimestamp $nodeID @utapi/getMetricsAt 'endResults' STORE
 
     // $startResults ->JSON LOGMSG
     // $endResults ->JSON LOGMSG
