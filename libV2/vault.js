@@ -2,6 +2,7 @@ const assert = require('assert');
 const { auth, policies } = require('arsenal');
 const vaultclient = require('vaultclient');
 const config = require('./config');
+const errors = require('./errors');
 
 /**
 @class Vault
@@ -85,14 +86,14 @@ class Vault {
 const handler = new Vault(config);
 auth.setHandler(handler);
 
-async function authenticateRequest(request, params) {
+async function authenticateRequest(request, action, level, resources) {
     const policyContext = new policies.RequestContext(
         request.headers,
-        params.resource,
-        params.body[params.resource],
+        level,
+        resources,
         request.ip,
         request.ctx.encrypted,
-        params.Action.value,
+        action,
         'utapi',
     );
 
