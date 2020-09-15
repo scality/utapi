@@ -33,9 +33,16 @@ const warp10MultiHost = Joi.object({
 });
 
 
+const tlsSchema = Joi.object({
+    key: Joi.string(),
+    cert: Joi.string(),
+    ca: Joi.string(),
+});
+
 const schema = Joi.object({
     host: Joi.string(),
     port: Joi.number().port(),
+    certFilePaths: tlsSchema.default({}),
     workers: Joi.number(),
     development: Joi.boolean(),
     log: Joi.object({

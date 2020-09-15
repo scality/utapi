@@ -28,7 +28,7 @@ const accountRecord = {
 
 // eslint-disable-next-line func-names
 describe('Test ReindexTask', function () {
-    this.timeout(1200000);
+    this.timeout(120000);
 
     let prefix;
     let warp10;

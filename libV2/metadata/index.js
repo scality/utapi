@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-syntax */
-const { usersBucket, splitter: mdKeySplitter, mpuBucketPrefix } = require('arsenal/lib/constants');
+const { usersBucket, splitter: mdKeySplitter, mpuBucketPrefix } = require('arsenal').constants;
 const metadata = require('./client');
 const { LoggerContext, logger } = require('../utils');
 const { keyVersionSplitter } = require('../constants');
@@ -47,7 +47,7 @@ function _listObject(bucket, prefix, hydrateFunc) {
                     yield hydrateFunc ? hydrateFunc(item) : item;
                 }
 
-                if (res.length === 0 || res.length !== PAGE_SIZE) {
+                if (res.length !== PAGE_SIZE) {
                     break;
                 }
 
