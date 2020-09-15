@@ -8,7 +8,7 @@ const { BucketD, values } = require('../../../utils/mock/');
 const { protobuf } = require('../../../utils/v2Data');
 
 const { CANONICAL_ID, BUCKET_NAME } = values;
-const bucketCounts = [1, 1001];
+const bucketCounts = [1, 251];
 
 const bucketRecord = {
     ops: {},
