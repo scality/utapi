@@ -18,7 +18,7 @@ models:
       images:
         aggressor:
           context: '.'
-          dockerfile: eve/workers/unit_and_feature_tests
+          dockerfile: eve/workers/unit_and_feature_tests/Dockerfile
         warp10:
           context: '.'
           dockerfile: 'images/warp10/Dockerfile'
