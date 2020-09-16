@@ -103,4 +103,27 @@ describe('Test cache memory backend', () => {
             assert(res, true);
         });
     });
+
+    it('should update the account size counter', async () => {
+        await Promise.all(testValues.map(event => mem.updateCounters(event)));
+        const expectedKey = schema.getAccountSizeCounterKey('utapi', testValues[0].account);
+        const expectedValue = testValues.reduce((prev, event) => prev + (event.sizeDelta || 0), 0);
+        assert.deepStrictEqual(mem._data, { [expectedKey]: expectedValue });
+    });
+
+    it('should update the account size counter base', async () => {
+        await mem.updateAccountCounterBase('imanaccount', 1);
+        const baseKey = schema.getAccountSizeCounterBaseKey('utapi', 'imanaccount');
+        const counterKey = schema.getAccountSizeCounterKey('utapi', 'imanaccount');
+        assert.deepStrictEqual(mem._data, { [baseKey]: 1, [counterKey]: 0 });
+    });
+
+    it('should fetch the account size counter and base', async () => {
+        const { account } = testValues[0];
+        await mem.updateAccountCounterBase(account, 1);
+        await Promise.all(testValues.map(event => mem.updateCounters(event)));
+        const counterValue = testValues.reduce((prev, event) => prev + (event.sizeDelta || 0), 0);
+        const res = await mem.fetchAccountSizeCounter(account);
+        assert.deepStrictEqual(res, [counterValue, 1]);
+    });
 });

@@ -14,10 +14,11 @@ const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
 
 const getClient = prefix => new CacheClient({
-    backend: new cacheBackends.RedisCache(
+    cacheBackend: new cacheBackends.RedisCache(
         config.cache,
         prefix,
     ),
+    counterBackend: new cacheBackends.MemoryCache(),
 });
 
 function eventToWarp10(event) {
@@ -63,7 +64,7 @@ describe('Test IngestShards', function () {
         await cacheClient.connect();
 
         ingestTask = new IngestShard({ warp10: { nodeId: prefix } });
-        ingestTask._cache._backend._prefix = prefix;
+        ingestTask._cache._cacheBackend._prefix = prefix;
         ingestTask._program = { lag: 0 };
         await ingestTask._cache.connect();
 
