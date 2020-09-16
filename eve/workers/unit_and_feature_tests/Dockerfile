@@ -9,7 +9,7 @@ ENV NODE_VERSION 10.22.0
 ENV PATH=$PATH:/utapi/node_modules/.bin
 ENV NODE_PATH=/utapi/node_modules
 
-COPY utapi_packages.list buildbot_worker_packages.list /tmp/
+COPY eve/workers/unit_and_feature_tests/utapi_packages.list eve/workers/unit_and_feature_tests/buildbot_worker_packages.list /tmp/
 
 WORKDIR /utapi
 
@@ -24,8 +24,6 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
     && rm -f /tmp/*packages.list \
     && rm -f /etc/supervisor/conf.d/*.conf \
     && rm -f node-v${NODE_VERSION}-linux-x64.tar.gz
-
-COPY package.json yarn.lock /utapi/
 
 #
 # Install yarn dependencies
@@ -44,7 +42,7 @@ ARG BUILDBOT_VERSION
 RUN pip install buildbot-worker==$BUILDBOT_VERSION
 RUN pip3 install requests
 RUN pip3 install redis
-ADD supervisor/buildbot_worker.conf /etc/supervisor/conf.d/
+ADD eve/workers/unit_and_feature_tests/supervisor/buildbot_worker.conf /etc/supervisor/conf.d/
 ADD redis/sentinel.conf /etc/sentinel.conf
 
 CMD ["supervisord", "-n"]
