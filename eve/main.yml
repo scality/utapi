@@ -23,11 +23,6 @@ models:
           context: '.'
           dockerfile: 'images/warp10/Dockerfile'
         vault: eve/workers/mocks/vault
-  - Install: &install
-      name: install node modules
-      # command: yarn install --frozen-lockfile
-      command: echo '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Skipping Install @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'
-      haltOnFailure: True
   - Upload: &upload_artifacts
       source: /artifacts
       urls:
@@ -56,8 +51,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
-      - ShellCommand:
+            - ShellCommand:
           name: run static analysis tools on markdown
           command: yarn run lint_md
       - ShellCommand:
@@ -67,16 +61,14 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
-      - ShellCommand:
+            - ShellCommand:
           name: run unit tests
           command: yarn test
   run-client-tests:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
-      - ShellCommand:
+            - ShellCommand:
           name: run client tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:client
           logfiles:
@@ -87,8 +79,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
-      - ShellCommand:
+            - ShellCommand:
           name: run server tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:server
           logfiles:
@@ -99,8 +90,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
-      - ShellCommand:
+            - ShellCommand:
           name: run cron tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
           logfiles:
@@ -111,8 +101,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
-      - ShellCommand:
+            - ShellCommand:
           name: run interval tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
           logfiles:
@@ -126,8 +115,7 @@ stages:
         vault: enabled
     steps:
       - Git: *clone
-      - ShellCommand: *install
-      - ShellCommand:
+            - ShellCommand:
           name: Wait for Warp 10
           command: |
             bash -c "
