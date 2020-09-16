@@ -43,6 +43,6 @@ RUN pip install buildbot-worker==$BUILDBOT_VERSION
 RUN pip3 install requests
 RUN pip3 install redis
 ADD eve/workers/unit_and_feature_tests/supervisor/buildbot_worker.conf /etc/supervisor/conf.d/
-ADD redis/sentinel.conf /etc/sentinel.conf
+ADD eve/workers/unit_and_feature_tests/redis/sentinel.conf /etc/sentinel.conf
 
 CMD ["supervisord", "-n"]
