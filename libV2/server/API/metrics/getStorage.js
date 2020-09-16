@@ -1,6 +1,5 @@
 const errors = require('../../../errors');
-const { serviceToWarp10Label, operationToResponse } = require('../../../constants');
-const { convertTimestamp } = require('../../../utils');
+const { serviceToWarp10Label } = require('../../../constants');
 const { client: warp10 } = require('../../../warp10');
 const { client: cache } = require('../../../cache');
 const { now } = require('../../../utils');
@@ -9,9 +8,6 @@ const config = require('../../../config');
 
 async function getStorage(ctx, params) {
     const { level, resource } = params;
-    if (level !== 'accounts') {
-        throw errors.InvalidRequest.customizeDescription(`Invalid metrics level ${level}`);
-    }
 
     const [counter, base] = await cache.fetchAccountSizeCounter(resource);
 
@@ -31,7 +27,7 @@ async function getStorage(ctx, params) {
             macro: 'utapi/getMetricsAt',
         };
         const res = await warp10.exec(options);
-        console.log(res)
+
         if (res.result.length === 0) {
             ctx.logger.error('unable to retrieve metrics', { level, resource });
             throw errors.InternalError;
@@ -43,7 +39,11 @@ async function getStorage(ctx, params) {
     }
 
     ctx.results.statusCode = 200;
-    ctx.results.body = { storageUtilized };
+    ctx.results.body = {
+        storageUtilized,
+        resource,
+        level,
+    };
 }
 
 module.exports = getStorage;

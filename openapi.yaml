@@ -84,6 +84,23 @@ components:
                     type: string
                   message:
                     type: string
+    utapi-get-storage-v1:
+      description: storageUtilized for a single resource
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - storageUtilized
+              - resource
+              - level
+            properties:
+              storageUtilized:
+                type: integer
+              resource:
+                type: string
+              level:
+                type: string
   parameters:
     level:
       in: path
@@ -145,17 +162,7 @@ paths:
         default:
           $ref: '#/components/responses/json-error'
         200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - storageUtilized
-                properties:
-                  storageUtilized:
-                    type: integer
-
+          $ref: '#/components/responses/utapi-get-storage-v1'
   /{resource}:
     parameters:
       - $ref: '#/components/parameters/resource'

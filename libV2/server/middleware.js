@@ -41,7 +41,6 @@ function loggerMiddleware(req, res, next) {
 // next is purposely not called as all error responses are handled here
 // eslint-disable-next-line no-unused-vars
 function errorMiddleware(err, req, res, next) {
-    console.log(err)
     let code = err.code || 500;
     let message = err.message || 'Internal Error';
 
@@ -114,9 +113,8 @@ async function authV4Middleware(request, response, params) {
     let authorizedResources;
 
     try {
-        [passed, authorizedResources] = await authenticateRequest(request, requestedResources);
+        [passed, authorizedResources] = await authenticateRequest(request, action, level, requestedResources);
     } catch (error) {
-        console.log(error);
         request.logger.error('error during authentication', { error });
         throw errors.InternalError;
     }

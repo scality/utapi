@@ -43,8 +43,8 @@
 
     { 'labels' $labels 'node' $nodeID } 'opInfo' STORE
 
-    $auth_info $opInfo UNMAP 'end' $startTimestamp } ->JSON @utapi/getMetricsAt 'startResults' STORE
-    $auth_info $opInfo UNMAP 'end' $endTimestamp } ->JSON @utapi/getMetricsAt 'endResults' STORE
+    $auth_info ->JSON $opInfo UNMAP 'end' $startTimestamp } ->JSON @utapi/getMetricsAt 'startResults' STORE
+    $auth_info ->JSON $opInfo UNMAP 'end' $endTimestamp } ->JSON @utapi/getMetricsAt 'endResults' STORE
 
     // $read_token $labels $startTimestamp $nodeID @utapi/getMetricsAt 'startResults' STORE
     // $read_token $labels $endTimestamp $nodeID @utapi/getMetricsAt 'endResults' STORE

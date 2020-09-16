@@ -64,6 +64,7 @@ class RedisCache {
         return logger
             .logAsyncError(async () => {
                 const metricKey = schema.getUtapiMetricKey(this._prefix, metric);
+                console.log(metricKey)
                 const shardKey = schema.getShardKey(this._prefix, shard);
                 const shardMasterKey = schema.getShardMasterKey(this._prefix);
                 logger.debug('adding metric to shard', { metricKey, shardKey });

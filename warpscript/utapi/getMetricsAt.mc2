@@ -28,7 +28,7 @@
     JSON-> 'operation_info' STORE
     JSON-> 'auth_info' STORE
 
-  $operation_info ->JSON LOGMSG
+  // $operation_info ->JSON LOGMSG
 
     $auth_info 'read' GET 'read_token' STORE
 
@@ -85,7 +85,7 @@
     %> FOREACH
 
     // $snapshots ->JSON LOGMSG
-    $results ->JSON LOGMSG
+    // $results ->JSON LOGMSG
 
     {} 'checkpoints' STORE
 
@@ -133,7 +133,7 @@
         VALUES
         <% // For each checkpoint
           @utapi/decodeRecord
-          DUP 'Loaded checkpoint ' SWAP ->JSON + LOGMSG
+          // DUP 'Loaded checkpoint ' SWAP ->JSON + LOGMSG
           $results @util/sumRecord 'results' STORE
         %> FOREACH
       %> FOREACH
@@ -255,7 +255,7 @@
         VALUES
         <% // For each correction
           @utapi/decodeRecord
-          DUP 'Loaded correction ' SWAP ->JSON + LOGMSG
+          // DUP 'Loaded correction ' SWAP ->JSON + LOGMSG
           $results @util/sumRecord 'results' STORE
         %> FOREACH
       %> FOREACH
@@ -275,7 +275,7 @@
       VALUES
       <% // For each reindex correction
         @utapi/decodeRecord
-        DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
+        // DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
         $results @util/sumRecord 'results' STORE
       %> FOREACH
     %> FOREACH

@@ -49,6 +49,7 @@ class MemoryCache {
 
     async addToShard(shard, event) {
         const metricKey = schema.getUtapiMetricKey(this._prefix, event);
+        console.log(`MEM: ${metricKey}`)
         this._data[metricKey] = event;
         if (this._shards[shard]) {
             this._shards[shard].push(metricKey);

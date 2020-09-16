@@ -2,7 +2,6 @@ const assert = require('assert');
 const { auth, policies } = require('arsenal');
 const vaultclient = require('vaultclient');
 const config = require('./config');
-const errors = require('./errors');
 
 /**
 @class Vault
@@ -98,7 +97,7 @@ async function authenticateRequest(request, action, level, resources) {
     );
 
     return new Promise((resolve, reject) => {
-        auth.server.doAuth(request, request.logger, (err, res) => {
+        auth.server.doAuth(request, request.logger.logger, (err, res) => {
             if (err && (err.InvalidAccessKeyId || err.AccessDenied)) {
                 resolve([false]);
                 return;
