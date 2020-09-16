@@ -1,1 +1,11 @@
-{ "extends": "scality" }
+{
+  "extends": "scality",
+  "settings": {
+      "import/resolver": {
+        "node": {
+          "paths": ["/utapi/node_modules", "node_modules"]
+        }
+      }
+    }
+}
+
