@@ -59,7 +59,7 @@ describe('Test CreateCheckpoint', function () {
         const { events, totals } = generateCustomEvents(start, stop, 100,
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
 
-        await warp10.ingest('utapi.event', events);
+        await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(0));
 
         const results = await warp10.fetch({
@@ -88,8 +88,8 @@ describe('Test CreateCheckpoint', function () {
             accounts,
         );
 
-        await warp10.ingest('utapi.event', historicalEvents);
-        await warp10.ingest('utapi.event', events);
+        await warp10.ingest({ className: 'utapi.event' }, historicalEvents);
+        await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-400));
         await checkpointTask._execute(getTs(0));
 
@@ -109,7 +109,7 @@ describe('Test CreateCheckpoint', function () {
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } },
         );
 
-        await warp10.ingest('utapi.event', events);
+        await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-100));
 
         let results = await warp10.fetch({

@@ -201,7 +201,7 @@ describe('UtapiReindex', () => {
                 shouldLeave = res === value;
                 return setTimeout(next, 200);
             }),
-            () => shouldLeave, cb);
+            next => next(null, shouldLeave), cb);
         }
 
         function checkMetrics({ resource, expected }, cb) {

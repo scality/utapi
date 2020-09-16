@@ -25,6 +25,7 @@
   <%
     'getMetricsAt' SECTION
 
+    'nodeID' STORE
     'endTimestamp' STORE
     'labels' STORE
     'read_token' STORE
@@ -37,6 +38,7 @@
     'utapi.checkpoint' 'checkpoint_class' STORE
     'utapi.snapshot' 'snapshot_class' STORE
     'utapi.repair.correction' 'correction_class' STORE
+    'utapi.repair.reindex' 'reindex_class' STORE
 
     {} 'snapshots' STORE
 
@@ -245,6 +247,25 @@
           // DUP 'Loaded correction ' SWAP ->JSON + LOGMSG
           $results @util/sumRecord 'results' STORE
         %> FOREACH
+      %> FOREACH
+    %> FOREACH
+
+    'load_reindex' SECTION
+    // Only load the latest reindex for the current node
+    $labels UNMAP 'node' $nodeID } 'filterLabels' STORE
+    {
+      'token' $read_token
+      'class' $reindex_class
+      'labels' $filterLabels
+      'end' $endTimestamp
+      'count' 1
+    } FETCH
+    <% // Handle multiple GTS
+      VALUES
+      <% // For each reindex correction
+        @utapi/decodeRecord
+        // DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
+        $results @util/sumRecord 'results' STORE
       %> FOREACH
     %> FOREACH
 

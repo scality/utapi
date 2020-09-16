@@ -59,7 +59,7 @@ class IngestShardTask extends BaseTask {
                                     return new UtapiMetric(metric);
                                 });
                         }
-                        const status = await this._warp10.ingest(metricClass, records);
+                        const status = await this._warp10.ingest({ className: metricClass }, records);
                         assert.strictEqual(status, records.length);
                         await this._cache.deleteShard(shard);
                     } else {
