@@ -16,14 +16,17 @@ models:
       type: kube_pod
       path: eve/workers/pod.yml
       images:
-        aggressor: eve/workers/unit_and_feature_tests
+        aggressor:
+          context: '.'
+          dockerfile: eve/workers/unit_and_feature_tests
         warp10:
           context: '.'
           dockerfile: 'images/warp10/Dockerfile'
         vault: eve/workers/mocks/vault
   - Install: &install
       name: install node modules
-      command: yarn install --frozen-lockfile
+      # command: yarn install --frozen-lockfile
+      command: echo '@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Skipping Install @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'
       haltOnFailure: True
   - Upload: &upload_artifacts
       source: /artifacts
