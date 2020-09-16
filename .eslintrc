@@ -3,5 +3,13 @@
     "rules": {
         "no-underscore-dangle": "off",
 	"implicit-arrow-linebreak" : "off"
-    }
+    },
+    "settings": {
+        "import/resolver": {
+          "node": {
+            "paths": ["/backbeat/node_modules", "node_modules"]
+          }
+        }
+      }
 }
+
