@@ -1,0 +1,34 @@
+{
+    "AccessDenied": {
+        "code": 403,
+        "description": "Access denied"
+    },
+    "InternalError": {
+        "code": 500,
+        "description": "The server encountered an internal error. Please retry the request."
+    },
+    "InvalidUri": {
+        "code": 400,
+        "description": "The requested URI does not represent any resource on the server."
+    },
+    "NotImplemented": {
+        "code": 501,
+        "description": "This operation has yet to be implemented."
+    },
+    "OperationIdNotFound": {
+        "code": 404,
+        "description": "The specified operation Id is not found."
+    },
+    "OperationTimedOut": {
+        "code": 500,
+        "description": "The operation could not be completed within the permitted time."
+    },
+    "ServiceUnavailable": {
+        "code": 503,
+        "description": "The server (or an internal component) is currently unavailable to receive requests. Please retry your request."
+    },
+    "InvalidRequest": {
+        "code": 400,
+        "description": "Request validation error"
+    }
+}

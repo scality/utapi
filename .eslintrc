@@ -1,1 +1,31 @@
-{ "extends": "scality" }
+{
+    "extends": "scality",
+    "rules": {
+        "no-underscore-dangle": "off",
+        "object-property-newline": "off",
+        "indent": "off",
+        "object-curly-newline": "off",
+        "operator-linebreak": "off",
+        "no-mixed-operators": "off",
+        "class-methods-use-this": "off",
+        "function-paren-newline": "off",
+        "prefer-destructuring": "off",
+        "comma-dangle": "off",
+        "padded-blocks": "off",
+        "max-classes-per-file": "off",
+        "import/no-useless-path-segments": "off",
+        "prefer-object-spread": "off",
+        "import/order": "off",
+        "import/newline-after-import": "off",
+        "no-plusplus": "off",
+        "global-require": "off",
+        "symbol-description": "off",
+        "prefer-spread": "off",
+        "import/no-extraneous-dependencies": "off",
+        "lines-around-directive": "off",
+        "no-undef-init": "off",
+        "no-bitwise": "off",
+        "operator-assignment": "off",
+    	  "implicit-arrow-linebreak" : "off"
+    },
+}
