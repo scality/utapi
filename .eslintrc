@@ -3,5 +3,13 @@
     "rules": {
         "no-underscore-dangle": "off",
 	"implicit-arrow-linebreak" : "off"
-    }
+    },
+    "settings": {
+        "import/resolver": {
+          "node": {
+            "paths": ["/utapi/node_modules", "node_modules"]
+          }
+        }
+      }
 }
+
