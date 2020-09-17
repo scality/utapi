@@ -34,7 +34,7 @@ class RequestContext extends RequestContextModel {
         const tag = request.swagger.operation['x-router-controller'];
         const { operationId } = request.swagger.operation;
 
-        request.logger.addDefaultFields({
+        request.logger.logger.addDefaultFields({
             tag,
             operationId,
             service: 'utapi',
