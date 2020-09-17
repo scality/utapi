@@ -60,7 +60,7 @@ describe('Test Repair', function () {
         const { events, totals } = generateCustomEvents(start, stop, 100,
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
 
-        await warp10.ingest('utapi.repair.event', events);
+        await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(0));
 
         const results = await warp10.fetch({
@@ -89,8 +89,8 @@ describe('Test Repair', function () {
             accounts,
         );
 
-        await warp10.ingest('utapi.repair.event', historicalEvents);
-        await warp10.ingest('utapi.repair.event', events);
+        await warp10.ingest({ className: 'utapi.repair.event' }, historicalEvents);
+        await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(-400));
         await repairTask._execute(getTs(0));
 
@@ -110,7 +110,7 @@ describe('Test Repair', function () {
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } },
         );
 
-        await warp10.ingest('utapi.repair.event', events);
+        await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(-100));
 
         let results = await warp10.fetch({

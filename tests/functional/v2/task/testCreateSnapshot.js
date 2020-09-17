@@ -67,7 +67,7 @@ describe('Test CreateSnapshot', function () {
         const { events, totals } = generateCustomEvents(start, stop, 100,
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
 
-        await warp10.ingest('utapi.event', events);
+        await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-1));
         await snapshotTask._execute(getTs(0));
 
@@ -86,7 +86,7 @@ describe('Test CreateSnapshot', function () {
         const { events, totals } = generateCustomEvents(start, stop, 500,
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
 
-        await warp10.ingest('utapi.event', events);
+        await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-400));
         await checkpointTask._execute(getTs(-300));
         await checkpointTask._execute(getTs(-200));
@@ -110,7 +110,7 @@ describe('Test CreateSnapshot', function () {
         const { events, totals } = generateCustomEvents(start, stop, 500,
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
 
-        await warp10.ingest('utapi.event', events);
+        await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-300));
         await snapshotTask._execute(getTs(-250));
 
@@ -132,11 +132,11 @@ describe('Test CreateSnapshot', function () {
         const stop = getTs(-50);
         const { events, totals } = generateCustomEvents(start, stop, 500, accounts);
 
-        await warp10.ingest('utapi.event', events);
+        await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-1));
 
         const { events: newEvents } = generateCustomEvents(getTs(10), getTs(100), 100, accounts);
-        await warp10.ingest('utapi.event', newEvents);
+        await warp10.ingest({ className: 'utapi.event' }, newEvents);
         await checkpointTask._execute(getTs(100));
 
         await snapshotTask._execute(getTs(0));
@@ -156,7 +156,7 @@ describe('Test CreateSnapshot', function () {
         const { events, totals } = generateCustomEvents(start, stop, 100,
             { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
 
-        await warp10.ingest('utapi.repair.event', events);
+        await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(-1));
         await snapshotTask._execute(getTs(0));
 

@@ -1,5 +1,6 @@
 const { Warp10 } = require('@senx/warp10');
-const { eventFieldsToWarp10, warp10ValueType } = require('./constants');
+const assert = require('assert');
+const { eventFieldsToWarp10, warp10EventType } = require('./constants');
 const _config = require('./config');
 const { LoggerContext } = require('./utils');
 const errors = require('./errors');
@@ -44,29 +45,39 @@ class Warp10Client {
                 // eslint-disable-next-line no-await-in-loop
                 return await func(client, ...params);
             } catch (error) {
-                moduleLogger.warn('error during warp10 operation, failing over to next host', { error });
+                moduleLogger.warn('error during warp10 operation, failing over to next host',
+                    { statusCode: error.statusCode, statusMessage: error.statusMessage });
             }
         }
         moduleLogger.error('no remaining warp10 hosts to try, unable to complete request');
         throw errors.InternalError;
     }
 
-    static _packEvent(event) {
+    static _packEvent(valueType, event) {
         const packed = Object.entries(event.getValue())
             .filter(([key]) => eventFieldsToWarp10[key])
             .map(([key, value]) => `'${eventFieldsToWarp10[key]}' ${_stringify(value)}`)
             .join(' ');
-        return `${warp10ValueType}{ ${packed} }`;
+        return `${valueType}{ ${packed} }`;
     }
 
-    _buildGTSEntry(className, event) {
-        const labels = this._clients[0].formatLabels({ node: this._nodeId });
-        const packed = Warp10Client._packEvent(event);
-        return `${event.timestamp}// ${className}${labels} ${packed}`;
+    _buildGTSEntry(className, valueType, labels, event) {
+        const _labels = this._clients[0].formatLabels({ node: this._nodeId, ...labels });
+        const packed = Warp10Client._packEvent(valueType, event);
+        return `${event.timestamp}// ${className}${_labels} ${packed}`;
     }
 
-    async _ingest(warp10, className, events) {
-        const payload = events.map(ev => this._buildGTSEntry(className, ev));
+    async _ingest(warp10, metadata, events) {
+        const { className, valueType, labels } = metadata;
+        assert.notStrictEqual(className, undefined, 'you must provide a className');
+        const payload = events.map(
+            ev => this._buildGTSEntry(
+                className,
+                valueType || warp10EventType,
+                labels || {},
+                ev,
+            ),
+        );
         const res = await warp10.update(this._writeToken, payload);
         return res.count;
     }
