@@ -5,6 +5,7 @@ const UtapiReplay = require('../../../lib/UtapiReplay');
 const UtapiClient = require('../../../lib/UtapiClient');
 const Datastore = require('../../../lib/Datastore');
 const redisClient = require('../../../utils/redisClient');
+const RedisClientv2 = require('../../../libV2/redis');
 const { getAllResourceTypeKeys } = require('../../utils/utils');
 const safeJsonParse = require('../../../utils/safeJsonParse');
 
@@ -13,7 +14,11 @@ const localCache = redisClient({
     host: '127.0.0.1',
     port: 6379,
 }, log);
-const datastore = new Datastore().setClient(localCache);
+const redis = new RedisClientv2({
+    host: '127.0.0.1',
+    port: 6379,
+});
+const datastore = new Datastore().setClient(redis);
 const utapiClient = new UtapiClient({
     redis: {
         host: '127.0.0.1',
@@ -224,6 +229,7 @@ function checkAllMetrics(cb) {
 }
 
 describe('Replay', () => {
+    before(() => redis.connect());
     describe('Local cache list', () => {
         after(() => localCache.flushdb());
 
