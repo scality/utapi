@@ -16,11 +16,9 @@ models:
       type: kube_pod
       path: eve/workers/pod.yml
       images:
-        aggressor: eve/workers/unit_and_feature_tests
-  - Install: &install
-      name: install node modules
-      command: npm install
-      haltOnFailure: True
+        aggressor:
+          context: '.'
+          dockerfile: eve/workers/unit_and_feature_tests/Dockerfile
 
 stages:
   pre-merge:
@@ -40,7 +38,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run static analysis tools on markdown
           command: npm run lint_md
@@ -51,7 +48,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run unit tests
           command: npm test
@@ -59,7 +55,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run client tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:client
@@ -67,7 +62,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run server tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:server
@@ -75,7 +69,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run cron tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
@@ -83,7 +76,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run interval tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
