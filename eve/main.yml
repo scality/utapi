@@ -16,14 +16,13 @@ models:
       type: kube_pod
       path: eve/workers/pod.yml
       images:
-        aggressor: eve/workers/unit_and_feature_tests
+        aggressor:
+          context: '.'
+          dockerfile: eve/workers/unit_and_feature_tests/Dockerfile
         warp10:
           context: '.'
           dockerfile: 'images/warp10/Dockerfile'
         vault: eve/workers/mocks/vault
-  - Install: &install
-      name: install node modules
-      command: yarn install --frozen-lockfile
       haltOnFailure: True
   - Upload: &upload_artifacts
       source: /artifacts
@@ -53,7 +52,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run static analysis tools on markdown
           command: yarn run lint_md
@@ -64,7 +62,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run unit tests
           command: yarn test
@@ -72,7 +69,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run client tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:client
@@ -80,7 +76,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run server tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:server
@@ -88,7 +83,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run cron tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
@@ -96,7 +90,6 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
-      - ShellCommand: *install
       - ShellCommand:
           name: run interval tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
