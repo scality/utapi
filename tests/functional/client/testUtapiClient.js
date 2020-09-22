@@ -6,6 +6,7 @@ const { Logger } = require('werelogs');
 const UtapiClient = require('../../../lib/UtapiClient');
 const Datastore = require('../../../lib/Datastore');
 const redisClient = require('../../../utils/redisClient');
+const RedisClientv2 = require('../../../libV2/redis');
 const {
     getCounters, getMetricFromKey,
     getStateKeys, getKeys,
@@ -16,7 +17,14 @@ const redis = redisClient({
     host: '127.0.0.1',
     port: 6379,
 }, log);
-const datastore = new Datastore().setClient(redis);
+const redisV2 = new RedisClientv2({
+    host: '127.0.0.1',
+    port: 6379,
+});
+redisV2.connect();
+const datastore = new Datastore().setClient(
+    redisV2,
+);
 const utapiConfig = {
     redis: {
         host: '127.0.0.1',
