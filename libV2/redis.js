@@ -1,7 +1,7 @@
 const EventEmitter = require('events');
 const { callbackify, promisify } = require('util');
 const IORedis = require('ioredis');
-const uuid = require('uuid');
+const { jsutil } = require('arsenal');
 
 const errors = require('./errors');
 const { LoggerContext, asyncOrCallback } = require('./utils');
@@ -32,7 +32,7 @@ class RedisClient extends EventEmitter {
         // Controls the use of additional command timeouts
         // Only use if connecting to a sentinel cluster
         this._useTimeouts = options.sentinels !== undefined;
-        this._inFlightTimeouts = this._useTimeouts ? {} : null;
+        this._inFlightTimeouts = this._useTimeouts ? new Set() : null;
         this._runningRedisProbe = null;
         this._isConnected = false;
         this._isReady = false;
@@ -41,7 +41,7 @@ class RedisClient extends EventEmitter {
     connect(callback) {
         this._initClient(false);
         if (callback) {
-            callback();
+            process.nextTick(callback);
         }
     }
 
@@ -98,40 +98,37 @@ class RedisClient extends EventEmitter {
         this.emit('ready');
     }
 
-    // eslint-disable-next-line class-methods-use-this
     _onError(error) {
         moduleLogger.error('error connecting to redis', { error });
         this.emit('error', error);
     }
 
 
-    // eslint-disable-next-line class-methods-use-this
     _createCommandTimeout() {
-        const timerId = uuid.v4();
-        const cancel = () => {
-            if (this._inFlightTimeouts[timerId]) {
-                clearTimeout(this._inFlightTimeouts[timerId]);
-                delete this._inFlightTimeouts[timerId];
-            }
-        };
+        let timer;
+        const cancelTimeout = jsutil.once(() => {
+            clearTimeout(timer);
+            this._inFlightTimeouts.delete(timer);
+        });
 
         const timeout = new Promise((_, reject) => {
-            const timer = setTimeout(
+            timer = setTimeout(
                 () => {
-                    moduleLogger.warn('redis command timed out');
-                    delete this._inFlightTimeouts[timerId];
                     this.emit('timeout');
                     this._initClient();
-                    reject(errors.OperationTimedOut);
                 },
                 COMMAND_TIMEOUT,
             );
 
-            this._inFlightTimeouts[timerId] = timer;
-            this.once('timeout', cancel);
+            this._inFlightTimeouts.add(timer);
+            this.once('timeout', () => {
+                moduleLogger.warn('redis command timed out');
+                cancelTimeout();
+                reject(errors.OperationTimedOut);
+            });
         });
 
-        return { timeout, cancel };
+        return { timeout, cancelTimeout };
     }
 
     async _call(asyncFunc) {
@@ -141,19 +138,13 @@ class RedisClient extends EventEmitter {
             return funcPromise;
         }
 
-        const { timeout, cancel } = this._createCommandTimeout();
+        const { timeout, cancelTimeout } = this._createCommandTimeout();
 
         try {
-            const resp = await Promise.race([funcPromise, timeout]);
-            cancel();
-            // timeout always rejects so if we have `resp` it's from funcPromise
-            return resp;
-        } catch (error) {
-            if (!(error.utapiError && error.OperationTimedOut)) {
-                // If it isn't a timeout error, cleanup the pending timer
-                cancel();
-            }
-            throw error;
+            // timeout always rejects so we can just return
+            return await Promise.race([funcPromise, timeout]);
+        } finally {
+            cancelTimeout();
         }
     }
 
