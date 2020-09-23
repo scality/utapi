@@ -229,7 +229,7 @@ function checkAllMetrics(cb) {
     }), err => cb(err));
 }
 
-describe.skip('Replay', () => {
+describe('Replay', () => {
     describe('Local cache list', () => {
         after(() => localCache.flushdb());
 
