@@ -138,18 +138,9 @@ describe('Test listMetric', function () {
                     const [level, resources] = query;
                     it(`should get metrics for ${level}`, async () => {
                         const resp = await listMetrics(...query, getTs(-500), getTs(0));
-                        if (resources.length === 1) {
-                            // If only one resource is requested the response is an object
-                            assert(!Array.isArray(resp.body));
-                        } else {
-                            // Otherwise it is an Array
-                            assert(Array.isArray(resp.body));
-                        }
+                        assert(Array.isArray(resp.body));
 
-                        let { body } = resp;
-                        if (!Array.isArray(resp.body)) {
-                            body = [body];
-                        }
+                        const { body } = resp;
                         assert.deepStrictEqual(body.map(r => r[metricResponseKeys[level]]), resources);
 
                         body.forEach(metric => {

@@ -70,13 +70,7 @@ async function listMetric(ctx, params) {
             return metric;
         });
 
-    // Unwrap the response if only one resource is passed
-    if (resp.length === 1) {
-        [ctx.results.body] = resp;
-    } else {
-        ctx.results.body = resp;
-    }
-
+    ctx.results.body = resp;
     ctx.results.statusCode = 200;
 }
 

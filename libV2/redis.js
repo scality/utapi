@@ -13,7 +13,17 @@ const moduleLogger = new LoggerContext({
 const COMMAND_TIMEOUT = 10000;
 const CONNECTION_TIMEOUT = 30000;
 
-
+/**
+* Creates a new Redis client instance
+* @param {object} conf - redis configuration
+* @param {string} conf.host - redis host
+* @param {number} conf.port - redis port
+* @param {string} [conf.password] - redis password (optional)
+* @param {string} [conf.sentinelPassword] - sentinel password (optional)
+* @param {Array<Object>} conf.sentinels - sentinels
+* @param {Werelogs.Logger} log - Werelogs logger
+* @return {Redis} - Redis client instance
+*/
 class RedisClient extends EventEmitter {
     constructor(options) {
         super();
