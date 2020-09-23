@@ -5,7 +5,14 @@ const { client: cache } = require('../../../cache');
 const { now } = require('../../../utils');
 const config = require('../../../config');
 
-
+/**
+ *
+ * @param {RequestContext} ctx - request context
+ * @param {object} params - request parameters
+ * @param {string} params.level - metric level
+ * @param {string} params.resource - Id of the requested resource
+ * @returns {Promise<undefined>} -
+ */
 async function getStorage(ctx, params) {
     const { level, resource } = params;
 

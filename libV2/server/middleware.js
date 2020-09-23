@@ -106,7 +106,7 @@ async function authV4Middleware(request, response, params) {
     }
 
     if (requestedResources.length === 0) {
-        throw errors.InvalidRequest.customizeDescription('You must specify at lest one resource');
+        throw errors.InvalidRequest.customizeDescription('You must specify at least one resource');
     }
 
     let passed;
