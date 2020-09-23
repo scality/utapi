@@ -39,7 +39,7 @@ class InterpolatedClock {
  * @returns {Number} - current timestamp
  */
 function now() {
-    return new Date().now() * 1000;
+    return Date.now() * 1000;
 }
 
 module.exports = {

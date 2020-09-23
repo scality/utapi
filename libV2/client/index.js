@@ -3,6 +3,7 @@ const { Transform } = require('stream');
 const uuid = require('uuid');
 const needle = require('needle');
 const aws4 = require('aws4');
+const assert = require('assert');
 
 // These modules are added via the `level-mem` package rather than individually
 /* eslint-disable import/no-extraneous-dependencies */
@@ -79,9 +80,11 @@ class UtapiClient {
         this._drainCanSchedule = true;
         this._drainDelay = (config && config.drainDelay) || 30000;
         this._credentials = {
-            accessKeyId: (config && config.accessKeyId) || 'accessKey1',
-            secretAccessKey: (config && config.secretAccessKey) || 'verySecretKey1',
+            accessKeyId: config && config.accessKeyId,
+            secretAccessKey: config && config.secretAccessKey,
         };
+        assert.notStrictEqual(this._credentials.accessKeyId, undefined, 'you must provide an accessKeyId');
+        assert.notStrictEqual(this._credentials.secretAccessKey, undefined, 'you must provide a secretAccessKey');
     }
 
     async join() {
