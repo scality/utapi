@@ -20,7 +20,7 @@ class InterpolatedClock {
     }
 
     getTs() {
-        const ts = new Date().getTime();
+        const ts = new Date().now();
         if (ts === this._now) {
             // If this is the same millisecond as the last call
             this._step += 1;
@@ -39,7 +39,7 @@ class InterpolatedClock {
  * @returns {Number} - current timestamp
  */
 function now() {
-    return new Date().getTime() * 1000;
+    return new Date().now() * 1000;
 }
 
 module.exports = {
