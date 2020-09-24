@@ -31,6 +31,7 @@
     "checkpointSchedule": "*/30 * * * * *",
     "snapshotSchedule": "* 0 * * * *",
     "repairSchedule": "* */5 * * * *",
+    "reindexSchedule": "0 0 0 * * Sun",
     "bucketd": [ "localhost:9000" ],
     "reindex": {
         "enabled": true,
