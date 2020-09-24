@@ -38,6 +38,8 @@ const stubLogger = {
     error: () => {},
 };
 
+stubLogger.logger = stubLogger;
+
 
 function templateRequest(overrides) {
     const results = new ResponseContainer();
