@@ -1,4 +1,4 @@
-const IORedis = require('ioredis');
+const RedisClient = require('../../redis');
 const schema = require('../schema');
 
 const { LoggerContext } = require('../../utils');
@@ -17,11 +17,8 @@ class RedisCache {
 
     async connect() {
         moduleLogger.debug('Connecting to redis...');
-        this._redis = new IORedis(this._options);
-        this._redis
-            .on('error', err =>
-                moduleLogger.error(`error connecting to redis ${err}`))
-            .on('connect', () => moduleLogger.debug('connected to redis'));
+        this._redis = new RedisClient(this._options);
+        this._redis.connect();
         return true;
     }
 
@@ -30,7 +27,7 @@ class RedisCache {
         if (this._redis) {
             try {
                 logger.debug('closing connection to redis');
-                await this._redis.quit();
+                await this._redis.disconnect();
             } catch (error) {
                 logger.error('error while closing connection to redis', {
                     error,
@@ -46,7 +43,7 @@ class RedisCache {
     async getKey(key) {
         return moduleLogger
             .with({ method: 'getKey' })
-            .logAsyncError(() => this._redis.get(key),
+            .logAsyncError(() => this._redis.call(redis => redis.get(key)),
                 'error fetching key from redis', { key });
     }
 
@@ -54,7 +51,7 @@ class RedisCache {
         return moduleLogger
             .with({ method: 'setKey' })
             .logAsyncError(async () => {
-                const res = await this._redis.set(key, value);
+                const res = await this._redis.call(redis => redis.set(key, value));
                 return res === 'OK';
             }, 'error setting key in redis', { key });
     }
@@ -69,12 +66,13 @@ class RedisCache {
                 logger.debug('adding metric to shard', { metricKey, shardKey });
 
                 const [setResults, saddResults] = await this._redis
-                    .multi([
-                        ['set', metricKey, JSON.stringify(metric.getValue())],
-                        ['sadd', shardKey, metricKey],
-                        ['sadd', shardMasterKey, shardKey],
-                    ])
-                    .exec();
+                    .call(redis => redis
+                        .multi([
+                            ['set', metricKey, JSON.stringify(metric.getValue())],
+                            ['sadd', shardKey, metricKey],
+                            ['sadd', shardMasterKey, shardKey],
+                        ])
+                        .exec());
 
                 let success = true;
                 if (setResults[1] !== 'OK') {
@@ -103,7 +101,7 @@ class RedisCache {
             .with({ method: 'getKeysInShard' })
             .logAsyncError(async () => {
                 const shardKey = schema.getShardKey(this._prefix, shard);
-                return this._redis.smembers(shardKey);
+                return this._redis.call(redis => redis.smembers(shardKey));
             }, 'error while fetching shard keys', { shard });
     }
 
@@ -115,7 +113,7 @@ class RedisCache {
                 if (!keys.length) {
                     return [];
                 }
-                return this._redis.mget(...keys);
+                return this._redis.call(redis => redis.mget(...keys));
             }, 'error while fetching shard data', { shard });
     }
 
@@ -126,10 +124,12 @@ class RedisCache {
                 const shardKey = schema.getShardKey(this._prefix, shard);
                 const shardMasterKey = schema.getShardMasterKey(this._prefix);
                 const keys = await this.getKeysInShard(shard);
-                return this._redis.multi([
-                    ['del', shardKey, ...keys],
-                    ['srem', shardMasterKey, shardKey],
-                ]).exec();
+                return this._redis.call(
+                    redis => redis.multi([
+                        ['del', shardKey, ...keys],
+                        ['srem', shardMasterKey, shardKey],
+                    ]).exec(),
+                );
             }, 'error while deleting shard', { shard });
     }
 
@@ -138,7 +138,7 @@ class RedisCache {
             .with({ method: 'shardExists' })
             .logAsyncError(async () => {
                 const shardKey = schema.getShardKey(this._prefix, shard);
-                const res = await this._redis.exists(shardKey);
+                const res = await this._redis.call(redis => redis.exists(shardKey));
                 return res === 1;
             }, 'error while checking shard', { shard });
     }
@@ -148,7 +148,7 @@ class RedisCache {
             .with({ method: 'getShards' })
             .logAsyncError(async () => {
                 const shardMasterKey = schema.getShardMasterKey(this._prefix);
-                return this._redis.smembers(shardMasterKey);
+                return this._redis.call(redis => redis.smembers(shardMasterKey));
             }, 'error while fetching shards');
     }
 
@@ -158,7 +158,7 @@ class RedisCache {
             .logAsyncError(async () => {
                 if (metric.sizeDelta) {
                     const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, metric.account);
-                    await this._redis.incrby(accountSizeKey, metric.sizeDelta);
+                    await this._redis.call(redis => redis.incrby(accountSizeKey, metric.sizeDelta));
                 }
             }, 'error while updating metric counters');
     }
@@ -169,8 +169,10 @@ class RedisCache {
             .logAsyncError(async () => {
                 const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, account);
                 const accountSizeBaseKey = schema.getAccountSizeCounterBaseKey(this._prefix, account);
-                await this._redis.mset(accountSizeKey, 0, accountSizeBaseKey, size);
-                await this._redis.expire(accountSizeBaseKey, constants.counterBaseValueExpiration);
+                await this._redis.call(async redis => {
+                    await redis.mset(accountSizeKey, 0, accountSizeBaseKey, size);
+                    await redis.expire(accountSizeBaseKey, constants.counterBaseValueExpiration);
+                });
             }, 'error while updating metric counter base');
     }
 
@@ -180,7 +182,7 @@ class RedisCache {
             .logAsyncError(async () => {
                 const accountSizeKey = schema.getAccountSizeCounterKey(this._prefix, account);
                 const accountSizeBaseKey = schema.getAccountSizeCounterBaseKey(this._prefix, account);
-                const [counter, base] = await this._redis.mget(accountSizeKey, accountSizeBaseKey);
+                const [counter, base] = await this._redis.call(redis => redis.mget(accountSizeKey, accountSizeBaseKey));
                 return [
                     counter !== null ? parseInt(counter, 10) : null,
                     base !== null ? parseInt(base, 10) : null,
