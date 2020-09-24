@@ -2,6 +2,8 @@ const { callbackify } = require('util');
 const { Transform } = require('stream');
 const uuid = require('uuid');
 const needle = require('needle');
+const aws4 = require('aws4');
+const assert = require('assert');
 
 // These modules are added via the `level-mem` package rather than individually
 /* eslint-disable import/no-extraneous-dependencies */
@@ -9,7 +11,7 @@ const levelup = require('levelup');
 const memdown = require('memdown');
 const encode = require('encoding-down');
 const { UtapiMetric } = require('../models');
-const { LoggerContext } = require('../utils');
+const { LoggerContext, asyncOrCallback } = require('../utils');
 /* eslint-enable import/no-extraneous-dependencies */
 
 const moduleLogger = new LoggerContext({
@@ -77,6 +79,12 @@ class UtapiClient {
         this._drainTimer = null;
         this._drainCanSchedule = true;
         this._drainDelay = (config && config.drainDelay) || 30000;
+        this._credentials = {
+            accessKeyId: config && config.accessKeyId,
+            secretAccessKey: config && config.secretAccessKey,
+        };
+        assert.notStrictEqual(this._credentials.accessKeyId, undefined, 'you must provide an accessKeyId');
+        assert.notStrictEqual(this._credentials.secretAccessKey, undefined, 'you must provide a secretAccessKey');
     }
 
     async join() {
@@ -258,6 +266,58 @@ class UtapiClient {
             return undefined;
         }
         return this._pushMetric(data);
+    }
+
+    async _signedRequest(method, url, options = {}) {
+        const _url = new URL(url);
+        const reqOptions = {
+            method,
+            hostname: _url.host,
+            service: 's3',
+            path: `${_url.pathname}${_url.search}`,
+            signQuery: false,
+            body: options.body,
+        };
+
+        const signedOptions = aws4.sign(reqOptions, this._credentials);
+
+        const args = [method, url];
+        if (options.body !== undefined) {
+            args.push(options.body);
+        }
+
+        args.push({
+            ...options,
+            headers: signedOptions.headers,
+        });
+
+        return needle(...args);
+    }
+
+    /**
+     *  Get the storageUtilized of a resource
+     *
+     * @param {string} level - level of metrics, currently only 'accounts' is supported
+     * @param {string} resource - id of the resource
+     * @param {Function|undefined} callback - optional callback
+     * @returns {Promise|undefined} - return a Promise if no callback is provided, undefined otherwise
+     */
+    getStorage(level, resource, callback) {
+        if (level !== 'accounts') {
+            throw new Error('invalid level, only "accounts" is supported');
+        }
+        return asyncOrCallback(async () => {
+            const resp = await this._signedRequest(
+                'get',
+                `http://${this._host}:${this._port}/v2/storage/${level}/${resource}`,
+            );
+
+            if (resp.statusCode !== 200) {
+                throw new Error(`unable to retrieve metrics: ${resp.statusMessage}`);
+            }
+
+            return resp.body;
+        }, callback);
     }
 }
 

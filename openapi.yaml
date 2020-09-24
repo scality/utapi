@@ -84,7 +84,31 @@ components:
                     type: string
                   message:
                     type: string
+    utapi-get-storage-v1:
+      description: storageUtilized for a single resource
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - storageUtilized
+              - resource
+              - level
+            properties:
+              storageUtilized:
+                type: integer
+              resource:
+                type: string
+              level:
+                type: string
   parameters:
+    level:
+      in: path
+      name: level
+      required: true
+      schema:
+        type: string
+        enum: [ 'accounts' ]
     resource:
         in: path
         name: resource
@@ -125,7 +149,20 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/utapi-metric-v1'
-
+  /v2/storage/{level}/{resource}:
+    parameters:
+      - $ref: '#/components/parameters/resource'
+      - $ref: '#/components/parameters/level'
+    get:
+      x-router-controller: metrics
+      x-authv4: true
+      description: Get current storage utilized
+      operationId: getStorage
+      responses:
+        default:
+          $ref: '#/components/responses/json-error'
+        200:
+          $ref: '#/components/responses/utapi-get-storage-v1'
   /{resource}:
     parameters:
       - $ref: '#/components/parameters/resource'
