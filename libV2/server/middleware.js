@@ -89,11 +89,31 @@ async function authV4Middleware(request, response, params) {
         throw errors.InvalidRequest.customizeDescription('Must use Auth V4 for this request.');
     }
 
+    let action;
+    let level;
+    let requestedResources = [];
+
+    if (params.level) {
+        // Can't destructure here
+        // eslint-disable-next-line prefer-destructuring
+        level = params.level;
+        requestedResources = [params.resource];
+        action = 'ListMetrics';
+    } else {
+        requestedResources = params.body[params.resource];
+        level = params.resource;
+        action = params.Action.value;
+    }
+
+    if (requestedResources.length === 0) {
+        throw errors.InvalidRequest.customizeDescription('You must specify at least one resource');
+    }
+
     let passed;
     let authorizedResources;
 
     try {
-        [passed, authorizedResources] = await authenticateRequest(request, params);
+        [passed, authorizedResources] = await authenticateRequest(request, action, level, requestedResources);
     } catch (error) {
         request.logger.error('error during authentication', { error });
         throw errors.InternalError;
@@ -104,8 +124,8 @@ async function authV4Middleware(request, response, params) {
         throw errors.AccessDenied;
     }
 
-    if (authorizedResources !== undefined) {
-        params.body[params.resource.value] = authorizedResources;
+    if (params.level === undefined && authorizedResources !== undefined) {
+        params.body[params.resource] = authorizedResources;
     }
 }
 

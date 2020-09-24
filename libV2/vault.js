@@ -85,19 +85,19 @@ class Vault {
 const handler = new Vault(config);
 auth.setHandler(handler);
 
-async function authenticateRequest(request, params) {
+async function authenticateRequest(request, action, level, resources) {
     const policyContext = new policies.RequestContext(
         request.headers,
-        params.resource,
-        params.body[params.resource],
+        level,
+        resources,
         request.ip,
         request.ctx.encrypted,
-        params.Action.value,
+        action,
         'utapi',
     );
 
     return new Promise((resolve, reject) => {
-        auth.server.doAuth(request, request.logger, (err, res) => {
+        auth.server.doAuth(request, request.logger.logger, (err, res) => {
             if (err && (err.InvalidAccessKeyId || err.AccessDenied)) {
                 resolve([false]);
                 return;
