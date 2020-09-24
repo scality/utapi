@@ -17,6 +17,8 @@ describe('Test UtapiClient', function () {
         sandbox = sinon.createSandbox();
         client = new UtapiClient({
             drainDelay: 10,
+            accessKeyId: 'accessKey1',
+            secretAccessKey: 'verySecretKey1',
         });
     });
 
@@ -129,6 +131,8 @@ describe('Test UtapiClient', function () {
     it('should disable draining', async () => {
         client = new UtapiClient({
             drainDelay: 5000,
+            accessKeyId: 'accessKey1',
+            secretAccessKey: 'verySecretKey1',
         });
 
         await client._disableDrain();
