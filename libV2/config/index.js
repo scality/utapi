@@ -279,6 +279,7 @@ class Config {
         parsedConfig.checkpointSchedule = _loadFromEnv('CHECKPOINT_SCHEDULE', config.checkpointSchedule);
         parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHEDULE', config.snapshotSchedule);
         parsedConfig.repairSchedule = _loadFromEnv('REPAIR_SCHEDULE', config.repairSchedule);
+        parsedConfig.reindexSchedule = _loadFromEnv('REINDEX_SCHEDULE', config.reindexSchedule);
 
         parsedConfig.vaultd = {
             host: _loadFromEnv('VAULT_HOST', config.vaultd.host),
