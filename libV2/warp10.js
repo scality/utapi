@@ -46,7 +46,7 @@ class Warp10Client {
                 return await func(client, ...params);
             } catch (error) {
                 moduleLogger.warn('error during warp10 operation, failing over to next host',
-                    { statusCode: error.statusCode, statusMessage: error.statusMessage });
+                    { statusCode: error.statusCode, statusMessage: error.statusMessage, error });
             }
         }
         moduleLogger.error('no remaining warp10 hosts to try, unable to complete request');
