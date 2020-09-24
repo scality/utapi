@@ -85,7 +85,7 @@ async function initializeOasTools(spec, app) {
 async function authV4Middleware(request, response, params) {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('AWS4-')) {
-        request.log.error('missing auth header for v4 auth');
+        request.logger.error('missing auth header for v4 auth');
         throw errors.InvalidRequest.customizeDescription('Must use Auth V4 for this request.');
     }
 
