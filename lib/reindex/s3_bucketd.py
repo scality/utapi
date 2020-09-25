@@ -75,7 +75,7 @@ class BucketDClient:
                 _log.exception(e)
                 _log.error('Error during listing, sleeping 5 secs %s'%url)
                 time.sleep(5)
-                
+
     def _list_bucket(self, bucket, **kwargs):
         '''
         Lists a bucket lazily until "empty"
@@ -116,7 +116,7 @@ class BucketDClient:
             yield resp.status_code, payload
             if isinstance(payload, dict):
                 is_truncated = payload.get('IsTruncated', False)
-            else: 
+            else:
                 is_truncated = len(payload) > 0
 
     def list_buckets(self):
@@ -161,7 +161,7 @@ class BucketDClient:
             'splitter': '..|..',
             'prefix': get_next_marker,
             'uploadIdMarker': get_next_upload_id,
-        } 
+        }
         keys = []
 
         for status_code, payload in self._list_bucket(_bucket, **params):
@@ -202,7 +202,7 @@ class BucketDClient:
                     total_size -= last_size
                     count -= 1
                     last_master = None
-                    
+
                 # Only save master versions
                 elif '\x00' not in obj['key']:
                     last_master = obj['key']
@@ -238,7 +238,7 @@ class BucketDClient:
                 return mpu.upload_id
             return p.get('Contents', [{}])[-1].get('key', '')
 
-        @_encoded    
+        @_encoded
         def get_next_marker(p):
             prefix = get_prefix(p)
             return prefix + '..|..00000'
@@ -266,9 +266,8 @@ def index_bucket(client, bucket):
     '''
     bucket_total = client.count_bucket_contents(bucket)
     mpus = client.list_mpus(bucket)
-    shadowbucket = bucket._replace(name=MPU_SHADOW_BUCKET_PREFIX + bucket.name)
     if not mpus:
-        mpu_total = BucketContents(shadowbucket, 0, 0)
+        mpu_total = BucketContents(bucket, 0, 0)
     else:
         mpu_totals = [client.count_mpu_parts(m) for m in mpus]
         mpu_part_count = 0
@@ -277,7 +276,7 @@ def index_bucket(client, bucket):
             mpu_part_count += mpu.obj_count
             mpu_total_size += mpu.total_size
         mpu_total = BucketContents(
-                shadowbucket,
+                bucket,
                 mpu_part_count,
                 mpu_total_size
             )
@@ -294,7 +293,7 @@ def update_report(report, key, obj_count, total_size):
             'obj_count': obj_count,
             'total_size': total_size,
         }
-    
+
 def get_redis_client(options):
     sentinel = redis.Redis(
         host=options.sentinel_ip,
@@ -314,7 +313,7 @@ def update_redis(client, resource, name, obj_count, total_size):
     timestamp = int(time.time() - 15 * 60) * 1000
     obj_count_key = 's3:%s:%s:numberOfObjects' % (resource, name)
     total_size_key = 's3:%s:%s:storageUtilized' % (resource, name)
-    
+
     client.zremrangebyscore(obj_count_key, timestamp, timestamp)
     client.zremrangebyscore(total_size_key, timestamp, timestamp)
     client.zadd(obj_count_key, {obj_count: timestamp})
@@ -337,14 +336,14 @@ if __name__ == '__main__':
     account_reports = {}
     with ThreadPoolExecutor(max_workers=options.worker) as executor:
         for batch in bucket_client.list_buckets():
-            bucket_reports = {}    
+            bucket_reports = {}
             jobs = [executor.submit(index_bucket, bucket_client, b) for b in batch]
             for job in futures.as_completed(jobs):
                 totals = job.result() # bucket and shadowbucket totals as tuple
                 for total in totals:
                     update_report(bucket_reports, total.bucket.name, total.obj_count, total.total_size)
                     update_report(account_reports, total.bucket.userid, total.obj_count, total.total_size)
-                    
+
             # Bucket reports can be updated as we get them
             pipeline = redis_client.pipeline(transaction=False)  # No transaction to reduce redis load
             for bucket, report in bucket_reports.items():
@@ -358,4 +357,4 @@ if __name__ == '__main__':
         for userid, report in chunk:
             update_redis(pipeline, 'accounts', userid, report['obj_count'], report['total_size'])
             log_report('accounts', userid, report['obj_count'], report['total_size'])
-        pipeline.execute() 
+        pipeline.execute()
