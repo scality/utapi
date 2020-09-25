@@ -254,7 +254,7 @@ class BucketDClient:
         count, total_size = self._sum_objects(self._list_bucket(_bucket, **params))
         return BucketContents(
             bucket=mpu.bucket._replace(name=_bucket),
-            obj_count=count,
+            obj_count=0, # MPU parts are not counted towards numberOfObjects
             total_size=total_size
         )
 

@@ -262,20 +262,7 @@ describe('UtapiReindex', () => {
                                     buckets: [bucket],
                                 },
                                 expected: {
-                                    storageUtilized: [0, 1024],
-                                    numberOfObjects: [0, 1],
-                                },
-                            };
-                            checkMetrics(params, next);
-                        },
-                        next => {
-                            const params = {
-                                resource: {
-                                    type: 'buckets',
-                                    buckets: [MPUBucket],
-                                },
-                                expected: {
-                                    storageUtilized: [0, 1024],
+                                    storageUtilized: [0, 1024 * 2],
                                     numberOfObjects: [0, 1],
                                 },
                             };
@@ -289,7 +276,7 @@ describe('UtapiReindex', () => {
                                 },
                                 expected: {
                                     storageUtilized: [0, 1024 * 2],
-                                    numberOfObjects: [0, 2],
+                                    numberOfObjects: [0, 1],
                                 },
                             };
                             checkMetrics(params, next);
