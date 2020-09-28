@@ -267,21 +267,14 @@ def index_bucket(client, bucket):
     bucket_total = client.count_bucket_contents(bucket)
     mpus = client.list_mpus(bucket)
     if not mpus:
-        mpu_total = BucketContents(bucket, 0, 0)
-    else:
-        mpu_totals = [client.count_mpu_parts(m) for m in mpus]
-        mpu_part_count = 0
-        mpu_total_size = 0
-        for mpu in mpu_totals:
-            mpu_part_count += mpu.obj_count
-            mpu_total_size += mpu.total_size
-        mpu_total = BucketContents(
-                bucket,
-                mpu_part_count,
-                mpu_total_size
-            )
-    return bucket_total, mpu_total
+        return bucket_total
 
+    total_size = bucket_total.total_size
+    mpu_totals = [client.count_mpu_parts(m) for m in mpus]
+    for mpu in mpu_totals:
+        total_size += mpu.total_size
+
+    return bucket_total._replace(total_size=total_size)
 
 def update_report(report, key, obj_count, total_size):
     '''Convenience function to update the report dicts'''
@@ -339,10 +332,9 @@ if __name__ == '__main__':
             bucket_reports = {}
             jobs = [executor.submit(index_bucket, bucket_client, b) for b in batch]
             for job in futures.as_completed(jobs):
-                totals = job.result() # bucket and shadowbucket totals as tuple
-                for total in totals:
-                    update_report(bucket_reports, total.bucket.name, total.obj_count, total.total_size)
-                    update_report(account_reports, total.bucket.userid, total.obj_count, total.total_size)
+                total = job.result() # Summed bucket and shadowbucket totals
+                update_report(bucket_reports, total.bucket.name, total.obj_count, total.total_size)
+                update_report(account_reports, total.bucket.userid, total.obj_count, total.total_size)
 
             # Bucket reports can be updated as we get them
             pipeline = redis_client.pipeline(transaction=False)  # No transaction to reduce redis load
