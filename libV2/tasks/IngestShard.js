@@ -5,7 +5,7 @@ const config = require('../config');
 const {
     LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock,
 } = require('../utils');
-const { shardIngestLagSecs, checkpointLagSecs } = require('../constants');
+const { checkpointLagSecs } = require('../constants');
 
 const logger = new LoggerContext({
     module: 'IngestShard',
@@ -18,7 +18,7 @@ class IngestShardTask extends BaseTask {
     constructor(...options) {
         super(...options);
         this._defaultSchedule = config.ingestionSchedule;
-        this._defaultLag = shardIngestLagSecs;
+        this._defaultLag = config.ingestionLagSeconds;
     }
 
     async _execute(timestamp) {
