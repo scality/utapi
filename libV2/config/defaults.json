@@ -28,6 +28,8 @@
     "development": false,
     "nodeId": "single_node",
     "ingestionSchedule": "*/5 * * * * *",
+    "ingestionShardSize": 10,
+    "ingestionLagSeconds": 30,
     "checkpointSchedule": "*/30 * * * * *",
     "snapshotSchedule": "* 0 * * * *",
     "repairSchedule": "* */5 * * * *",
