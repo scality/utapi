@@ -83,8 +83,10 @@ class UtapiClient {
             accessKeyId: config && config.accessKeyId,
             secretAccessKey: config && config.secretAccessKey,
         };
-        assert.notStrictEqual(this._credentials.accessKeyId, undefined, 'you must provide an accessKeyId');
-        assert.notStrictEqual(this._credentials.secretAccessKey, undefined, 'you must provide a secretAccessKey');
+
+        if (!this._credentials.accessKeyId || !this._credentials.secretAccessKey) {
+            this._logger.warn('Now access or secret key provided, client limited to push only');
+        }
     }
 
     async join() {
@@ -303,6 +305,8 @@ class UtapiClient {
      * @returns {Promise|undefined} - return a Promise if no callback is provided, undefined otherwise
      */
     getStorage(level, resource, callback) {
+        assert.notStrictEqual(this._credentials.accessKeyId, undefined, 'you must provide an accessKeyId');
+        assert.notStrictEqual(this._credentials.secretAccessKey, undefined, 'you must provide a secretAccessKey');
         if (level !== 'accounts') {
             throw new Error('invalid level, only "accounts" is supported');
         }
