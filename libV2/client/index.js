@@ -85,7 +85,7 @@ class UtapiClient {
         };
 
         if (!this._credentials.accessKeyId || !this._credentials.secretAccessKey) {
-            this._logger.warn('Now access or secret key provided, client limited to push only');
+            this._logger.warn('No access or secret key provided, client limited to push only');
         }
     }
 
