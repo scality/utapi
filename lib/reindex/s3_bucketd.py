@@ -363,7 +363,7 @@ if __name__ == '__main__':
 
     # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
     stale_accounts = recorded_accounts.difference(observed_accounts)
-    print('Found %s stale accounts' % len(stale_accounts))
+    _log.info('Found %s stale accounts' % len(stale_accounts))
     for chunk in chunks(stale_accounts, ACCOUNT_UPDATE_CHUNKSIZE):
         pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
         for account in chunk:
@@ -372,7 +372,7 @@ if __name__ == '__main__':
         pipeline.execute()
 
     stale_buckets = recorded_buckets.difference(observed_buckets)
-    print('Found %s stale buckets' % len(stale_buckets))
+    _log.info('Found %s stale buckets' % len(stale_buckets))
     for chunk in chunks(stale_buckets, ACCOUNT_UPDATE_CHUNKSIZE):
         pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
         for bucket in chunk:
