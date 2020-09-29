@@ -135,7 +135,7 @@ class ReindexTask extends BaseTask {
 
             const total = {
                 size: bktTotal.size + mpuTotal.size,
-                count: bktTotal.count + mpuTotal.count,
+                count: bktTotal.count,
             };
 
             if (accountTotals[bucket.account]) {
@@ -147,17 +147,11 @@ class ReindexTask extends BaseTask {
 
             logger.trace('finished indexing bucket', { bucket: bucket.name });
 
-            await Promise.all([
-                this._updateMetric(
-                    serviceToWarp10Label.buckets,
-                    bucket.name,
-                    bktTotal,
-                ),
-                this._updateMetric(
-                    serviceToWarp10Label.buckets,
-                    mpuBucket,
-                    mpuTotal,
-                )]);
+            await this._updateMetric(
+                serviceToWarp10Label.buckets,
+                bucket.name,
+                total,
+            );
         });
 
         const toUpdate = Object.entries(accountTotals)
