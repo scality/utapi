@@ -26,7 +26,7 @@ function execShim(version, env, callback) {
 
 // eslint-disable-next-line func-names
 describe('Test v2 Feature Toggle', function () {
-    this.timeout(5000);
+    this.timeout(10000);
 
     it('should import v1 when ENABLE_UTAPI_V2 is not set', done => {
         execShim(1, {}, results => {
