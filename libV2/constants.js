@@ -89,7 +89,6 @@ const constants = {
     warp10EventType: ':m:utapi/event:',
     warp10RecordType: ':m:utapi/record:',
     truthy,
-    shardIngestLagSecs: 30,
     checkpointLagSecs: 300,
     snapshotLagSecs: 900,
     repairLagSecs: 5,
