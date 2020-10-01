@@ -281,6 +281,17 @@ class Config {
         parsedConfig.repairSchedule = _loadFromEnv('REPAIR_SCHEDULE', config.repairSchedule);
         parsedConfig.reindexSchedule = _loadFromEnv('REINDEX_SCHEDULE', config.reindexSchedule);
 
+        parsedConfig.ingestionLagSeconds = _loadFromEnv(
+            'INGESTION_LAG_SECONDS',
+            config.ingestionLagSeconds,
+            _typeCasts.int,
+        );
+        parsedConfig.ingestionShardSize = _loadFromEnv(
+            'INGESTION_SHARD_SIZE',
+            config.ingestionShardSize,
+            _typeCasts.int,
+        );
+
         parsedConfig.vaultd = {
             host: _loadFromEnv('VAULT_HOST', config.vaultd.host),
             port: _loadFromEnv('VAULT_PORT', config.vaultd.port),

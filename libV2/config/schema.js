@@ -71,6 +71,8 @@ const schema = Joi.object({
     cacheBackend: Joi.string().valid('memory', 'redis'),
     nodeId: Joi.string(),
     ingestionSchedule: Joi.string(),
+    ingestionShardSize: Joi.number().greater(0),
+    ingestionLagSeconds: Joi.number().greater(0),
     checkpointSchedule: Joi.string(),
     snapshotSchedule: Joi.string(),
     repairSchedule: Joi.string(),
