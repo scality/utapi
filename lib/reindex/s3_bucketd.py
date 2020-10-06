@@ -1,4 +1,6 @@
 import argparse
+import concurrent.futures as futures
+import itertools
 import json
 import logging
 import os
@@ -8,13 +10,11 @@ import time
 import urllib
 from collections import defaultdict, namedtuple
 from concurrent.futures import ThreadPoolExecutor
-import concurrent.futures as futures
 from pprint import pprint
 
 import redis
 import requests
 from requests import ConnectionError, HTTPError, Timeout
-import itertools
 
 logging.basicConfig(level=logging.INFO)
 _log = logging.getLogger('utapi-reindex')
@@ -35,7 +35,7 @@ def get_options():
     parser.add_argument("-b", "--bucket", default=False, help="Bucket to be processed")
     return parser.parse_args()
 
-def chunks(iterable,size):
+def chunks(iterable, size):
     it = iter(iterable)
     chunk = tuple(itertools.islice(it,size))
     while chunk:
@@ -314,6 +314,10 @@ def update_redis(client, resource, name, obj_count, total_size):
     client.set(obj_count_key + ':counter', obj_count)
     client.set(total_size_key + ':counter', total_size)
 
+def get_resources_from_redis(client, resource):
+    for key in redis_client.scan_iter('s3:%s:*:storageUtilized' % resource):
+        yield key.decode('utf-8').split(':')[2]
+
 def log_report(resource, name, obj_count, total_size):
     print('%s:%s:%s:%s'%(
         resource,
@@ -327,12 +331,14 @@ if __name__ == '__main__':
     bucket_client = BucketDClient(options.bucketd_addr)
     redis_client = get_redis_client(options)
     account_reports = {}
+    observed_buckets = set()
     with ThreadPoolExecutor(max_workers=options.worker) as executor:
         for batch in bucket_client.list_buckets():
             bucket_reports = {}
             jobs = [executor.submit(index_bucket, bucket_client, b) for b in batch]
             for job in futures.as_completed(jobs):
                 total = job.result() # Summed bucket and shadowbucket totals
+                observed_buckets.add(total.bucket.name)
                 update_report(bucket_reports, total.bucket.name, total.obj_count, total.total_size)
                 update_report(account_reports, total.bucket.userid, total.obj_count, total.total_size)
 
@@ -349,4 +355,27 @@ if __name__ == '__main__':
         for userid, report in chunk:
             update_redis(pipeline, 'accounts', userid, report['obj_count'], report['total_size'])
             log_report('accounts', userid, report['obj_count'], report['total_size'])
+        pipeline.execute()
+
+    observed_accounts = set(account_reports.keys())
+    recorded_accounts = set(get_resources_from_redis(redis_client, 'accounts'))
+    recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
+
+    # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
+    stale_accounts = recorded_accounts.difference(observed_accounts)
+    _log.info('Found %s stale accounts' % len(stale_accounts))
+    for chunk in chunks(stale_accounts, ACCOUNT_UPDATE_CHUNKSIZE):
+        pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
+        for account in chunk:
+            update_redis(pipeline, 'accounts', account, 0, 0)
+            log_report('accounts', account, 0, 0)
+        pipeline.execute()
+
+    stale_buckets = recorded_buckets.difference(observed_buckets)
+    _log.info('Found %s stale buckets' % len(stale_buckets))
+    for chunk in chunks(stale_buckets, ACCOUNT_UPDATE_CHUNKSIZE):
+        pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
+        for bucket in chunk:
+            update_redis(pipeline, 'buckets', bucket, 0, 0)
+            log_report('buckets', bucket, 0, 0)
         pipeline.execute()
