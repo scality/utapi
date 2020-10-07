@@ -9,12 +9,6 @@ const moduleLogger = new LoggerContext({
     module: 'warp10',
 });
 
-function _stringify(value) {
-    if (typeof value === 'number') {
-        return value.toString();
-    }
-    return `'${value}'`;
-}
 
 class Warp10Client {
     constructor(config) {
@@ -56,9 +50,11 @@ class Warp10Client {
     static _packEvent(valueType, event) {
         const packed = Object.entries(event.getValue())
             .filter(([key]) => eventFieldsToWarp10[key])
-            .map(([key, value]) => `'${eventFieldsToWarp10[key]}' ${_stringify(value)}`)
-            .join(' ');
-        return `${valueType}{ ${packed} }`;
+            .reduce((ev, [key, value]) => {
+                ev[eventFieldsToWarp10[key]] = value;
+                return ev;
+            }, {});
+        return `${valueType}${JSON.stringify(packed)}`;
     }
 
     _buildGTSEntry(className, valueType, labels, event) {
