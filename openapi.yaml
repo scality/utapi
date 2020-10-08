@@ -126,6 +126,7 @@ paths:
   /_/healthcheck:
     get:
       x-router-controller: internal
+      x-iplimit: true
       operationId: healthcheck
       responses:
         default:
@@ -155,7 +156,7 @@ paths:
       - $ref: '#/components/parameters/level'
     get:
       x-router-controller: metrics
-      x-authv4: true
+      x-iplimit: true
       description: Get current storage utilized
       operationId: getStorage
       responses:
