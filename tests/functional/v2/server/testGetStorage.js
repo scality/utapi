@@ -33,8 +33,6 @@ describe('Test getStorage handler', function () {
     beforeEach(async () => {
         client = new UtapiClient({
             drainDelay: 5000,
-            accessKeyId: 'accessKey1',
-            secretAccessKey: 'verySecretKey1',
         });
 
         const { events: _events, totals: _totals } = generateCustomEvents(
