@@ -79,14 +79,6 @@ class UtapiClient {
         this._drainTimer = null;
         this._drainCanSchedule = true;
         this._drainDelay = (config && config.drainDelay) || 30000;
-        this._credentials = {
-            accessKeyId: config && config.accessKeyId,
-            secretAccessKey: config && config.secretAccessKey,
-        };
-
-        if (!this._credentials.accessKeyId || !this._credentials.secretAccessKey) {
-            this._logger.warn('No access or secret key provided, client limited to push only');
-        }
     }
 
     async join() {
@@ -270,32 +262,6 @@ class UtapiClient {
         return this._pushMetric(data);
     }
 
-    async _signedRequest(method, url, options = {}) {
-        const _url = new URL(url);
-        const reqOptions = {
-            method,
-            hostname: _url.host,
-            service: 's3',
-            path: `${_url.pathname}${_url.search}`,
-            signQuery: false,
-            body: options.body,
-        };
-
-        const signedOptions = aws4.sign(reqOptions, this._credentials);
-
-        const args = [method, url];
-        if (options.body !== undefined) {
-            args.push(options.body);
-        }
-
-        args.push({
-            ...options,
-            headers: signedOptions.headers,
-        });
-
-        return needle(...args);
-    }
-
     /**
      *  Get the storageUtilized of a resource
      *
@@ -305,13 +271,11 @@ class UtapiClient {
      * @returns {Promise|undefined} - return a Promise if no callback is provided, undefined otherwise
      */
     getStorage(level, resource, callback) {
-        assert.notStrictEqual(this._credentials.accessKeyId, undefined, 'you must provide an accessKeyId');
-        assert.notStrictEqual(this._credentials.secretAccessKey, undefined, 'you must provide a secretAccessKey');
         if (level !== 'accounts') {
             throw new Error('invalid level, only "accounts" is supported');
         }
         return asyncOrCallback(async () => {
-            const resp = await this._signedRequest(
+            const resp = await needle(
                 'get',
                 `http://${this._host}:${this._port}/v2/storage/${level}/${resource}`,
             );
