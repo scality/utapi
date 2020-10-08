@@ -34,8 +34,6 @@ describe('Test UtapiClient', function () {
             sandbox = sinon.createSandbox();
             client = new UtapiClient({
                 drainDelay: 5000,
-                accessKeyId: 'accessKey1',
-                secretAccessKey: 'verySecretKey1',
             });
 
             const { events: _events } = generateCustomEvents(now() - (60 * 1000000), now() - (10 * 1000000), 50, {
@@ -92,8 +90,6 @@ describe('Test UtapiClient', function () {
         beforeEach(async () => {
             client = new UtapiClient({
                 drainDelay: 5000,
-                accessKeyId: 'accessKey1',
-                secretAccessKey: 'verySecretKey1',
             });
 
             const { events: _events, totals: _totals } = generateCustomEvents(
