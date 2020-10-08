@@ -54,6 +54,11 @@ function _getApiOperationMiddleware(routes) {
                     if (op['x-authv4'] === true) {
                         middleware.authv4 = true;
                     }
+
+                    if (op['x-iplimit'] === true) {
+                        middleware.iplimit = true;
+                    }
+
                     optIds[tag][op.operationId] = middleware;
 
                     moduleLogger
