@@ -1,6 +1,7 @@
 const oasTools = require('oas-tools');
 const path = require('path');
 const { promisify } = require('util');
+const { ipCheck } = require('arsenal');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');
@@ -129,6 +130,15 @@ async function authV4Middleware(request, response, params) {
     }
 }
 
+async function clientIpLimitMiddleware(request) {
+    const allowIp = ipCheck.ipMatchCidrList(
+        config.healthChecks.allowFrom, request.ip,
+    );
+    if (!allowIp) {
+        throw errors.AccessDenied.customizeDescription('invalid origin ip on request');
+    }
+}
+
 module.exports = {
     initializeOasTools,
     middleware: {
@@ -136,5 +146,6 @@ module.exports = {
         errorMiddleware,
         responseLoggerMiddleware,
         authV4Middleware,
+        clientIpLimitMiddleware,
     },
 };
