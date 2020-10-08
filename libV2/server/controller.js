@@ -67,6 +67,9 @@ class APIController {
         return Object.entries(apiOperationMiddleware[tag])
             .reduce((handlers, [id, handler]) => {
                 const middleware = [];
+                if (handler.iplimit) {
+                    middleware.push(utapiMiddleware.clientIpLimitMiddleware);
+                }
                 if (handler.authv4) {
                     middleware.push(utapiMiddleware.authV4Middleware);
                 }
