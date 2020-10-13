@@ -35,7 +35,7 @@
     "node-schedule": "1.2.0",
     "oas-tools": "^2.1.8",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#21d03b1",
+    "vaultclient": "scality/vaultclient#ff9e92f",
     "werelogs": "scality/werelogs#0a4c576"
   },
   "devDependencies": {
