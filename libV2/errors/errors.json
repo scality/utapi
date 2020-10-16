@@ -30,5 +30,13 @@
     "InvalidRequest": {
         "code": 400,
         "description": "Request validation error"
+    },
+    "FailedMigration": {
+        "code": 1000,
+        "description": "failed to migrate metrics"
+    },
+    "FailedCorrection": {
+        "code": 1001,
+        "description": "failed to correct migrated metric"
     }
 }

@@ -73,6 +73,7 @@ const constants = {
         sizeDelta: 'sizeD',
         incomingBytes: 'inB',
         outgoingBytes: 'outB',
+        operations: 'ops',
     },
     indexedEventFields: [
         'acc',
@@ -94,6 +95,7 @@ const constants = {
     repairLagSecs: 5,
     counterBaseValueExpiration: 86400, // 24hrs
     keyVersionSplitter: String.fromCharCode(0),
+    migrationChunksize: 500,
 };
 
 constants.operationToResponse = constants.operations

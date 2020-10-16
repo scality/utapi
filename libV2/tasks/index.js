@@ -4,6 +4,7 @@ const CreateCheckpoint = require('./CreateCheckpoint');
 const CreateSnapshot = require('./CreateSnapshot');
 const RepairTask = require('./Repair');
 const ReindexTask = require('./Reindex');
+const MigrateTask = require('./Migrate');
 
 module.exports = {
     IngestShard,
@@ -12,4 +13,5 @@ module.exports = {
     CreateSnapshot,
     RepairTask,
     ReindexTask,
+    MigrateTask,
 };
