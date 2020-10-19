@@ -76,6 +76,7 @@ const schema = Joi.object({
     checkpointSchedule: Joi.string(),
     snapshotSchedule: Joi.string(),
     repairSchedule: Joi.string(),
+    reindexSchedule: Joi.string(),
 });
 
 module.exports = schema;
