@@ -161,8 +161,8 @@ class MigrateTask extends BaseTask {
 
             yield {
                 timestamp: convertTimestamp(timestamp),
-                storageUtilized: storageUtilized - storageUtilizedOffset,
-                numberOfObjects: numberOfObjects - numberOfObjectsOffset,
+                sizeDelta: storageUtilized - storageUtilizedOffset,
+                objectDelta: numberOfObjects - numberOfObjectsOffset,
                 incomingBytes,
                 outgoingBytes,
                 operations,
@@ -255,9 +255,9 @@ class MigrateTask extends BaseTask {
     }
 
     async _migrateResource(level, resource, ingest = true) {
-        logger.trace('migrating metrics for resource', { level, resource });
+        logger.trace('migrating metrics for resource', { metricLevel: level, resource });
         if (!ingest) {
-            logger.debug('ingestion is disabled, no records will be written');
+            logger.debug('ingestion is disabled, no records will be written', { metricLevel: level, resource });
         }
 
         const latestSnapshot = await this._findLatestSnapshot(level, resource);
@@ -266,16 +266,13 @@ class MigrateTask extends BaseTask {
             : null;
 
         let correction = new UtapiRecord();
-        let total = new UtapiRecord();
         for await (const metric of this._iterMetrics(level, resource)) {
-            total = MigrateTask._sumRecord(total, metric);
-
             // Add metric to correction if it predates the latest snapshot
             if (latestSnapshot !== null && metric.timestamp < latestSnapshot) {
                 correction = MigrateTask._sumRecord(correction, metric);
             }
 
-            const _logger = logger.with({ level, resource, metricTimestamp: metric.timestamp });
+            const _logger = logger.with({ metricLevel: level, resource, metricTimestamp: metric.timestamp });
 
             if (ingest) {
                 // Metric predates the oldest snapshot
@@ -285,12 +282,8 @@ class MigrateTask extends BaseTask {
                         'utapi.snapshot',
                         level, resource,
                         new UtapiRecord({
+                            ...correction.getValue(),
                             timestamp: metric.timestamp,
-                            sizeDelta: metric.sizeDelta,
-                            objectDelta: metric.objectDelta,
-                            operations: total.operations,
-                            incomingBytes: total.incomingBytes,
-                            outgoingBytes: total.outgoingBytes,
                         }),
                     );
 
@@ -301,14 +294,7 @@ class MigrateTask extends BaseTask {
                     await this._migrateMetric(
                         'utapi.checkpoint',
                         level, resource,
-                        new UtapiRecord({
-                            timestamp: metric.timestamp,
-                            sizeDelta: total.sizeDelta - metric.sizeDelta,
-                            objectDelta: total.objectDelta - metric.objectDelta,
-                            operations: metric.operations,
-                            incomingBytes: metric.incomingBytes,
-                            outgoingBytes: metric.outgoingBytes,
-                        }),
+                        metric,
                     );
 
                 // Metric newer than latest snapshot or no snapshots exist
@@ -317,14 +303,7 @@ class MigrateTask extends BaseTask {
                     await this._migrateMetric(
                         'utapi.checkpoint',
                         level, resource,
-                        new UtapiRecord({
-                            objectDelta: (total.objectDelta || 0) - (metric.objectDelta || 0),
-                            sizeDelta: (total.sizeDelta || 0) - (metric.sizeDelta || 0),
-                            timestamp: metric.timestamp,
-                            operations: metric.operations,
-                            incomingBytes: metric.incomingBytes,
-                            outgoingBytes: metric.outgoingBytes,
-                        }),
+                        metric,
                     );
                 }
             } else {
@@ -335,20 +314,21 @@ class MigrateTask extends BaseTask {
     }
 
     async _migrateResourceLevel(level) {
-        logger.debug('migrating metric level', { level });
+        const _logger = logger.with({ metricLevel: level });
+        _logger.debug('migrating metric level');
         return async.eachLimit(this._iterResources(level), 5, async resource => {
             let totals;
             const migrated = await this._isMigrated(level, resource);
             try {
                 totals = await this._migrateResource(level, resource, !migrated);
             } catch (error) {
-                logger.error('failed to migrate resource', { level, resource, error });
+                _logger.error('failed to migrate resource', { resource, error });
                 throw error;
             }
 
             if (!await this._markMigrated(level, resource)) {
                 const error = new Error('Failed to mark resource as migrated');
-                logger.error('failed to migrate resource', { level, resource, error });
+                _logger.error('failed to migrate resource', { resource, error });
                 throw error;
             }
 
@@ -359,11 +339,11 @@ class MigrateTask extends BaseTask {
 
             if (!await this._isCorrected(level, resource)) {
                 try {
-                    logger.debug('ingesting correction for metrics');
+                    _logger.debug('ingesting correction for metrics', { resource });
                     await this._migrateMetric('utapi.repair.event', level, resource, correction);
                 } catch (error) {
                     this._failedCorrections.push(correction);
-                    logger.error('error during correction', { level, resource, error });
+                    _logger.error('error during correction', { resource, error });
                     throw errors.FailedMigration;
                 }
 
@@ -373,11 +353,11 @@ class MigrateTask extends BaseTask {
                         'Failed to mark resource as corrected,'
                         + ' this can lead to inconsistencies if not manually corrected',
                     );
-                    logger.error('failed to migrate resource', { level, resource, error });
+                    _logger.error('failed to migrate resource', { resource, error });
                     throw error;
                 }
             } else {
-                logger.trace('already marked as corrected, skipping correction', { level, resource });
+                _logger.trace('already marked as corrected, skipping correction', { resource });
             }
         });
     }
@@ -395,7 +375,7 @@ class MigrateTask extends BaseTask {
             return res === 'OK';
         } catch (error) {
             logger.error('error setting migration status key', {
-                level, resource, key, error,
+                metricLevel: level, resource, key, error,
             });
             return false;
         }
