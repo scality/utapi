@@ -16,6 +16,11 @@ const config = require('../../../config');
 async function getStorage(ctx, params) {
     const { level, resource } = params;
 
+    if (level !== 'accounts') {
+        throw errors.BadRequest
+            .customizeDescription(`Unsupported level "${level}". Only "accounts" is currently supported`);
+    }
+
     const [counter, base] = await cache.fetchAccountSizeCounter(resource);
 
     let storageUtilized;
