@@ -7,6 +7,7 @@ const recordSchema = {
     sizeDelta: Joi.number(),
     incomingBytes: Joi.number(),
     outgoingBytes: Joi.number(),
+    operations: Joi.object(),
 };
 
 module.exports = buildModel('UtapiRecord', recordSchema);
