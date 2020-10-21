@@ -1,4 +1,4 @@
-const cron = require('node-cron');
+const cron = require('node-schedule');
 const cronparser = require('cron-parser');
 
 const config = require('../config');
@@ -74,15 +74,14 @@ class BaseTask extends Process {
                 this.join();
             });
         } else {
-            this._scheduler = cron.schedule(this.schedule,
+            this._scheduler = cron.scheduleJob(this.schedule,
                 async () => {
-                    this._scheduler.stop(); // Halt execution to avoid overlapping tasks
+                    this._scheduler.cancel(); // Halt execution to avoid overlapping tasks
                     await this.execute();
-                    this._scheduler.start();
+                    this._scheduler.reschedule(this.schedule);
                 });
             this.on('exit', () => {
-                this._scheduler.stop();
-                this._scheduler.destroy();
+                this._scheduler.cancel();
             });
         }
     }
