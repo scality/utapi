@@ -5,7 +5,7 @@ const { ipCheck } = require('arsenal');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');
-const { authenticateRequest } = require('../vault');
+const { authenticateRequest, vault } = require('../vault');
 
 const oasOptions = {
     controllers: path.join(__dirname, './API/'),
@@ -30,6 +30,11 @@ if (config.development) {
         swaggerUiPrefix: '',
         ...oasOptions.docs,
     };
+}
+
+async function initializeOasTools(spec, app) {
+    oasTools.configure(oasOptions);
+    return promisify(oasTools.initialize)(spec, app);
 }
 
 function loggerMiddleware(req, res, next) {
@@ -76,12 +81,6 @@ function responseLoggerMiddleware(req, res, next) {
     return next();
 }
 
-
-async function initializeOasTools(spec, app) {
-    oasTools.configure(oasOptions);
-    return promisify(oasTools.initialize)(spec, app);
-}
-
 // eslint-disable-next-line no-unused-vars
 async function authV4Middleware(request, response, params) {
     const authHeader = request.headers.authorization;
@@ -90,20 +89,18 @@ async function authV4Middleware(request, response, params) {
         throw errors.InvalidRequest.customizeDescription('Must use Auth V4 for this request.');
     }
 
-    let action;
-    let level;
+    let action = 'ListMetrics';
     let requestedResources = [];
 
-    if (params.level) {
-        // Can't destructure here
-        // eslint-disable-next-line prefer-destructuring
-        level = params.level;
-        requestedResources = [params.resource];
-        action = 'ListMetrics';
-    } else {
-        requestedResources = params.body[params.resource];
-        level = params.resource;
+    switch (request.ctx.operationId) {
+    case 'listMetrics':
+        requestedResources = params.body[params.level];
         action = params.Action.value;
+        break;
+
+    default:
+        requestedResources = [params.resource];
+        break;
     }
 
     if (requestedResources.length === 0) {
@@ -114,7 +111,7 @@ async function authV4Middleware(request, response, params) {
     let authorizedResources;
 
     try {
-        [passed, authorizedResources] = await authenticateRequest(request, action, level, requestedResources);
+        [passed, authorizedResources] = await authenticateRequest(request, action, params.level, requestedResources);
     } catch (error) {
         request.logger.error('error during authentication', { error });
         throw errors.InternalError;
@@ -125,8 +122,16 @@ async function authV4Middleware(request, response, params) {
         throw errors.AccessDenied;
     }
 
-    if (params.level === undefined && authorizedResources !== undefined) {
-        params.body[params.resource] = authorizedResources;
+    if (params.level === 'accounts') {
+        request.logger.debug('converting account ids to canonical ids');
+        authorizedResources = await vault.getCanonicalIds(
+            authorizedResources,
+            request.logger.logger,
+        );
+    }
+
+    if (request.ctx.operationId === 'listMetrics') {
+        params.body[params.level] = authorizedResources;
     }
 }
 
