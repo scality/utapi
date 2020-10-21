@@ -275,37 +275,25 @@ class MigrateTask extends BaseTask {
             const _logger = logger.with({ metricLevel: level, resource, metricTimestamp: metric.timestamp });
 
             if (ingest) {
+                let toIngest = new UtapiRecord(metric);
+                let className = 'utapi.checkpoint';
+
                 // Metric predates the oldest snapshot
                 if (oldestSnapshot !== null && metric.timestamp < oldestSnapshot) {
                     _logger.trace('ingesting metric as snapshot');
-                    await this._migrateMetric(
-                        'utapi.snapshot',
-                        level, resource,
-                        new UtapiRecord({
-                            ...correction.getValue(),
-                            timestamp: metric.timestamp,
-                        }),
-                    );
+                    className = 'utapi.snapshot';
+                    toIngest = new UtapiRecord({
+                        ...correction.getValue(),
+                        timestamp: metric.timestamp,
+                    });
 
                 // Metric in between oldest and latest snapshots
-                } else if ((oldestSnapshot !== null && metric.timestamp > oldestSnapshot)
-                && (latestSnapshot !== null && metric.timestamp < latestSnapshot)) {
-                    _logger.trace('ingesting metric as historic checkpoint');
-                    await this._migrateMetric(
-                        'utapi.checkpoint',
-                        level, resource,
-                        metric,
-                    );
-
-                // Metric newer than latest snapshot or no snapshots exist
-                } else if (latestSnapshot === null || metric.timestamp > latestSnapshot) {
-                    _logger.trace('ingesting metric as new checkpoint');
-                    await this._migrateMetric(
-                        'utapi.checkpoint',
-                        level, resource,
-                        metric,
-                    );
+                } else {
+                    _logger.trace('ingesting metric as checkpoint');
                 }
+
+                await this._migrateMetric(className, level, resource, toIngest);
+
             } else {
                 logger.trace('skipping ingestion of metric');
             }
