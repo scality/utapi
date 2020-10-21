@@ -15,6 +15,22 @@ function asyncOrCallback(asyncFunc, callback) {
     return asyncFunc();
 }
 
+/**
+ *
+ * @param {Array|Object} data - data to reduce
+ * @param {function(string, [string])} func - Called with the index/key and value for each entry in the input
+ *                                            Array or Object. Expected to return { key, value };
+ * @returns {Object} - Resulting object
+ */
+function comprehend(data, func) {
+    return Object.entries(data).reduce((prev, [key, value]) => {
+        const { key: _key, value: _value } = func(key, value);
+        prev[_key] = _value;
+        return prev;
+    }, {});
+}
+
 module.exports = {
     asyncOrCallback,
+    comprehend,
 };
