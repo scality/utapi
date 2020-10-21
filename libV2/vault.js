@@ -70,20 +70,26 @@ class Vault {
     * Returns canonical Ids for a given list of account Ids
     * @param {string[]} accountIds - list of account ids
     * @param {object} log - Werelogs request logger
-    * @param {callback} callback - callback with error and result as params
-    * @return {undefined}
+    * @return {Promise} -
     */
-    getCanonicalIds(accountIds, log, callback) {
+    getCanonicalIds(accountIds, log) {
         log.debug('retrieving canonical ids for account ids', {
             method: 'Vault.getCanonicalIds',
         });
-        return this._client.getCanonicalIdsByAccountIds(accountIds,
-            { reqUid: log.getSerializedUids(), logger: log }, callback);
+        return new Promise((resolve, reject) =>
+            this._client.getCanonicalIdsByAccountIds(accountIds,
+                { reqUid: log.getSerializedUids(), logger: log }, (err, res) => {
+                    if (err) {
+                        reject(err);
+                        return;
+                    }
+                    resolve(res);
+                }));
     }
 }
 
-const handler = new Vault(config);
-auth.setHandler(handler);
+const vault = new Vault(config);
+auth.setHandler(vault);
 
 async function authenticateRequest(request, action, level, resources) {
     const policyContext = new policies.RequestContext(
@@ -140,4 +146,5 @@ async function authenticateRequest(request, action, level, resources) {
 module.exports = {
     authenticateRequest,
     Vault,
+    vault,
 };
