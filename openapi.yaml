@@ -108,7 +108,7 @@ components:
       required: true
       schema:
         type: string
-        enum: [ 'accounts' ]
+        enum: [ 'accounts', 'buckets', 'users' ]
     resource:
         in: path
         name: resource
@@ -164,9 +164,9 @@ paths:
           $ref: '#/components/responses/json-error'
         200:
           $ref: '#/components/responses/utapi-get-storage-v1'
-  /{resource}:
+  /{level}:
     parameters:
-      - $ref: '#/components/parameters/resource'
+      - $ref: '#/components/parameters/level'
       - $ref: '#/components/parameters/action'
     post:
       x-router-controller: metrics
