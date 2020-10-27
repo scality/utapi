@@ -130,7 +130,8 @@ async function authV4Middleware(request, response, params) {
         );
     }
 
-    if (request.ctx.operationId === 'listMetrics') {
+    // authorizedResources is only defined on non-account credentials
+    if (request.ctx.operationId === 'listMetrics' && authorizedResources !== undefined) {
         params.body[params.level] = authorizedResources;
     }
 }
