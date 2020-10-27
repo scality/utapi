@@ -31,8 +31,8 @@
     "ingestionShardSize": 10,
     "ingestionLagSeconds": 30,
     "checkpointSchedule": "*/30 * * * * *",
-    "snapshotSchedule": "* 0 * * * *",
-    "repairSchedule": "* */5 * * * *",
+    "snapshotSchedule": "5 0 * * * *",
+    "repairSchedule": "0 */5 * * * *",
     "reindexSchedule": "0 0 0 * * Sun",
     "bucketd": [ "localhost:9000" ],
     "reindex": {
