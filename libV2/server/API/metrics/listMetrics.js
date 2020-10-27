@@ -18,8 +18,8 @@ const metricResponseKeys = {
 };
 
 async function listMetric(ctx, params) {
-    const labelName = serviceToWarp10Label[params.resource];
-    const resources = params.body[params.resource];
+    const labelName = serviceToWarp10Label[params.level];
+    const resources = params.body[params.level];
     const [start, end] = params.body.timeRange
         .map(convertTimestamp)
         .map(v => v.toString());
@@ -39,7 +39,7 @@ async function listMetric(ctx, params) {
             };
             const res = await warp10.exec(options);
             if (res.result.length === 0) {
-                ctx.logger.error('unable to retrieve metrics', { resource, type: params.resource });
+                ctx.logger.error('unable to retrieve metrics', { resource, type: params.level });
                 throw errors.InternalError;
             }
             return {
@@ -66,7 +66,7 @@ async function listMetric(ctx, params) {
                     ...operations,
                 },
             };
-            metric[metricResponseKeys[params.resource]] = result.resource;
+            metric[metricResponseKeys[params.level]] = result.resource;
             return metric;
         });
 
