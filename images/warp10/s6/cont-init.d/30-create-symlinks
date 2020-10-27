@@ -15,3 +15,9 @@ ensure_link "$WARP10_HOME/etc/conf.d" "$WARP10_DATA_DIR/conf"
 ensure_link "$WARP10_HOME/leveldb" "$WARP10_DATA_DIR/data/leveldb"
 ensure_link "$WARP10_HOME/datalog" "$WARP10_DATA_DIR/data/datalog"
 ensure_link "$WARP10_HOME/datalog_done" "$WARP10_DATA_DIR/data/datalog_done"
+
+ensure_link "$SENSISION_HOME/etc" "${SENSISION_DATA_DIR}/conf"
+ensure_link "$SENSISION_HOME/logs" "${SENSISION_DATA_DIR}/logs"
+ensure_link /var/run/sensision/metrics ${SENSISION_HOME}/metrics
+ensure_link /var/run/sensision/targets ${SENSISION_HOME}/targets
+ensure_link /var/run/sensision/queued ${SENSISION_HOME}/queued
