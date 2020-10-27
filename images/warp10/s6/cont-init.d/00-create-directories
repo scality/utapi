@@ -15,3 +15,15 @@ ensureDir "$WARP10_DATA_DIR/conf"
 ensureDir "$WARP10_DATA_DIR/data/leveldb"
 ensureDir "$WARP10_DATA_DIR/data/datalog"
 ensureDir "$WARP10_DATA_DIR/data/datalog_done"
+
+ensureDir "$SENSISION_DATA_DIR"
+ensureDir "$SENSISION_DATA_DIR/logs"
+ensureDir "$SENSISION_DATA_DIR/conf"
+
+ensureDir "/var/run/sensision"
+# ensureDir "/var/run/sensision/targets"
+# ensureDir "/var/run/sensision/queued"
+
+chmod 1733 "$SENSISION_HOME/metrics"
+chmod 1733 "$SENSISION_HOME/targets"
+chmod 700 "$SENSISION_HOME/queued"

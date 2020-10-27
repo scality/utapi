@@ -1,5 +1,6 @@
 #!/usr/bin/with-contenv sh
 
+echo "Installing warp 10 config"
 for path in $WARP10_CONF_TEMPLATES/*; do
     name="$(basename $path .template)"
     if [ ! -f "$WARP10_DATA_DIR/conf/$name" ]; then
@@ -7,3 +8,7 @@ for path in $WARP10_CONF_TEMPLATES/*; do
         echo "Copied $name to $WARP10_DATA_DIR/conf/$name"
     fi
 done
+
+echo "Installing sensision config"
+cp ${SENSISION_HOME}/templates/sensision.template $SENSISION_DATA_DIR/conf/sensision.conf
+cp ${SENSISION_HOME}/templates/log4j.properties.template ${SENSISION_DATA_DIR}/conf/log4j.properties

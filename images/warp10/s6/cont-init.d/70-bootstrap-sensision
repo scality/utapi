@@ -1,0 +1,10 @@
+#!/usr/bin/with-contenv sh
+
+sed -i 's/@warp:WriteToken@/'"writeTokenStatic"'/' $SENSISION_DATA_DIR/conf/sensision.conf
+sed -i -e "s_^sensision\.home.*_sensision\.home = ${SENSISION_HOME}_" $SENSISION_DATA_DIR/conf/sensision.conf
+sed -i -e 's_^sensision\.qf\.url\.default.*_sensision\.qf\.url\.default=http://127.0.0.1:4802/api/v0/update_' $SENSISION_DATA_DIR/conf/sensision.conf
+sed -i -e 's_^log4j\.logger\.io\.warp10.*_log4j\.logger\.io\.warp10=DEBUG, stdout_' $SENSISION_DATA_DIR/conf/log4j.properties
+sed -i -e 's_^log4j\.rootLogger.*_log4j\.rootLogger=DEBUG, stdout_' $SENSISION_DATA_DIR/conf/log4j.properties
+
+# Fool the startup script so it doesn't try to rebootstrap
+# touch ${SENSISION_HOME}/etc/sensision.conf

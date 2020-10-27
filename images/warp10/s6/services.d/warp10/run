@@ -9,5 +9,28 @@ CONFIG_FILES="$(find ${WARP10_CONFIG_DIR} -not -path "*/\.*" -name "*.conf" | so
 
 WARP10_CMD="${JAVA} ${JAVA_OPTS} -cp ${WARP10_CP} ${WARP10_CLASS} ${CONFIG_FILES}"
 
+VERSION=1.0.21
+SENSISION_HEAP=64m
+SENSISION_CONFIG=${SENSISION_DATA_DIR}/conf/sensision.conf
+SENSISION_JAR=${SENSISION_HOME}/bin/sensision-${VERSION}.jar
+SENSISION_CP=${SENSISION_HOME}/etc:${SENSISION_JAR}
+SENSISION_CLASS=io.warp10.sensision.Main
+export MALLOC_ARENA_MAX=1
+
+if [ -z "$SENSISION_HEAP" ]; then
+    SENSISION_HEAP=64m
+fi
+
+if [ -z "$SENSISION_OPTS" ]; then
+    SENSISION_OPTS=-Dsensision.server.port=0
+fi
+
 echo "Starting Warp 10 with $WARP10_CMD ..."
-exec $WARP10_CMD | tee -a ${WARP10_HOME}/logs/warp10.log
+$WARP10_CMD | tee -a ${WARP10_HOME}/logs/warp10.log &
+
+SENSISION_CMD="${JAVA} ${JAVA_OPTS} -Xmx${SENSISION_HEAP} ${SENSISION_OPTS} -Dsensision.config=${SENSISION_CONFIG} -cp ${SENSISION_CP} ${SENSISION_CLASS}"
+
+echo "Starting Sensision with $SENSISION_CMD ..."
+exec $SENSISION_CMD | tee -a ${SENSISION_HOME}/logs/sensision.log
+
+
