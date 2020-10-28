@@ -10,5 +10,5 @@ for path in $WARP10_CONF_TEMPLATES/*; do
 done
 
 echo "Installing sensision config"
-cp ${SENSISION_HOME}/templates/sensision.template $SENSISION_DATA_DIR/conf/sensision.conf
+cp ${SENSISION_HOME}/templates/sensision.template ${SENSISION_DATA_DIR}/conf/sensision.conf
 cp ${SENSISION_HOME}/templates/log4j.properties.template ${SENSISION_DATA_DIR}/conf/log4j.properties
