@@ -1,0 +1,9 @@
+#!/usr/bin/with-contenv sh
+
+chmod 1733 "$SENSISION_HOME/metrics"
+chmod 1733 "$SENSISION_HOME/targets"
+chmod 700 "$SENSISION_HOME/queued"
+
+sed -i 's/@warp:WriteToken@/'"writeTokenStatic"'/' $SENSISION_DATA_DIR/conf/sensision.conf
+sed -i -e "s_^sensision\.home.*_sensision\.home = ${SENSISION_HOME}_" $SENSISION_DATA_DIR/conf/sensision.conf
+sed -i -e 's_^sensision\.qf\.url\.default.*_sensision\.qf\.url\.default=http://127.0.0.1:4802/api/v0/update_' $SENSISION_DATA_DIR/conf/sensision.conf
