@@ -1,0 +1,126 @@
+{
+  'name' 'findOldestRecord'
+  'desc'
+  <'
+
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'c:LIST[GTS]'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'r' 'Timestamp of oldest record found or NULL if no records exist'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    JSON-> 'operation_info' STORE
+    JSON-> 'auth_info' STORE
+
+    $auth_info 'write' GET 'write_token' STORE
+    $auth_info 'read' GET 'read_token' STORE
+
+    $operation_info 'class' GET 'className' STORE
+    $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+    $operation_info 'labels' GET 'filterLabels' STORE
+
+    'Finding oldest record for ' $className + $filterLabels ->JSON + LOGMSG
+
+    //ISO-8601 Duration Format PwWdDThHmMsS
+    // w weeks
+    // d days
+    // h hours
+    // m minutes
+    // s or s.ssssss... seconds
+    [ 'P-1D' 'PT-12H' 'PT-6H' 'PT-1H' 'PT-15M' 'PT-5M' 'PT-1M' 'PT-30S' ] 'steps' STORE
+    0 'currentStep' STORE
+    false 'foundRecords' STORE
+    $endTimestamp 'currentTimestamp' STORE
+    $currentTimestamp TOSTRING LOGMSG
+
+    $currentTimestamp
+    <%
+        $steps $currentStep GET ADDDURATION 'checkTimestamp' STORE
+        $checkTimestamp TOSTRING LOGMSG
+        {
+            'token' $read_token
+            'class' $className
+            'labels' $filterLabels
+            'end' $checkTimestamp
+            'count' 1
+        } FETCH
+    %>
+    <%
+        <% DUP SIZE 0 == %>
+        <%
+            DROP // Drop empty GTS
+            'Found 0 records for timestamp' $currentTimestamp TOSTRING + LOGMSG
+            <% $currentStep $steps SIZE 1 - >= %>
+            <%
+                'At final step, exiting loop' LOGMSG
+                $currentTimestamp
+                true
+            %>
+            <%
+                'Moving to smaller step and retrying timestamp' LOGMSG
+                $currentStep 1 + 'currentStep' STORE
+                $currentTimestamp
+                false
+            %> IFTE
+        %>
+        <%
+            'Found records before ' $currentTimestamp TOSTRING + ' Advancing currentTimestamp' + LOGMSG
+            FIRSTTICK 'currentTimestamp' STORE
+            true 'foundRecords' STORE
+            $currentTimestamp
+            false
+        %> IFTE
+    %> UNTIL
+
+    'currentTimestamp' STORE
+    'currentTimestamp ' $currentTimestamp TOSTRING + LOGMSG
+
+    <% $foundRecords ! %>
+    <% NULL %>
+    <%
+        <%
+            $currentTimestamp TOSTRING LOGMSG
+            {
+                'token' $read_token
+                'class' $className
+                'labels' $filterLabels
+                'end' $currentTimestamp 1 -
+                'count' 1000
+            } FETCH
+        %>
+        <%
+            <% DUP SIZE 0 == %>
+            <% DROP true %>
+            <%
+                FIRSTTICK 'currentTimestamp' STORE
+                false
+            %> IFTE
+        %> UNTIL
+        $currentTimestamp
+    %> IFTE
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+$macro

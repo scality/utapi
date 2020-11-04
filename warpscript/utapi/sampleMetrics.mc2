@@ -1,0 +1,40 @@
+{
+  'name' 'sampleMetrics'
+  'desc'
+  <'
+Sample metrics at the given interval using the provided labels
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'c:LIST[GTS]'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'r' 'Generated metrics GTS'
+  }
+  'exampl
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    // Code of the actual macro
+
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+$macro

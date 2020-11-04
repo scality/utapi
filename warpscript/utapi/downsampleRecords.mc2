@@ -1,0 +1,94 @@
+{
+  'name' 'downsampleRecords'
+  'desc'
+  <'
+
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'c:LIST[GTS]'  ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'c' 'List of created checkpoints'
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    'Downsampling records' LOGMSG
+    JSON-> 'operation_info' STORE
+    JSON-> 'auth_info' STORE
+
+    $auth_info 'write' GET 'write_token' STORE
+    $auth_info 'read' GET 'read_token' STORE
+
+    $operation_info 'fields' GET 'fieldsToIndex' STORE
+    $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+    $operation_info 'size' GET 'sampleSize' STORE
+
+    'utapi.downsample.master' 'master_downsample_class' STORE
+    'utapi.snapshot' 'snapshot_class' STORE
+
+    $read_token $master_downsample_class {} $endTimestamp @utapi/fetchFirstRecordBefore // Fetch latest master downsample
+    FIRSTTICK 'startTimestamp' STORE // Grab our starting timestamp from the last downsample (0 if no downsamples)
+
+    <% $startTimestamp 0 == %>
+    <%
+        'No previous timestamp found, calculating starting point' LOGMSG
+        $auth_info ->JSON
+        {
+            'class' 'utapi.event'
+            'end' $operation_info 'end' GET
+            'labels' {}
+        } ->JSON @utapi/findOldestRecord
+        'startTimestamp' STORE
+    %> IFT
+
+    'Using ' $startTimestamp TOSTRING + ' as startTimestamp' + LOGMSG
+
+    $fieldsToIndex
+    <%
+        'field' STORE
+        [
+            $read_token
+            $snapshot_class
+            { $field '~.*' }
+        ] FINDSETS
+        DROP SWAP DROP $field GET
+        [] 'macros' STORE
+        <%
+            'resource' STORE
+            <%
+                $auth_info ->JSON
+                {
+                    'start'
+                    'end'
+                    'labels' { $field $resource}
+                    'size' $sampleSize
+                } ->JSON @utapi/sampleMetrics
+            %> 'macro' STORE
+            $macros $macro +! DROP
+        %> FOREACH
+        $macros 10 CEVAL
+    %> FOREACH
+
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+$macro
