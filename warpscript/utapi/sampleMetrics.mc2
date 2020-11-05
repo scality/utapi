@@ -11,7 +11,6 @@ Sample metrics at the given interval using the provided labels
     'o' 'Map containing operation info'
     'r' 'Generated metrics GTS'
   }
-  'exampl
   'examples' [
     <'
 
@@ -23,8 +22,33 @@ Sample metrics at the given interval using the provided labels
   !$info INFO
   SAVE 'context' STORE
   <%
-    // Code of the actual macro
+    JSON-> 'operation_info' STORE
+    'auth_info_json' STORE
+    $auth_info_json JSON-> 'auth_info' STORE
 
+    $auth_info 'write' GET 'write_token' STORE
+    $auth_info 'read' GET 'read_token' STORE
+
+    $operation_info 'start' GET TOLONG 'startTimestamp' STORE
+    $operation_info 'end' GET TOLONG 'endTimestamp' STORE
+    $operation_info 'labels' GET 'filterLabels' STORE
+    $operation_info 'sampleClass' GET 'sampleClass' STORE
+    $operation_info 'size' GET 'sampleSize' STORE
+
+    'Sampling records from ' $startTimestamp TOSTRING + ' - ' + $endTimestamp TOSTRING + ' ' + $filterLabels ->JSON + LOGMSG
+
+    $auth_info_json { 'labels' $filterLabels 'end' $startTimestamp } ->JSON @utapi/getMetricsAt 'metric' STORE
+    $startTimestamp $sampleSize ADDDURATION 'currentTimestamp' STORE
+    NEWGTS $sampleClass RENAME
+    $filterLabels RELABEL
+    <% $currentTimestamp $sampleSize ADDDURATION $endTimestamp <= %>
+    <%
+      'Sampling metrics for ' $filterLabels ->JSON + ' at ' + $currentTimestamp TOSTRING + LOGMSG
+      $auth_info_json { 'labels' $filterLabels 'end' $startTimestamp 'prev' $metric } ->JSON @utapi/getMetricsAt 'metric' STORE
+      $currentTimestamp NaN NaN NaN $metric @utapi/encodeRecord ADDVALUE
+      $currentTimestamp $sampleSize ADDDURATION 'currentTimestamp' STORE
+    %>
+    WHILE
   %>
   <% // catch any exception
     RETHROW

@@ -12,6 +12,8 @@ ENV warpscript.repository.directory /usr/local/share/warpscript
 ENV warp.token.file /static.tokens
 ENV warpscript.extension.protobuf io.warp10.ext.protobuf.ProtobufWarpScriptExtension
 ENV warpscript.extension.macrovalueencoder 'io.warp10.continuum.ingress.MacroValueEncoder$Extension'
+ENV warpscript.extension.concurrent 'io.warp10.script.ext.concurrent.ConcurrentWarpScriptExtension'
+
 # ENV warpscript.extension.debug io.warp10.script.ext.debug.DebugWarpScriptExtension
 
 RUN wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_VERSION}/s6-overlay-amd64.tar.gz -O /tmp/s6-overlay-amd64.tar.gz \

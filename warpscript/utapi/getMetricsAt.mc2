@@ -34,7 +34,9 @@
 
     $operation_info 'end' GET TOLONG 'endTimestamp' STORE
     $operation_info 'labels' GET 'labels' STORE
-    $operation_info 'node' GET 'nodeID' STORE
+
+    <% $operation_info 'node' CONTAINSKEY SWAP DROP %>
+    <% $operation_info 'node' GET 'nodeID' STORE %> IFT
 
     // Raise the max operations for a executing script
     // $read_token AUTHENTICATE
@@ -259,23 +261,26 @@
     %> FOREACH
 
     'load_reindex' SECTION
-    // Only load the latest reindex for the current node
-    $labels UNMAP 'node' $nodeID } 'filterLabels' STORE
-    {
-      'token' $read_token
-      'class' $reindex_class
-      'labels' $filterLabels
-      'end' $endTimestamp
-      'count' 1
-    } FETCH
-    <% // Handle multiple GTS
-      VALUES
-      <% // For each reindex correction
-        @utapi/decodeRecord
-        // DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
-        $results @util/sumRecord 'results' STORE
+    <% 'nodeID' DEFINED %>
+    <%
+      // Only load the latest reindex for the current node
+      $labels UNMAP 'node' $nodeID } 'filterLabels' STORE
+      {
+        'token' $read_token
+        'class' $reindex_class
+        'labels' $filterLabels
+        'end' $endTimestamp
+        'count' 1
+      } FETCH
+      <% // Handle multiple GTS
+        VALUES
+        <% // For each reindex correction
+          @utapi/decodeRecord
+          // DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
+          $results @util/sumRecord 'results' STORE
+        %> FOREACH
       %> FOREACH
-    %> FOREACH
+    %> IFT
 
     $results // Leave results on the stack
 

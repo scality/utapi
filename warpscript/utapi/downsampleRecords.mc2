@@ -35,6 +35,7 @@
 
     'utapi.downsample.master' 'master_downsample_class' STORE
     'utapi.snapshot' 'snapshot_class' STORE
+    'utapi.downsample.stage1' 'sample_class' STORE
 
     $read_token $master_downsample_class {} $endTimestamp @utapi/fetchFirstRecordBefore // Fetch latest master downsample
     FIRSTTICK 'startTimestamp' STORE // Grab our starting timestamp from the last downsample (0 if no downsamples)
@@ -52,7 +53,7 @@
     %> IFT
 
     'Using ' $startTimestamp TOSTRING + ' as startTimestamp' + LOGMSG
-
+    [] 'created' STORE
     $fieldsToIndex
     <%
         'field' STORE
@@ -62,23 +63,33 @@
             { $field '~.*' }
         ] FINDSETS
         DROP SWAP DROP $field GET
+        DUP ->JSON ' ' + $field + LOGMSG
+        <% DUP ISNULL %>
+        <% DROP CONTINUE %> IFT
+        'resources' STORE
         [] 'macros' STORE
+        $resources
         <%
-            'resource' STORE
+          DROP
             <%
+                1 - 'idx' STORE
+                $idx TOSTRING LOGMSG
                 $auth_info ->JSON
                 {
-                    'start'
-                    'end'
-                    'labels' { $field $resource}
+                    'start' $startTimestamp
+                    'end' $operation_info 'end' GET
+                    'labels' { $field $resources $idx GET }
                     'size' $sampleSize
+                    'sampleClass' $sample_class
                 } ->JSON @utapi/sampleMetrics
             %> 'macro' STORE
             $macros $macro +! DROP
         %> FOREACH
         $macros 10 CEVAL
+        $created SWAP +! DROP
+        'test' LOGMSG
     %> FOREACH
-
+    $created
   %>
   <% // catch any exception
     RETHROW
