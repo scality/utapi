@@ -2,6 +2,7 @@ const assert = require('assert');
 const { auth, policies } = require('arsenal');
 const vaultclient = require('vaultclient');
 const config = require('./config');
+const errors = require('./errors');
 
 /**
 @class Vault
@@ -44,6 +45,9 @@ class Vault {
      * @return {undefined}
     */
     authenticateV4Request(params, requestContexts, callback) {
+        authorizedResources.length !== 0,
+        authorizedResources,
+    ]);
         const {
             accessKey, signatureFromRequest, region, scopeDate,
             stringToSign,
@@ -83,13 +87,28 @@ class Vault {
                         reject(err);
                         return;
                     }
-                    resolve(res);
+                    if (!res.message || !res.message.body) {
+                        reject(errors.InternalError);
+                    }
+                    resolve(res.message.body.map(acc => acc.canonicalId));
                 }));
     }
 }
 
 const vault = new Vault(config);
 auth.setHandler(vault);
+
+async function translateResourceIds(level, resources) {
+    if (level === 'accounts') {
+        const res = await vault.getCanonicalIds(resources);
+        if (res.message || !res.message.body) {
+            throw errors.InternalError.customizeDescription('error converting accountIds to canonicalIds');
+        }
+        return res.message.body.map(acc => ({ resource: acc.accountId, id: acc.canonicalId }));
+    }
+
+    return resources.map((resource) => ({ resource, id: resource }));
+}
 
 async function authenticateRequest(request, action, level, resources) {
     const policyContext = new policies.RequestContext(
@@ -104,7 +123,7 @@ async function authenticateRequest(request, action, level, resources) {
     );
 
     return new Promise((resolve, reject) => {
-        auth.server.doAuth(request, request.logger.logger, (err, res) => {
+        auth.server.doAuth(request, request.logger.logger, async (err, res) => {
             if (err && (err.InvalidAccessKeyId || err.AccessDenied)) {
                 resolve([false]);
                 return;
@@ -114,10 +133,11 @@ async function authenticateRequest(request, action, level, resources) {
                 return;
             }
             // Will only have res if request is from a user rather than an account
+            let authorizedResources = resources;
             if (res) {
                 try {
-                    const authorizedResources = (res || [])
-                        .reduce((authed, result) => {
+                    authorizedResources = res.reduce(
+                        (authed, result) => {
                             if (result.isAllowed) {
                                 // result.arn should be of format:
                                 // arn:scality:utapi:::resourcetype/resource
@@ -129,17 +149,17 @@ async function authenticateRequest(request, action, level, resources) {
                             }
                             return authed;
                         }, []);
-                    resolve([
-                        authorizedResources.length !== 0,
-                        authorizedResources,
-                    ]);
                 } catch (err) {
                     reject(err);
                 }
             } else {
                 request.logger.trace('granted access to all resources');
-                resolve([true]);
             }
+
+            resolve([
+                authorizedResources.length !== 0,
+                await translateResourceIds(level, authorizedResources),
+            ]);
         }, 's3', [policyContext]);
     });
 }

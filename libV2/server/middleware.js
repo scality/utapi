@@ -122,17 +122,14 @@ async function authV4Middleware(request, response, params) {
         throw errors.AccessDenied;
     }
 
-    if (params.level === 'accounts') {
-        request.logger.debug('converting account ids to canonical ids');
-        authorizedResources = await vault.getCanonicalIds(
-            authorizedResources,
-            request.logger.logger,
-        );
-    }
-
-    // authorizedResources is only defined on non-account credentials
-    if (request.ctx.operationId === 'listMetrics' && authorizedResources !== undefined) {
+    switch (request.ctx.operationId) {
+    case 'listMetrics':
         params.body[params.level] = authorizedResources;
+        break;
+
+    default:
+        [params.resource] = authorizedResources;
+        break;
     }
 }
 
