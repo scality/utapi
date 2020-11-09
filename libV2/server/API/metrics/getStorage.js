@@ -14,14 +14,15 @@ const config = require('../../../config');
  * @returns {Promise<undefined>} -
  */
 async function getStorage(ctx, params) {
-    const { level, resource } = params;
+    const { level, resource: _resource } = params;
+    const { resource, id } = _resource;
 
     if (level !== 'accounts') {
         throw errors.BadRequest
             .customizeDescription(`Unsupported level "${level}". Only "accounts" is currently supported`);
     }
 
-    const [counter, base] = await cache.fetchAccountSizeCounter(resource);
+    const [counter, base] = await cache.fetchAccountSizeCounter(id);
 
     let storageUtilized;
 
@@ -29,7 +30,7 @@ async function getStorage(ctx, params) {
         storageUtilized = counter + base;
     } else {
         const labelName = serviceToWarp10Label[params.level];
-        const labels = { [labelName]: resource };
+        const labels = { [labelName]: id };
         const options = {
             params: {
                 end: now(),
@@ -46,7 +47,7 @@ async function getStorage(ctx, params) {
         }
 
         const { sizeD: currentSize } = res.result[0];
-        await cache.updateAccountCounterBase(resource, currentSize);
+        await cache.updateAccountCounterBase(id, currentSize);
         storageUtilized = currentSize;
     }
 
