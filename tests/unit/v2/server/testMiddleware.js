@@ -37,7 +37,7 @@ describe('Test middleware', () => {
         );
     });
 
-    describe('test errorMiddleware', () => {\
+    describe('test errorMiddleware', () => {
         let req;
         let resp;
 
@@ -46,7 +46,7 @@ describe('Test middleware', () => {
             resp = new ExpressResponseStub();
         });
 
-        it('should set a default code and message', next => {
+        it('should set a default code and message', () => {
             middleware.errorMiddleware({}, req, resp);
             assert.strictEqual(resp._status, 500);
             assert.deepStrictEqual(resp._body, {
