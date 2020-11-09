@@ -99,27 +99,15 @@ const vault = new Vault(config);
 auth.setHandler(vault);
 
 async function translateResourceIds(level, resources) {
-    let translatedIds = resources;
     if (level === 'accounts') {
         const res = await vault.getCanonicalIds(resources);
         if (res.message || !res.message.body) {
-            throw errors.InternalError.customizeDescription('invalid response from vault');
+            throw errors.InternalError.customizeDescription('error converting accountIds to canonicalIds');
         }
-
-        translatedIds = res.message.body.map(acc => acc.canonicalId);
-
-        if (resources.length !== translatedIds.length) {
-            throw errors.InternalError.customizeDescription(
-                'error converting accountIds to canonicalIds, not all accounts converted',
-            );
-        }
+        return res.message.body.map(acc => ({ resource: acc.accountId, id: acc.canonicalId }));
     }
-    return resources.map((resource, idx) => (
-        {
-            resource,
-            id: translatedIds[idx],
-        }
-    ));
+
+    return resources.map((resource) => ({ resource, id: resource }));
 }
 
 async function authenticateRequest(request, action, level, resources) {
@@ -173,7 +161,7 @@ async function authenticateRequest(request, action, level, resources) {
                 await translateResourceIds(level, authorizedResources),
             ]);
         }, 's3', [policyContext]);
-    }).then(res => translateResourceIds(level, res));
+    });
 }
 
 module.exports = {
