@@ -38,14 +38,16 @@ describe('Test middleware', () => {
     });
 
     describe('test errorMiddleware', () => {
+        let req;
         let resp;
 
         beforeEach(() => {
+            req = templateRequest();
             resp = new ExpressResponseStub();
         });
 
         it('should set a default code and message', () => {
-            middleware.errorMiddleware({}, null, resp);
+            middleware.errorMiddleware({}, req, resp);
             assert.strictEqual(resp._status, 500);
             assert.deepStrictEqual(resp._body, {
                 error: {
@@ -56,7 +58,7 @@ describe('Test middleware', () => {
         });
 
         it('should set the correct info from an error', () => {
-            middleware.errorMiddleware({ code: 123, message: 'Hello World!', utapiError: true }, null, resp);
+            middleware.errorMiddleware({ code: 123, message: 'Hello World!', utapiError: true }, req, resp);
             assert.deepStrictEqual(resp._body, {
                 error: {
                     code: '123',
@@ -66,13 +68,24 @@ describe('Test middleware', () => {
         });
 
         it("should replace an error's message if it's internal and not in development mode", () => {
-            middleware.errorMiddleware({ code: 123, message: 'Hello World!' }, null, resp);
+            middleware.errorMiddleware({ code: 123, message: 'Hello World!' }, req, resp);
             assert.deepStrictEqual(resp._body, {
                 error: {
                     code: '123',
                     message: 'Internal Error',
                 },
             });
+        });
+
+        it('should call responseLoggerMiddleware after response', () => {
+            const spy = sinon.spy();
+            req.logger.end = spy;
+            resp.statusMessage = 'Hello World!';
+            middleware.errorMiddleware({ code: 123 }, req, resp);
+            assert(spy.calledOnceWith('finished handling request', {
+                httpCode: 123,
+                httpMessage: 'Hello World!',
+            }));
         });
     });
 });
