@@ -2,6 +2,7 @@ const assert = require('assert');
 const { auth, policies } = require('arsenal');
 const vaultclient = require('vaultclient');
 const config = require('./config');
+const errors = require('./errors');
 
 /**
 @class Vault
@@ -83,13 +84,29 @@ class Vault {
                         reject(err);
                         return;
                     }
-                    resolve(res);
+                    if (!res.message || !res.message.body) {
+                        reject(errors.InternalError);
+                        return;
+                    }
+                    resolve(res.message.body.map(acc => ({
+                        resource: acc.accountId,
+                        id: acc.canonicalId,
+                    })));
                 }));
     }
 }
 
 const vault = new Vault(config);
 auth.setHandler(vault);
+
+async function translateResourceIds(level, resources, log) {
+    if (level === 'accounts') {
+        const res = await vault.getCanonicalIds(resources, log);
+        return res;
+    }
+
+    return resources.map(resource => ({ resource, id: resource }));
+}
 
 async function authenticateRequest(request, action, level, resources) {
     const policyContext = new policies.RequestContext(
@@ -114,10 +131,11 @@ async function authenticateRequest(request, action, level, resources) {
                 return;
             }
             // Will only have res if request is from a user rather than an account
+            let authorizedResources = resources;
             if (res) {
                 try {
-                    const authorizedResources = (res || [])
-                        .reduce((authed, result) => {
+                    authorizedResources = res.reduce(
+                        (authed, result) => {
                             if (result.isAllowed) {
                                 // result.arn should be of format:
                                 // arn:scality:utapi:::resourcetype/resource
@@ -128,24 +146,32 @@ async function authenticateRequest(request, action, level, resources) {
                                 request.logger.trace('access granted for resource', { resource });
                             }
                             return authed;
-                        }, []);
-                    resolve([
-                        authorizedResources.length !== 0,
-                        authorizedResources,
-                    ]);
+                        }, [],
+                    );
                 } catch (err) {
                     reject(err);
                 }
             } else {
                 request.logger.trace('granted access to all resources');
-                resolve([true]);
             }
+
+            resolve([
+                authorizedResources.length !== 0,
+                authorizedResources,
+            ]);
         }, 's3', [policyContext]);
     });
 }
 
+async function translateAndAuthorize(request, action, level, resources) {
+    const [authed, authorizedResources] = await authenticateRequest(request, action, level, resources);
+    const translated = await translateResourceIds(level, authorizedResources, request.logger.logger);
+    return [authed, translated];
+}
+
 module.exports = {
     authenticateRequest,
+    translateAndAuthorize,
     Vault,
     vault,
 };
