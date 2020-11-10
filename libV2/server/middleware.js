@@ -44,6 +44,17 @@ function loggerMiddleware(req, res, next) {
     return next();
 }
 
+function responseLoggerMiddleware(req, res, next) {
+    const info = {
+        httpCode: res.statusCode,
+        httpMessage: res.statusMessage,
+    };
+    req.logger.end('finished handling request', info);
+    if (next !== undefined) {
+        next();
+    }
+}
+
 // next is purposely not called as all error responses are handled here
 // eslint-disable-next-line no-unused-vars
 function errorMiddleware(err, req, res, next) {
@@ -70,15 +81,7 @@ function errorMiddleware(err, req, res, next) {
             message,
         },
     });
-}
-
-function responseLoggerMiddleware(req, res, next) {
-    const info = {
-        httpCode: res.statusCode,
-        httpMessage: res.statusMessage,
-    };
-    req.logger.end('finished handling request', info);
-    return next();
+    responseLoggerMiddleware(req, res);
 }
 
 // eslint-disable-next-line no-unused-vars

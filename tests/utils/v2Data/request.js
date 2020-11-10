@@ -7,6 +7,10 @@ class ExpressResponseStub {
         this._redirect = null;
     }
 
+    get statusCode() {
+        return this._status;
+    }
+
     status(code) {
         this._status = code;
         return this;
