@@ -33,7 +33,8 @@ PROTOC 'proto' STORE
   !$info INFO
   SAVE 'context' STORE
   <%
-    HEX-> !$proto 'Record' PB->
+    'iso8859-1' ->BYTES
+    !$proto 'Record' PB->
   %>
   <% // catch any exception
     RETHROW
@@ -45,7 +46,7 @@ PROTOC 'proto' STORE
 'macro' STORE
 
 // Unit tests
-'081e101e181e20002a0d0a097075744f626a656374101e'
+'081e101e181e20002a0d0a097075744f626a656374101e' HEX-> 'iso8859-1' BYTES->
 @macro
 { 'outB' 0 'ops' { 'putObject' 30 } 'sizeD' 30 'inB' 30 'objD' 30 } == ASSERT
 
