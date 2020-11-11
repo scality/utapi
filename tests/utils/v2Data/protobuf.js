@@ -8,7 +8,7 @@ function decode(type, data, includeDefaults = true) {
     if (!Type) {
         throw new Error(`Unknown type ${type}`);
     }
-    const msg = Type.decode(Buffer.from(data, 'hex'));
+    const msg = Type.decode(Buffer.from(data));
     return Type.toObject(msg, {
         longs: Number,
         defaults: includeDefaults,

@@ -34,7 +34,7 @@ PROTOC 'proto' STORE
   !$info INFO
   SAVE 'context' STORE
   <%
-    !$proto 'Record' ->PB ->HEX
+    !$proto 'Record' ->PB
   %>
   <% // catch any exception
     RETHROW
@@ -49,6 +49,7 @@ PROTOC 'proto' STORE
 { 'outB' 0 'ops' { 'putObject' 30 } 'sizeD' 30 'inB' 30 'objD' 30 }
 @macro
 
+->HEX
 '081e101e181e20002a0d0a097075744f626a656374101e' == ASSERT
 
 $macro
