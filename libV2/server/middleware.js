@@ -5,7 +5,7 @@ const { ipCheck } = require('arsenal');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');
-const { authenticateRequest, vault } = require('../vault');
+const { translateAndAuthorize } = require('../vault');
 
 const oasOptions = {
     controllers: path.join(__dirname, './API/'),
@@ -114,7 +114,7 @@ async function authV4Middleware(request, response, params) {
     let authorizedResources;
 
     try {
-        [passed, authorizedResources] = await authenticateRequest(request, action, params.level, requestedResources);
+        [passed, authorizedResources] = await translateAndAuthorize(request, action, params.level, requestedResources);
     } catch (error) {
         request.logger.error('error during authentication', { error });
         throw errors.InternalError;
@@ -125,17 +125,14 @@ async function authV4Middleware(request, response, params) {
         throw errors.AccessDenied;
     }
 
-    if (params.level === 'accounts') {
-        request.logger.debug('converting account ids to canonical ids');
-        authorizedResources = await vault.getCanonicalIds(
-            authorizedResources,
-            request.logger.logger,
-        );
-    }
-
-    // authorizedResources is only defined on non-account credentials
-    if (request.ctx.operationId === 'listMetrics' && authorizedResources !== undefined) {
+    switch (request.ctx.operationId) {
+    case 'listMetrics':
         params.body[params.level] = authorizedResources;
+        break;
+
+    default:
+        [params.resource] = authorizedResources;
+        break;
     }
 }
 
