@@ -86,8 +86,12 @@ class Vault {
                     }
                     if (!res.message || !res.message.body) {
                         reject(errors.InternalError);
+                        return;
                     }
-                    resolve(res.message.body.map(acc => acc.canonicalId));
+                    resolve(res.message.body.map(acc => ({
+                        resource: acc.accountId,
+                        id: acc.canonicalId,
+                    })));
                 }));
     }
 }
@@ -95,13 +99,10 @@ class Vault {
 const vault = new Vault(config);
 auth.setHandler(vault);
 
-async function translateResourceIds(level, resources) {
+async function translateResourceIds(level, resources, log) {
     if (level === 'accounts') {
-        const res = await vault.getCanonicalIds(resources);
-        if (res.message || !res.message.body) {
-            throw errors.InternalError.customizeDescription('error converting accountIds to canonicalIds');
-        }
-        return res.message.body.map(acc => ({ resource: acc.accountId, id: acc.canonicalId }));
+        const res = await vault.getCanonicalIds(resources, log);
+        return res;
     }
 
     return resources.map(resource => ({ resource, id: resource }));
@@ -120,7 +121,7 @@ async function authenticateRequest(request, action, level, resources) {
     );
 
     return new Promise((resolve, reject) => {
-        auth.server.doAuth(request, request.logger.logger, async (err, res) => {
+        auth.server.doAuth(request, request.logger.logger, (err, res) => {
             if (err && (err.InvalidAccessKeyId || err.AccessDenied)) {
                 resolve([false]);
                 return;
@@ -145,8 +146,7 @@ async function authenticateRequest(request, action, level, resources) {
                                 request.logger.trace('access granted for resource', { resource });
                             }
                             return authed;
-                        },
-                        [],
+                        }, [],
                     );
                 } catch (err) {
                     reject(err);
@@ -157,14 +157,21 @@ async function authenticateRequest(request, action, level, resources) {
 
             resolve([
                 authorizedResources.length !== 0,
-                await translateResourceIds(level, authorizedResources),
+                authorizedResources,
             ]);
         }, 's3', [policyContext]);
     });
 }
 
+async function translateAndAuthorize(request, action, level, resources) {
+    const [authed, authorizedResources] = await authenticateRequest(request, action, level, resources);
+    const translated = await translateResourceIds(level, authorizedResources, request.logger.logger);
+    return [authed, translated];
+}
+
 module.exports = {
     authenticateRequest,
+    translateAndAuthorize,
     Vault,
     vault,
 };

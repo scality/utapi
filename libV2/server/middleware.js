@@ -5,7 +5,7 @@ const { ipCheck } = require('arsenal');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');
-const { authenticateRequest } = require('../vault');
+const { translateAndAuthorize } = require('../vault');
 
 const oasOptions = {
     controllers: path.join(__dirname, './API/'),
@@ -114,7 +114,7 @@ async function authV4Middleware(request, response, params) {
     let authorizedResources;
 
     try {
-        [passed, authorizedResources] = await authenticateRequest(request, action, params.level, requestedResources);
+        [passed, authorizedResources] = await translateAndAuthorize(request, action, params.level, requestedResources);
     } catch (error) {
         request.logger.error('error during authentication', { error });
         throw errors.InternalError;
