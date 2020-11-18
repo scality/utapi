@@ -103,29 +103,26 @@ class RedisClient extends EventEmitter {
         this.emit('error', error);
     }
 
-
     _createCommandTimeout() {
         let timer;
+        let onTimeout;
+
         const cancelTimeout = jsutil.once(() => {
             clearTimeout(timer);
+            this.off('timeout', onTimeout);
             this._inFlightTimeouts.delete(timer);
         });
 
         const timeout = new Promise((_, reject) => {
-            timer = setTimeout(
-                () => {
-                    this.emit('timeout');
-                    this._initClient();
-                },
-                COMMAND_TIMEOUT,
-            );
-
+            timer = setTimeout(this.emit.bind(this, 'timeout'), COMMAND_TIMEOUT);
             this._inFlightTimeouts.add(timer);
-            this.once('timeout', () => {
+            onTimeout = () => {
                 moduleLogger.warn('redis command timed out');
                 cancelTimeout();
+                this._initClient();
                 reject(errors.OperationTimedOut);
-            });
+            };
+            this.once('timeout', onTimeout);
         });
 
         return { timeout, cancelTimeout };
