@@ -19,7 +19,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.10",
-    "arsenal": "scality/Arsenal#aa9c9e5",
+    "arsenal": "scality/Arsenal#c858c81",
     "async": "^3.2.0",
     "aws4": "^1.8.0",
     "body-parser": "^1.19.0",
@@ -35,7 +35,7 @@
     "node-schedule": "1.2.0",
     "oas-tools": "^2.1.8",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#478710c",
+    "vaultclient": "scality/vaultclient#2e42177",
     "werelogs": "scality/werelogs#0a4c576"
   },
   "devDependencies": {
