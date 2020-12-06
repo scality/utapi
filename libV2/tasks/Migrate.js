@@ -141,7 +141,20 @@ class MigrateTask extends BaseTask {
                 timestamp,
                 timestamp,
             ));
-            const numberOfObjects = MigrateTask._parseMetricValue(numberOfObjectsResp[0]);
+
+            let numberOfObjects;
+            if (numberOfObjectsResp.length === 1) {
+                numberOfObjects = MigrateTask._parseMetricValue(numberOfObjectsResp[0]);
+            } else {
+                numberOfObjects = numberOfObjectsOffset;
+                logger.warn('Could not retrieve value for numberOfObjects, falling back to last seen value',
+                    {
+                        metricLevel: level,
+                        resource,
+                        metricTimestamp: timestamp,
+                        lastSeen: numberOfObjectsOffset,
+                    });
+            }
 
             let incomingBytes = 0;
             let outgoingBytes = 0;
@@ -183,7 +196,7 @@ class MigrateTask extends BaseTask {
             stop: -1,
         });
 
-        if (resp.result && (resp.result.length === 0 || resp.result[0] === '')) {
+        if (resp.result && (resp.result.length === 0 || resp.result[0] === '' || resp.result[0] === '[]')) {
             return null;
         }
 
