@@ -32,7 +32,7 @@ def get_options():
     parser.add_argument("-n", "--sentinel-cluster-name", default='scality-s3', help="Redis cluster name")
     parser.add_argument("-s", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
     parser.add_argument("-w", "--worker", default=10, help="Number of workers")
-    parser.add_argument("-b", "--bucket", default=False, help="Bucket to be processed")
+    parser.add_argument("-b", "--bucket", default=None, help="Bucket to be processed")
     return parser.parse_args()
 
 def chunks(iterable, size):
@@ -119,7 +119,7 @@ class BucketDClient:
             else:
                 is_truncated = len(payload) > 0
 
-    def list_buckets(self):
+    def list_buckets(self, name = None):
 
         def get_next_marker(p):
             if p is None:
@@ -135,8 +135,14 @@ class BucketDClient:
             buckets = []
             for result in payload['Contents']:
                 match = re.match("(\w+)..\|..(\w+.*)", result['key'])
-                buckets.append(Bucket(*match.groups()))
-            yield buckets
+                bucket = Bucket(*match.groups())
+                if name is None or bucket.name == name:
+                    buckets.append(bucket)
+            if buckets:
+                yield buckets
+                if name is not None:
+                    # Break on the first matching bucket if a name is given
+                    break
 
 
     def list_mpus(self, bucket):
@@ -328,12 +334,15 @@ def log_report(resource, name, obj_count, total_size):
 
 if __name__ == '__main__':
     options = get_options()
+    if options.bucket is not None and not options.bucket.strip():
+        print('You must provide a bucket name with the --bucket flag')
+        sys.exit(1)
     bucket_client = BucketDClient(options.bucketd_addr)
     redis_client = get_redis_client(options)
     account_reports = {}
     observed_buckets = set()
     with ThreadPoolExecutor(max_workers=options.worker) as executor:
-        for batch in bucket_client.list_buckets():
+        for batch in bucket_client.list_buckets(options.bucket):
             bucket_reports = {}
             jobs = [executor.submit(index_bucket, bucket_client, b) for b in batch]
             for job in futures.as_completed(jobs):
@@ -349,29 +358,15 @@ if __name__ == '__main__':
                 log_report('buckets', bucket, report['obj_count'], report['total_size'])
             pipeline.execute()
 
-    # Update total account reports in chunks
-    for chunk in chunks(account_reports.items(), ACCOUNT_UPDATE_CHUNKSIZE):
-        pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
-        for userid, report in chunk:
-            update_redis(pipeline, 'accounts', userid, report['obj_count'], report['total_size'])
-            log_report('accounts', userid, report['obj_count'], report['total_size'])
-        pipeline.execute()
-
-    observed_accounts = set(account_reports.keys())
-    recorded_accounts = set(get_resources_from_redis(redis_client, 'accounts'))
     recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
+    if options.bucket is None:
+        stale_buckets = recorded_buckets.difference(observed_buckets)
+    elif observed_buckets and options.bucket in recorded_buckets:
+        # The provided bucket does not exist, so clean up any metrics
+        stale_buckets = { options.bucket }
+    else:
+        stale_buckets = set()
 
-    # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
-    stale_accounts = recorded_accounts.difference(observed_accounts)
-    _log.info('Found %s stale accounts' % len(stale_accounts))
-    for chunk in chunks(stale_accounts, ACCOUNT_UPDATE_CHUNKSIZE):
-        pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
-        for account in chunk:
-            update_redis(pipeline, 'accounts', account, 0, 0)
-            log_report('accounts', account, 0, 0)
-        pipeline.execute()
-
-    stale_buckets = recorded_buckets.difference(observed_buckets)
     _log.info('Found %s stale buckets' % len(stale_buckets))
     for chunk in chunks(stale_buckets, ACCOUNT_UPDATE_CHUNKSIZE):
         pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
@@ -379,3 +374,26 @@ if __name__ == '__main__':
             update_redis(pipeline, 'buckets', bucket, 0, 0)
             log_report('buckets', bucket, 0, 0)
         pipeline.execute()
+
+    # Account metrics are not updated if a bucket is specified
+    if options.bucket is None:
+        # Update total account reports in chunks
+        for chunk in chunks(account_reports.items(), ACCOUNT_UPDATE_CHUNKSIZE):
+            pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
+            for userid, report in chunk:
+                update_redis(pipeline, 'accounts', userid, report['obj_count'], report['total_size'])
+                log_report('accounts', userid, report['obj_count'], report['total_size'])
+            pipeline.execute()
+
+        observed_accounts = set(account_reports.keys())
+        recorded_accounts = set(get_resources_from_redis(redis_client, 'accounts'))
+
+        # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
+        stale_accounts = recorded_accounts.difference(observed_accounts)
+        _log.info('Found %s stale accounts' % len(stale_accounts))
+        for chunk in chunks(stale_accounts, ACCOUNT_UPDATE_CHUNKSIZE):
+            pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
+            for account in chunk:
+                update_redis(pipeline, 'accounts', account, 0, 0)
+                log_report('accounts', account, 0, 0)
+            pipeline.execute()
