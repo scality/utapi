@@ -32,8 +32,6 @@ spec:
     env:
       - name: standalone.port
         value: '4802'
-      - name: warp.token.file
-        value: /opt/warp10/etc/ci.tokens
       - name: warpscript.maxops
         value: '10000000'
     resources:
