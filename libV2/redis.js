@@ -51,7 +51,10 @@ class RedisClient extends EventEmitter {
                 Object.values(this._inFlightTimeouts)
                     .forEach(clearTimeout);
             }
-            await this._redis.quit();
+            if (this._redis !== null) {
+                await this._redis.quit();
+                this._redis = null;
+            }
         }, callback);
     }
 
