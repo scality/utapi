@@ -20,7 +20,7 @@ class InterpolatedClock {
     }
 
     getTs() {
-        const ts = new Date().now();
+        const ts = Date.now();
         if (ts === this._now) {
             // If this is the same millisecond as the last call
             this._step += 1;
