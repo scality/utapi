@@ -34,6 +34,7 @@
     "snapshotSchedule": "5 0 * * * *",
     "repairSchedule": "0 */5 * * * *",
     "reindexSchedule": "0 0 0 * * Sun",
+    "diskUsageSchedule": "0 */15 * * * *",
     "bucketd": [ "localhost:9000" ],
     "reindex": {
         "enabled": true,
