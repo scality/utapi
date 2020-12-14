@@ -4,6 +4,7 @@ const Joi = require('@hapi/joi');
 const assert = require('assert');
 
 const { truthy, envNamespace } = require('../constants');
+const { parseDiskSizeSpec } = require('../utils');
 const configSchema = require('./schema');
 
 function _splitServer(text) {
@@ -280,6 +281,7 @@ class Config {
         parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHEDULE', config.snapshotSchedule);
         parsedConfig.repairSchedule = _loadFromEnv('REPAIR_SCHEDULE', config.repairSchedule);
         parsedConfig.reindexSchedule = _loadFromEnv('REINDEX_SCHEDULE', config.reindexSchedule);
+        parsedConfig.diskUsageSchedule = _loadFromEnv('DISK_USAGE_SCHEDULE', config.diskUsageSchedule);
 
         parsedConfig.ingestionLagSeconds = _loadFromEnv(
             'INGESTION_LAG_SECONDS',
@@ -291,6 +293,23 @@ class Config {
             config.ingestionShardSize,
             _typeCasts.int,
         );
+
+        const diskUsage = { ...(parsedConfig.diskUsage || {}) };
+        diskUsage.path = _loadFromEnv('DISK_USAGE_PATH', diskUsage.path);
+        diskUsage.softLimit = _loadFromEnv('DISK_USAGE_SOFT_LIMIT', diskUsage.softLimit);
+        diskUsage.hardLimit = _loadFromEnv('DISK_USAGE_HARD_LIMIT', diskUsage.hardLimit);
+        if (diskUsage.softLimit) {
+            diskUsage.softLimit = parseDiskSizeSpec(diskUsage.softLimit);
+        }
+        if (diskUsage.hardLimit) {
+            diskUsage.hardLimit = parseDiskSizeSpec(diskUsage.hardLimit);
+        }
+        if (diskUsage.path !== undefined
+            && (!diskUsage.softLimit || !diskUsage.hardLimit)) {
+        if ((diskUsage.softLimit || diskUsage.hardLimit)
+            && (!diskUsage.softLimit || !diskUsage.hardLimit)) {
+            throw Error('Both diskUsage.softLimit and diskUsage.hardLimit must be specified');
+        }
 
         parsedConfig.vaultd = {
             host: _loadFromEnv('VAULT_HOST', config.vaultd.host),
