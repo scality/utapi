@@ -5,6 +5,8 @@ const assert = require('assert');
 
 const { truthy, envNamespace } = require('../constants');
 const configSchema = require('./schema');
+// We need to require the specific file rather than the parent module to avoid a circular require
+const { parseDiskSizeSpec } = require('../utils/disk');
 
 function _splitServer(text) {
     assert.notStrictEqual(text.indexOf(':'), -1);
@@ -20,8 +22,8 @@ const _typeCasts = {
     int: val => parseInt(val, 10),
     list: val => val.split(',').map(v => v.trim()),
     serverList: val => val.split(',').map(v => v.trim()).map(_splitServer),
+    diskSize: parseDiskSizeSpec,
 };
-
 
 function _definedInEnv(key) {
     return process.env[`${envNamespace}_${key}`] !== undefined;
@@ -280,6 +282,7 @@ class Config {
         parsedConfig.snapshotSchedule = _loadFromEnv('SNAPSHOT_SCHEDULE', config.snapshotSchedule);
         parsedConfig.repairSchedule = _loadFromEnv('REPAIR_SCHEDULE', config.repairSchedule);
         parsedConfig.reindexSchedule = _loadFromEnv('REINDEX_SCHEDULE', config.reindexSchedule);
+        parsedConfig.diskUsageSchedule = _loadFromEnv('DISK_USAGE_SCHEDULE', config.diskUsageSchedule);
 
         parsedConfig.ingestionLagSeconds = _loadFromEnv(
             'INGESTION_LAG_SECONDS',
@@ -291,6 +294,13 @@ class Config {
             config.ingestionShardSize,
             _typeCasts.int,
         );
+
+        const diskUsage = {
+            path: _loadFromEnv('DISK_USAGE_PATH', (config.diskUsage || {}).path),
+        };
+
+        diskUsage.enabled = diskUsage.path !== undefined;
+        parsedConfig.diskUsage = diskUsage;
 
         parsedConfig.vaultd = {
             host: _loadFromEnv('VAULT_HOST', config.vaultd.host),
