@@ -4,8 +4,9 @@ const Joi = require('@hapi/joi');
 const assert = require('assert');
 
 const { truthy, envNamespace } = require('../constants');
-const { parseDiskSizeSpec } = require('../utils');
 const configSchema = require('./schema');
+// We need to require the specific file rather than the parent module to avoid a circular require
+const { parseDiskSizeSpec } = require('../utils/disk');
 
 function _splitServer(text) {
     assert.notStrictEqual(text.indexOf(':'), -1);
@@ -21,8 +22,8 @@ const _typeCasts = {
     int: val => parseInt(val, 10),
     list: val => val.split(',').map(v => v.trim()),
     serverList: val => val.split(',').map(v => v.trim()).map(_splitServer),
+    diskSize: parseDiskSizeSpec,
 };
-
 
 function _definedInEnv(key) {
     return process.env[`${envNamespace}_${key}`] !== undefined;
@@ -294,22 +295,20 @@ class Config {
             _typeCasts.int,
         );
 
-        const diskUsage = { ...(parsedConfig.diskUsage || {}) };
-        diskUsage.path = _loadFromEnv('DISK_USAGE_PATH', diskUsage.path);
-        diskUsage.softLimit = _loadFromEnv('DISK_USAGE_SOFT_LIMIT', diskUsage.softLimit);
-        diskUsage.hardLimit = _loadFromEnv('DISK_USAGE_HARD_LIMIT', diskUsage.hardLimit);
-        if (diskUsage.softLimit) {
-            diskUsage.softLimit = parseDiskSizeSpec(diskUsage.softLimit);
+        const diskUsage = {
+            path: _loadFromEnv('DISK_USAGE_PATH', (config.diskUsage || {}).path),
+            softLimit: _loadFromEnv('DISK_USAGE_SOFT_LIMIT', (config.diskUsage || {}).softLimit, _typeCasts.diskSize),
+            hardLimit: _loadFromEnv('DISK_USAGE_HARD_LIMIT', (config.diskUsage || {}).hardLimit, _typeCasts.diskSize),
+        };
+
+        if (!diskUsage.path && (diskUsage.softLimit !== undefined || diskUsage.hardLimit !== undefined)) {
+            throw Error('You must specify diskUsage.path to monitor for disk usage');
+        } else if (diskUsage.path && (diskUsage.softLimit === undefined && diskUsage.hardLimit === undefined)) {
+            throw Error('One of diskUsage.softLimit or diskUsage.hardLimit must be specified');
         }
-        if (diskUsage.hardLimit) {
-            diskUsage.hardLimit = parseDiskSizeSpec(diskUsage.hardLimit);
-        }
-        if (diskUsage.path !== undefined
-            && (!diskUsage.softLimit || !diskUsage.hardLimit)) {
-        if ((diskUsage.softLimit || diskUsage.hardLimit)
-            && (!diskUsage.softLimit || !diskUsage.hardLimit)) {
-            throw Error('Both diskUsage.softLimit and diskUsage.hardLimit must be specified');
-        }
+
+        diskUsage.enabled = diskUsage.path !== undefined;
+        parsedConfig.diskUsage = diskUsage;
 
         parsedConfig.vaultd = {
             host: _loadFromEnv('VAULT_HOST', config.vaultd.host),

@@ -77,11 +77,11 @@ const schema = Joi.object({
     snapshotSchedule: Joi.string(),
     repairSchedule: Joi.string(),
     reindexSchedule: Joi.string(),
-    diskUsageSchedule: Joi.number().string(),
+    diskUsageSchedule: Joi.string(),
     diskUsage: Joi.object({
         path: Joi.string(),
-        softLimit: Joi.string().pattern(/\d+([bkmgtxzKMGTZXB])?([iI]?[bB])?/),
-        hardLimit: Joi.string().pattern(/\d+([bkmgtxzKMGTZXB])?([iI]?[bB])?/),
+        softLimit: Joi.string(),
+        hardLimit: Joi.string(),
     }),
 });
 

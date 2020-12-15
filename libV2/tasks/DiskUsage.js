@@ -1,8 +1,8 @@
 const BaseTask = require('./BaseTask');
 const config = require('../config');
-const { LoggerContext } = require('../utils');
+const { LoggerContext, getFolderSize, formatDiskSize } = require('../utils');
 
-const logger = new LoggerContext({
+const moduleLogger = new LoggerContext({
     module: 'MonitorDiskUsage',
 });
 
@@ -15,21 +15,17 @@ class MonitorDiskUsage extends BaseTask {
         this._defaultLag = 0;
     }
 
-    async _execute(timestamp) {
-        logger.debug('checking disk usage', { config.diskUsage.monitored_path });
-
-        const params = {
-            params: {
-                nodeId: this.nodeId,
-                end: timestamp.toString(),
-                fields: indexedEventFields,
-            },
-            macro: 'utapi/createCheckpoint',
-        };
-        const status = await this._warp10.exec(params);
-        if (status.result[0]) {
-            logger.info(`created ${status.result[0] || 0} checkpoints`);
+    // eslint-disable-next-line class-methods-use-this
+    async _execute() {
+        if (!config.diskUsage.enabled) {
+            moduleLogger.trace('disk usage monitoring not enabled, skipping check');
+            return;
         }
+        const logger = moduleLogger.with({ path: config.diskUsage.path });
+
+        logger.trace('checking disk usage');
+        const size = await getFolderSize(config.diskUsage.path);
+        logger.trace(`using ${formatDiskSize(size)}`);
     }
 }
 

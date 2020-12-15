@@ -1,3 +1,6 @@
+const { promisify } = require('util');
+const getFolderSize = require('get-folder-size');
+const byteSize = require('byte-size');
 
 const diskSpecRegex = /(\d+)([bkmgtxz])(i?b)?/;
 const suffixToExp = {
@@ -11,13 +14,13 @@ const suffixToExp = {
 };
 
 /**
- * Converts a string specifying disksize into its value in bytes
+ * Converts a string specifying disk size into its value in bytes
  * Supported formats:
  *  1b/1B - Directly specify a byte size
- *  1K/1MB/1GiB - Specify a number of bytes using SI or common suffixes
+ *  1K/1MB/1GiB - Specify a number of bytes using IEC or common suffixes
  *
  * Suffixes are case insensitive.
- * All suffixes are considered SI standard with 1 kilobyte being 1024 bytes.
+ * All suffixes are considered IEC standard with 1 kibibyte being 2^10 bytes.
  *
  * @param {String} spec - string for conversion
  * @returns {Integer} - disk size in bytes
@@ -34,6 +37,16 @@ function parseDiskSizeSpec(spec) {
     return size * (1024 ** exponent);
 }
 
+function _formatFunc() {
+    return `${this.value}${this.unit}`;
+}
+
+function formatDiskSize(value) {
+    return byteSize(value, { units: 'iec', toStringFn: _formatFunc }).toString();
+}
+
 module.exports = {
     parseDiskSizeSpec,
+    getFolderSize: promisify(getFolderSize),
+    formatDiskSize,
 };
