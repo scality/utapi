@@ -138,7 +138,7 @@ class BucketDClient:
                 bucket = Bucket(*match.groups())
                 if name is None or bucket.name == name:
                     buckets.append(bucket)
-            if len(buckets):
+            if buckets:
                 yield buckets
                 if name is not None:
                     # Break on the first matching bucket if a name is given
@@ -334,6 +334,9 @@ def log_report(resource, name, obj_count, total_size):
 
 if __name__ == '__main__':
     options = get_options()
+    if options.bucket is not None and not options.bucket.strip():
+        print('You must provide a bucket name with the --bucket flag')
+        sys.exit(1)
     bucket_client = BucketDClient(options.bucketd_addr)
     redis_client = get_redis_client(options)
     account_reports = {}
@@ -358,7 +361,7 @@ if __name__ == '__main__':
     recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
     if options.bucket is None:
         stale_buckets = recorded_buckets.difference(observed_buckets)
-    elif len(observed_buckets) == 0 and options.bucket in recorded_buckets:
+    elif observed_buckets and options.bucket in recorded_buckets:
         # The provided bucket does not exist, so clean up any metrics
         stale_buckets = { options.bucket }
     else:
