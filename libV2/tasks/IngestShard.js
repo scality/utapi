@@ -1,22 +1,28 @@
 const assert = require('assert');
+const async = require('async');
 const BaseTask = require('./BaseTask');
 const { UtapiMetric } = require('../models');
 const config = require('../config');
-const {
-    LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock,
-} = require('../utils');
 const { checkpointLagSecs } = require('../constants');
+const {
+    LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock, now,
+} = require('../utils');
 
 const logger = new LoggerContext({
     module: 'IngestShard',
 });
 
-const now = () => convertTimestamp(new Date().getTime());
 const checkpointLagMicroseconds = convertTimestamp(checkpointLagSecs);
 
 class IngestShardTask extends BaseTask {
     constructor(...options) {
-        super(...options);
+        super({
+            warp10: {
+                requestTimeout: 30000,
+                connectTimeout: 30000,
+            },
+            ...options,
+        });
         this._defaultSchedule = config.ingestionSchedule;
         this._defaultLag = config.ingestionLagSeconds;
     }
@@ -35,7 +41,7 @@ class IngestShardTask extends BaseTask {
             return;
         }
 
-        await Promise.all(toIngest.map(
+        await async.eachLimit(toIngest, 10,
             async shard => {
                 if (await this._cache.shardExists(shard)) {
                     const metrics = await this._cache.getMetricsForShard(shard);
@@ -68,8 +74,7 @@ class IngestShardTask extends BaseTask {
                 } else {
                     logger.warn('shard does not exist', { shard });
                 }
-            },
-        ));
+            });
     }
 }
 
