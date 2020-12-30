@@ -12,8 +12,8 @@ const moduleLogger = new LoggerContext({
 
 class Warp10Client {
     constructor(config) {
-        this._writeToken = (config && config.writeToken) || 'writeTokenCI';
-        this._readToken = (config && config.readToken) || 'readTokenCI';
+        this._writeToken = (config && config.writeToken) || 'writeTokenStatic';
+        this._readToken = (config && config.readToken) || 'readTokenStatic';
         this._nodeId = (config && config.nodeId) || _config.nodeId;
         const proto = (config && config.tls) ? 'https' : 'http';
         const requestTimeout = (config && config.requestTimeout) || 10000;
