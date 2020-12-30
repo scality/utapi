@@ -12,8 +12,8 @@ const errors = require('./errors');
 class Vault {
     constructor(options) {
         const { host, port } = options.vaultd;
-        if (options.https) {
-            const { key, cert, ca } = options.https;
+        if (options.tls) {
+            const { key, cert, ca } = options.tls;
             this._client = new vaultclient.Client(host, port, true, key, cert,
                 ca);
         } else {
