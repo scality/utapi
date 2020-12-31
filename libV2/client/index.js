@@ -8,9 +8,10 @@ const needle = require('needle');
 const levelup = require('levelup');
 const memdown = require('memdown');
 const encode = require('encoding-down');
+/* eslint-enable import/no-extraneous-dependencies */
+
 const { UtapiMetric } = require('../models');
 const { LoggerContext, asyncOrCallback } = require('../utils');
-/* eslint-enable import/no-extraneous-dependencies */
 
 const moduleLogger = new LoggerContext({
     module: 'client',
@@ -70,6 +71,8 @@ class UtapiClient {
     constructor(config) {
         this._host = (config && config.host) || 'localhost';
         this._port = (config && config.port) || '8100';
+        this._tls = (config && config.tls) || {};
+        this._transport = (config && config.tls) ? 'https' : 'http';
         this._logger = (config && config.logger) || moduleLogger;
         this._maxCachedMetrics = (config && config.maxCachedMetrics) || 200000; // roughly 100MB
         this._numCachedMetrics = 0;
@@ -87,9 +90,9 @@ class UtapiClient {
     async _pushToUtapi(metrics) {
         const resp = await needle(
             'post',
-            `http://${this._host}:${this._port}/v2/ingest`,
+            `${this._transport}://${this._host}:${this._port}/v2/ingest`,
             metrics.map(metric => metric.getValue()),
-            { json: true },
+            { json: true, ...this._tls },
         );
         if (resp.statusCode !== 200) {
             throw Error('failed to push metric, server returned non 200 status code',
