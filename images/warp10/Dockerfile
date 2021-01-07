@@ -1,4 +1,4 @@
-FROM warp10io/warp10:2.6.0
+FROM warp10io/warp10:2.7.2
 
 ENV S6_VERSION 2.0.0.1
 
@@ -8,6 +8,7 @@ ENV SENSISION_DATA_DIR /data/sensision
 # Modify Warp 10 default config
 ENV standalone.host 0.0.0.0
 ENV standalone.port 4802
+ENV standalone.home /opt/warp10
 ENV warpscript.repository.directory /usr/local/share/warpscript
 ENV warp.token.file /static.tokens
 ENV warpscript.extension.protobuf io.warp10.ext.protobuf.ProtobufWarpScriptExtension
