@@ -6,7 +6,12 @@ const { UtapiRecord } = require('../models');
 const config = require('../config');
 const errors = require('../errors');
 const RedisClient = require('../redis');
-const { warp10RecordType, operations: operationIds, serviceToWarp10Label } = require('../constants');
+const {
+    warp10RecordType,
+    operations: operationIds,
+    serviceToWarp10Label,
+    migrationOpTranslationMap,
+} = require('../constants');
 const {
     LoggerContext,
     now,
@@ -167,6 +172,8 @@ class MigrateTask extends BaseTask {
                     outgoingBytes = apiOp.count;
                 } else if (operationIds.includes(apiOp.op)) {
                     operations[apiOp.op] = apiOp.count;
+                } else if (migrationOpTranslationMap[apiOp.op] !== undefined) {
+                    operations[migrationOpTranslationMap[apiOp.op]] = apiOp.count;
                 } else {
                     logger.warn('dropping unknown operation', { apiOp });
                 }
