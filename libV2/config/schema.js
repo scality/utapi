@@ -77,6 +77,12 @@ const schema = Joi.object({
     snapshotSchedule: Joi.string(),
     repairSchedule: Joi.string(),
     reindexSchedule: Joi.string(),
+    diskUsageSchedule: Joi.string(),
+    diskUsage: Joi.object({
+        path: Joi.string(),
+        softLimit: Joi.string(),
+        hardLimit: Joi.string(),
+    }),
 });
 
 module.exports = schema;
