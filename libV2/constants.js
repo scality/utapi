@@ -96,6 +96,9 @@ const constants = {
     counterBaseValueExpiration: 86400, // 24hrs
     keyVersionSplitter: String.fromCharCode(0),
     migrationChunksize: 500,
+    migrationOpTranslationMap: {
+        listBucketMultipartUploads: 'listMultipartUploads',
+    },
 };
 
 constants.operationToResponse = constants.operations
