@@ -24,9 +24,12 @@
     "aws4": "^1.8.0",
     "body-parser": "^1.19.0",
     "bucketclient": "scality/bucketclient",
+    "byte-size": "^7.0.0",
     "commander": "^5.1.0",
     "cron-parser": "^2.15.0",
+    "diskusage": "^1.1.3",
     "express": "^4.17.1",
+    "get-folder-size": "^2.0.1",
     "ioredis": "^4.9.5",
     "js-yaml": "^3.14.0",
     "level-mem": "^5.0.1",
@@ -64,6 +67,7 @@
     "start_v2:task:repair": "ENABLE_UTAPI_V2=1 node bin/repair.js",
     "start_v2:task:reindex": "ENABLE_UTAPI_V2=1 node bin/reindex.js",
     "start_v2:task:migrate": "ENABLE_UTAPI_V2=1 node bin/migrate.js",
+    "start_v2:task:disk": "ENABLE_UTAPI_V2=1 node bin/diskUsage.js",
     "start_v2:server": "ENABLE_UTAPI_V2=1 node bin/server.js",
     "start_v2:server:dev": "UTAPI_DEV_MODE=t ENABLE_UTAPI_V2=t yarn nodemon --watch './**/*.js' --watch './**/*.json' --watch './**/*.yaml' --exec node bin/server.js"
   }

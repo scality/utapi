@@ -5,6 +5,7 @@ const CreateSnapshot = require('./CreateSnapshot');
 const RepairTask = require('./Repair');
 const ReindexTask = require('./Reindex');
 const MigrateTask = require('./Migrate');
+const MonitorDiskUsage = require('./DiskUsage');
 
 module.exports = {
     IngestShard,
@@ -14,4 +15,5 @@ module.exports = {
     RepairTask,
     ReindexTask,
     MigrateTask,
+    MonitorDiskUsage,
 };
