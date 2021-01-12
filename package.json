@@ -57,6 +57,7 @@
     "ft_test:interval": "mocha --recursive tests/functional/interval",
     "ft_test:server": "mocha --recursive tests/functional/server",
     "ft_test:v2": "mocha --recursive tests/functional/v2",
+    "ft_test:softLimit": "mocha --recursive tests/functional/softLimit",
     "lint": "eslint $(git ls-files '*.js')",
     "lint_md": "mdlint $(git ls-files '*.md')",
     "start": "node server.js",
