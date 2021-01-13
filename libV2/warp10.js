@@ -1,4 +1,5 @@
 const { Warp10 } = require('@senx/warp10');
+const needle = require('needle');
 const assert = require('assert');
 const { eventFieldsToWarp10, warp10EventType } = require('./constants');
 const _config = require('./config');
@@ -16,19 +17,19 @@ class Warp10Client {
         this._readToken = (config && config.readToken) || 'readTokenStatic';
         this._nodeId = (config && config.nodeId) || _config.nodeId;
         const proto = (config && config.tls) ? 'https' : 'http';
-        const requestTimeout = (config && config.requestTimeout) || 10000;
-        const connectTimeout = (config && config.connectTimeout) || 10000;
+        this._requestTimeout = (config && config.requestTimeout) || 10000;
+        this._connectTimeout = (config && config.connectTimeout) || 10000;
         if (config && config.hosts) {
             this._clients = config.hosts
                 .map(({ host, port }) => new Warp10(
                     `${proto}://${host}:${port}`,
-                    requestTimeout,
-                    connectTimeout,
+                    this._requestTimeout,
+                    this._connectTimeout,
                 ));
         } else {
             const host = (config && config.host) || 'localhost';
             const port = (config && config.port) || 4802;
-            this._clients = [new Warp10(`${proto}://${host}:${port}`, requestTimeout, connectTimeout)];
+            this._clients = [new Warp10(`${proto}://${host}:${port}`, this._requestTimeout, this._connectTimeout)];
         }
     }
 
@@ -47,6 +48,17 @@ class Warp10Client {
         throw errors.InternalError;
     }
 
+    async _update(warp10, payload) {
+        return warp10.update(this._writeToken, payload);
+    }
+
+    async update(...params) {
+        return this._wrapCall(
+            this._update.bind(this),
+            params,
+        );
+    }
+
     static _packEvent(valueType, event) {
         const packed = Object.entries(event.getValue())
             .filter(([key]) => eventFieldsToWarp10[key])
@@ -63,7 +75,7 @@ class Warp10Client {
         return `${event.timestamp}// ${className}${_labels} ${packed}`;
     }
 
-    async _ingest(warp10, metadata, events) {
+    async ingest(metadata, events) {
         const { className, valueType, labels } = metadata;
         assert.notStrictEqual(className, undefined, 'you must provide a className');
         const payload = events.map(
@@ -74,15 +86,8 @@ class Warp10Client {
                 ev,
             ),
         );
-        const res = await warp10.update(this._writeToken, payload);
+        const res = await this.update(payload);
         return res.count;
-    }
-
-    ingest(...params) {
-        return this._wrapCall(
-            this._ingest.bind(this),
-            params,
-        );
     }
 
     _buildScriptEntry(params) {
@@ -133,6 +138,41 @@ class Warp10Client {
     fetch(...params) {
         return this._wrapCall(
             this._fetch.bind(this),
+            params,
+        );
+    }
+
+    async _delete(warp10, params) {
+        const {
+            className, labels, start, end,
+        } = params;
+        assert.notStrictEqual(className, undefined, 'you must provide a className');
+        assert.notStrictEqual(start, undefined, 'you must provide a start timestamp');
+        assert.notStrictEqual(end, undefined, 'you must provide a end timestamp');
+        const query = new URLSearchParams([]);
+        query.set('selector', encodeURIComponent(className) + this._clients[0].formatLabels(labels || {}));
+        query.set('start', start.toString());
+        query.set('end', end.toString());
+        const response = await needle(
+            'get',
+            `${warp10.url}/api/v0/delete?${query.toString()}`,
+            {
+                // eslint-disable-next-line camelcase
+                open_timeout: this._connectTimeout,
+                // eslint-disable-next-line camelcase
+                response_timeout: this._requestTimeout,
+                headers: {
+                    'Content-Type': 'text/plain; charset=UTF-8',
+                    'X-Warp10-Token': this._writeToken,
+                },
+            },
+        );
+        return { result: response.body };
+    }
+
+    delete(...params) {
+        return this._wrapCall(
+            this._delete.bind(this),
             params,
         );
     }
