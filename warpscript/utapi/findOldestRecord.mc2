@@ -1,0 +1,56 @@
+{
+  'name' 'findOldestRecord'
+  'desc'
+  <'
+Finds the oldest record matching the passed class and labels and returns its timestamp
+  '>
+  'sig' [ [ [ 'a:MAP' 'o:MAP' ] [ 'v:GTS' ] ] ] // Signature
+  'params' {
+    // Signature params description
+    'a' 'Map containing read/write tokens'
+    'o' 'Map containing operation info'
+    'v' 'GTS of record'
+  }
+  'examples' [
+    <'
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    JSON-> 'operation_info' STORE
+    JSON-> 'auth_info' STORE
+
+    $auth_info 'read' GET 'read_token' STORE
+
+    $operation_info 'class' GET  'class' STORE
+    $operation_info 'labels' GET  'labels' STORE
+
+    {
+      'token' $read_token
+      'class' $class
+      'labels' $labels
+      'end' MINLONG 1 +
+      'count' 1
+      'boundary.post' 1
+    } FETCH
+    <% DUP SIZE 0 > %>
+    <% FIRSTTICK %>
+    <% DROP -1 %>
+    IFTE
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+$macro
