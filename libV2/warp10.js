@@ -147,8 +147,8 @@ class Warp10Client {
             className, labels, start, end,
         } = params;
         assert.notStrictEqual(className, undefined, 'you must provide a className');
-        assert.notStrictEqual(className, start, 'you must provide a start timestamp');
-        assert.notStrictEqual(className, end, 'you must provide a end timestamp');
+        assert.notStrictEqual(start, undefined, 'you must provide a start timestamp');
+        assert.notStrictEqual(end, undefined, 'you must provide a end timestamp');
         const query = new URLSearchParams([]);
         query.set('selector', encodeURIComponent(className) + this._clients[0].formatLabels(labels || {}));
         query.set('start', start.toString());
