@@ -39,4 +39,15 @@ describe('Test Warp Client', () => {
         const res = await warp10.exec({ script: testWarpscript, params: { greeting: 'hello' } });
         assert.deepStrictEqual(res.result[0], ['OK']);
     });
+
+    it('should delete the specified time range', async () => {
+        const ev = generateFakeEvents(startTime, endTime, 100);
+        const count = await warp10.ingest({ className }, ev);
+        let fetchResp = await warp10.fetch({ className, start: endTime, stop: startTime });
+        assert.strictEqual(JSON.parse(fetchResp.result[0]).length, 1);
+        assert.strictEqual(JSON.parse(fetchResp.result[0])[0].v.length, count);
+        await warp10.delete({ className, start: startTime, end: endTime });
+        fetchResp = await warp10.fetch({ className, start: endTime, stop: startTime });
+        assert.strictEqual(JSON.parse(fetchResp.result[0]).length, 0);
+    });
 });
