@@ -44,6 +44,7 @@ stages:
         - run-cron-tests
         - run-interval-tests
         - run-v2-functional-tests
+        - run-v2-soft-limit-tests
   linting-coverage:
     worker: *workspace
     steps:
