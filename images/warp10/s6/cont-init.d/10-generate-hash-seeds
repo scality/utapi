@@ -8,4 +8,5 @@ WARP10_SECRETS="$WARP10_CONFIG_DIR/00-secrets.conf"
 if [ ! -f "$WARP10_SECRETS" ]; then
     cp "$WARP10_CONF_TEMPLATES/00-secrets.conf.template" "$WARP10_SECRETS"
     python "${WARP10_HOME}/etc/generate_crypto_key.py" "$WARP10_SECRETS"
+    echo "warp10.manager.secret = scality" >> $WARP10_SECRETS
 fi
