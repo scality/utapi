@@ -51,6 +51,15 @@ describe('Test getStorage handler', function () {
         await ingestTask._cache.connect();
     });
 
+    afterEach(async () => {
+        await cacheClient._cacheBackend._redis._redis.flushall();
+        await warp10.delete({
+            className: '~.*',
+            start: 0,
+            end: now(),
+        });
+    });
+
     it('should get the current storage for an account with a empty cache', async () => {
         await warp10.ingest({ className: 'utapi.event' }, events);
 
@@ -64,9 +73,8 @@ describe('Test getStorage handler', function () {
         });
     });
 
-    it.only('should get the current storage for an account using the cache', async () => {
-        const firstHalfTotal = events.slice(0, 25).reduce((prev, ev) => {
-            // console.log(ev)
+    it('should get the current storage for an account using the cache', async () => {
+        const firstHalfTotal = events.slice(0, 24).reduce((prev, ev) => {
             if (prev[ev.account] === undefined) {
                 prev[ev.account] = 0;
             }
@@ -77,7 +85,6 @@ describe('Test getStorage handler', function () {
         }, {});
 
         const secondHalfTotal = events.slice(25).reduce((prev, ev) => {
-            // console.log(ev)
             if (ev.sizeDelta !== undefined) {
                 if (prev[ev.account] === undefined) {
                     prev[ev.account] = 0;
