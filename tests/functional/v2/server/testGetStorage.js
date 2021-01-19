@@ -64,7 +64,7 @@ describe('Test getStorage handler', function () {
         });
     });
 
-    it.only('should get the current storage for an account using the cache', async () => {
+    it('should get the current storage for an account using the cache', async () => {
         const firstHalfTotal = events.slice(0, 25).reduce((prev, ev) => {
             // console.log(ev)
             if (prev[ev.account] === undefined) {
