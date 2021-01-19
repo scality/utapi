@@ -3,7 +3,7 @@ const assert = require('assert');
 const BaseTask = require('./BaseTask');
 const config = require('../config');
 const {
-    LoggerContext, getFolderSize, formatDiskSize, now,
+    LoggerContext, getFolderSize, formatDiskSize,
 } = require('../utils');
 
 const moduleLogger = new LoggerContext({
