@@ -44,7 +44,7 @@ stages:
         - run-cron-tests
         - run-interval-tests
         - run-v2-functional-tests
-        - run-v2-soft-limit-tests
+        - run-v2-limit-tests
   linting-coverage:
     worker: *workspace
     steps:
@@ -136,7 +136,7 @@ stages:
             utapi:
               filename: "/artifacts/setup_ft_test:v2.log"
               follow: true
-  run-v2-soft-limit-tests:
+  run-v2-limit-tests:
     worker:
       << : *workspace
       vars:
@@ -165,5 +165,17 @@ stages:
               follow: true
             utapi:
               filename: "/artifacts/setup_ft_test:softLimit.log"
+      - ShellCommand:
+          name: run v2 functional tests
+          command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:hardLimit
+          env:
+            UTAPI_CACHE_BACKEND: redis
+            UTAPI_LOG_LEVEL: trace
+          logfiles:
+            warp10:
+              filename: "/artifacts/warp10.log"
+              follow: true
+            utapi:
+              filename: "/artifacts/setup_ft_test:hardLimit.log"
               follow: true
       - Upload: *upload_artifacts
