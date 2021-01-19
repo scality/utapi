@@ -40,7 +40,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
 
     it('should not trigger delete if below the limit', async () => {
         fillDir(path, { count: 1, size: 100 });
-        task._softLimit = 1000;
+        task._softLimit = 10240;
         const checkSpy = sinon.spy(task, '_checkSoftLimit');
         const expireSpy = sinon.spy(task, '_expireMetrics');
         await task.execute();
