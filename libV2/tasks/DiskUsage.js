@@ -14,7 +14,6 @@ const moduleLogger = new LoggerContext({
 const WARN_THRESHOLD = 0.8;
 const ACTION_THRESHOLD = 0.95;
 
-const softLimitHuman = formatDiskSize(config.diskUsage.softLimit);
 const expirationBlockMicroSecs = config.diskUsage.expirationBlockSize * 60 * 60 * 1000000;
 
 class MonitorDiskUsage extends BaseTask {
@@ -27,6 +26,7 @@ class MonitorDiskUsage extends BaseTask {
         this._path = config.diskUsage.path;
         this._enabled = config.diskUsage.enabled;
         this._mode = config.diskUsage.mode;
+        this._softLimit = config.diskUsage.softLimit || null;
     }
 
     async _setup() {
@@ -43,14 +43,14 @@ class MonitorDiskUsage extends BaseTask {
         return getFolderSize(this._path);
     }
 
-    static _checkSoftLimit(size, nodeId) {
-        const softPercentage = (size / config.diskUsage.softLimit).toFixed(2);
-
+    _checkSoftLimit(size, nodeId) {
+        const softPercentage = (size / this._softLimit).toFixed(2);
+        const softLimitHuman = formatDiskSize(this._softLimit);
         const softLogger = moduleLogger.with({
             size,
             sizeHuman: formatDiskSize(size),
-            softLimit: config.diskUsage.softLimit,
             softPercentage,
+            softLimit: this._softLimit,
             softLimitHuman,
             nodeId,
         });
@@ -88,19 +88,19 @@ class MonitorDiskUsage extends BaseTask {
             return;
         }
 
-        const endTimestamp = oldestTimestamp + expirationBlockMicroSecs;
+        const endTimestamp = oldestTimestamp + expirationBlockMicroSecs - 1;
         moduleLogger.info(`deleting oldest ${config.diskUsage.expirationBlockSize}hr block of metrics`, {
             start: oldestTimestamp, stop: endTimestamp,
         });
 
         await this._warp10.delete({
             className: '~.*',
-            start: oldestTimestamp,
+            start: oldestTimestamp - 1,
             end: endTimestamp,
         });
     }
 
-    async _execute() {
+    async _execute(timestamp) {
         if (!this._enabled) {
             moduleLogger.debug('disk usage monitoring not enabled, skipping check');
             return;
@@ -118,11 +118,11 @@ class MonitorDiskUsage extends BaseTask {
         }
 
 
-        if (config.diskUsage.softLimit !== undefined) {
+        if (this._softLimit !== undefined) {
             let shouldDelete = false;
             if (this._mode === 'local') {
                 moduleLogger.debug('Operating in local mode, only checking the current node');
-                shouldDelete = await MonitorDiskUsage._checkSoftLimit(size, this.nodeId);
+                shouldDelete = await this._checkSoftLimit(size, this.nodeId);
             } else if (this._mode === 'distributed') {
                 if (this.isLeader) {
                     try {
@@ -140,7 +140,7 @@ class MonitorDiskUsage extends BaseTask {
                         } else {
                             shouldDelete = JSON.parse(resp.result)
                                 .map(val => ({ node: val.l.node, used: val.v[0][1] }))
-                                .map(val => MonitorDiskUsage._checkSoftLimit(val.used, val.node))
+                                .map(val => this._checkSoftLimit(val.used, val.node))
                                 .some(val => val);
                         }
                     } catch (error) {
@@ -149,7 +149,7 @@ class MonitorDiskUsage extends BaseTask {
                 } else {
                     try {
                         const { count } = await this._warp10.update([{
-                            timestamp: now(),
+                            timestamp,
                             className: 'utapi.disk.monitor',
                             value: size,
                             labels: { node: this.nodeId },
