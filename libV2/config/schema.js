@@ -81,6 +81,7 @@ const schema = Joi.object({
     diskUsage: Joi.object({
         path: Joi.string(),
         softLimit: Joi.string(),
+        expirationBlockSize: Joi.number(),
         hardLimit: Joi.string(),
     }),
 });

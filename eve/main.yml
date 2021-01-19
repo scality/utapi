@@ -135,4 +135,34 @@ stages:
             utapi:
               filename: "/artifacts/setup_ft_test:v2.log"
               follow: true
+  run-v2-soft-limit-tests:
+    worker:
+      << : *workspace
+      vars:
+        vault: enabled
+    steps:
+      - Git: *clone
+      - ShellCommand:
+          name: Wait for Warp 10
+          command: |
+            bash -c "
+            set -ex
+            bash tests/utils/wait_for_local_port.bash 4802 60"
+          logfiles:
+            warp10:
+              filename: "/artifacts/warp10.log"
+              follow: true
+      - ShellCommand:
+          name: run v2 functional tests
+          command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:softLimit
+          env:
+            UTAPI_CACHE_BACKEND: redis
+            UTAPI_LOG_LEVEL: trace
+          logfiles:
+            warp10:
+              filename: "/artifacts/warp10.log"
+              follow: true
+            utapi:
+              filename: "/artifacts/setup_ft_test:softLimit.log"
+              follow: true
       - Upload: *upload_artifacts
