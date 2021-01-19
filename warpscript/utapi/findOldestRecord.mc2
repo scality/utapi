@@ -34,7 +34,7 @@ Finds the oldest record matching the passed class and labels and returns its tim
       'class' $class
       'labels' $labels
       'end' MINLONG 1 +
-      'count' 1
+      'count' 0
       'boundary.post' 1
     } FETCH
     <% DUP SIZE 0 > %>

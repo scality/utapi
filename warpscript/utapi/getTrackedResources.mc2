@@ -1,0 +1,36 @@
+{
+  'name' 'getTrackedResources'
+  'desc'
+  <'
+
+  '>
+  'sig' [ [ [   ] [   ] ] ] // Signature
+  'params' {
+    // Signature params description
+  }
+  'examples' [
+    <'
+
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    // Code of the actual macro
+
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+// Unit tests
+
+$macro
