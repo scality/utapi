@@ -5,7 +5,7 @@ const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
 const { CreateCheckpoint } = require('../../../../libV2/tasks');
 
-const { generateCustomEvents, protobuf } = require('../../../utils/v2Data');
+const { generateCustomEvents, fetchRecords } = require('../../../utils/v2Data');
 
 const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
@@ -15,6 +15,33 @@ const checkpointLabelToLevel = {
     acc: 'accounts',
     usr: 'users',
 };
+
+// async function fetchRecords(warp10, className, labels, params) {
+//     const _labels = warp10._clients[0].formatLabels(labels);
+//     const _params = Object.entries(params).map(([k, v]) => `'${k}' ${v}`).join('\n');
+//     const script = `
+//     DROP DROP
+//     {
+//         'token' '${warp10._readToken}'
+//         'selector' '${className}${_labels}'
+//         ${_params}
+//     } FETCH
+//     <%
+//         DUP LABELS 'labels' STORE
+//         [ SWAP
+//         VALUES
+//         <% @utapi/decodeRecord %> FOREACH
+//         ] 'values' STORE
+//         { 'labels' $labels 'values' $values }
+//     %> FOREACH
+//     DEPTH ->LIST
+//     ->JSON`;
+//     const resp = await warp10.exec({
+//         script,
+//     });
+//     return JSON.parse(resp.result[0]);
+// }
+
 
 function assertCheckpoint(expected, checkpoint) {
     assert.strictEqual(checkpoint.inB, expected.in);
@@ -26,13 +53,13 @@ function assertCheckpoint(expected, checkpoint) {
 
 function assertResults(totals, series) {
     series.forEach(checkpoint => {
-        const [[label, id]] = Object.entries(checkpoint.l)
+        const [[label, id]] = Object.entries(checkpoint.labels)
             .filter(([k]) => checkpointLabelToLevel[k] !== undefined);
         const level = checkpointLabelToLevel[label];
-        assert.strictEqual(checkpoint.v.length, 1);
+        assert.strictEqual(checkpoint.values.length, 1);
         assertCheckpoint(
             totals[level][id],
-            protobuf.decode('Record', checkpoint.v[0][1]),
+            checkpoint.values[0],
         );
     });
 }
@@ -62,11 +89,14 @@ describe('Test CreateCheckpoint', function () {
         await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.checkpoint', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
+        const series = await fetchRecords(
+            warp10,
+            'utapi.checkpoint',
+            { node: prefix },
+            { end: getTs(1), count: 1 },
+        );
 
-        const series = JSON.parse(results.result[0]);
+
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -93,10 +123,13 @@ describe('Test CreateCheckpoint', function () {
         await checkpointTask._execute(getTs(-400));
         await checkpointTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.checkpoint', labels: { node: prefix }, start: getTs(1), stop: 10 * 1000 * 1000,
-        });
-        const series = JSON.parse(results.result[0]);
+        const series = await fetchRecords(
+            warp10,
+            'utapi.checkpoint',
+            { node: prefix },
+            { end: getTs(1), count: 1 },
+        );
+
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -112,16 +145,18 @@ describe('Test CreateCheckpoint', function () {
         await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-100));
 
-        let results = await warp10.fetch({
-            className: 'utapi.checkpoint', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
+        const series = await fetchRecords(
+            warp10,
+            'utapi.checkpoint',
+            { node: prefix },
+            { end: getTs(1), count: -1 },
+        );
 
-        const series = JSON.parse(results.result[0]);
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
 
         await checkpointTask._execute(getTs(0));
-        results = await warp10.fetch({
+        const results = await warp10.fetch({
             className: 'utapi.checkpoint', labels: { node: prefix }, start: getTs(1), stop: 10 * 1000 * 1000,
         });
 

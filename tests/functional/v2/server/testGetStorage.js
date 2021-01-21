@@ -37,7 +37,7 @@ describe('Test getStorage handler', function () {
 
         const { events: _events, totals: _totals } = generateCustomEvents(
             now() - (120 * 1000000), now() - (30 * 1000000), 50, {
-                [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] },
+                hello: { [uuid.v4()]: [uuid.v4()] },
             },
         );
         events = _events;
@@ -49,6 +49,15 @@ describe('Test getStorage handler', function () {
         ingestTask = new IngestShard();
         ingestTask._program = { lag: 0 };
         await ingestTask._cache.connect();
+    });
+
+    afterEach(async () => {
+        await cacheClient._cacheBackend._redis._redis.flushall();
+        await warp10.delete({
+            className: '~.*',
+            start: 0,
+            end: now(),
+        });
     });
 
     it('should get the current storage for an account with a empty cache', async () => {
@@ -65,7 +74,7 @@ describe('Test getStorage handler', function () {
     });
 
     it('should get the current storage for an account using the cache', async () => {
-        const firstHalfTotal = events.slice(0, 25).reduce((prev, ev) => {
+        const firstHalfTotal = events.slice(0, 24).reduce((prev, ev) => {
             // console.log(ev)
             if (prev[ev.account] === undefined) {
                 prev[ev.account] = 0;

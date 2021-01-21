@@ -3,12 +3,12 @@ const uuid = require('uuid');
 
 const { CacheClient, backends: cacheBackends } = require('../../../../libV2/cache');
 const { Warp10Client } = require('../../../../libV2/warp10');
-const { convertTimestamp, shardFromTimestamp } = require('../../../../libV2/utils');
+const { convertTimestamp, shardFromTimestamp, now } = require('../../../../libV2/utils');
 const { IngestShard } = require('../../../../libV2/tasks');
 const config = require('../../../../libV2/config');
 const { eventFieldsToWarp10 } = require('../../../../libV2/constants');
 
-const { generateFakeEvents, protobuf } = require('../../../utils/v2Data');
+const { generateFakeEvents, fetchRecords } = require('../../../utils/v2Data');
 
 const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
@@ -30,21 +30,15 @@ function eventToWarp10(event) {
         }, {});
 }
 
-function assertResults(events, results) {
-    assert.strictEqual(results.result.length, 1);
-    const series = JSON.parse(results.result[0]);
+function assertResults(events, series) {
     assert.strictEqual(series.length, 1);
-    const gts = series[0];
-    const decoded = gts.v.map(v => protobuf.decode('Event', v[1], false));
-
     const expected = events
         .reduce((prev, event) => {
             prev[event.uuid] = eventToWarp10(event);
             return prev;
         }, {});
 
-
-    decoded.forEach(v => {
+    series[0].values.forEach(v => {
         assert.deepStrictEqual(v, expected[v.id]);
     });
 }
@@ -83,10 +77,15 @@ describe('Test IngestShards', function () {
 
         await Promise.all(events.map(e => cacheClient.pushMetric(e)));
         await ingestTask.execute();
-        const results = await warp10.fetch({
-            className: 'utapi.event', labels: { node: prefix }, start: stop, stop: -100,
-        });
-        assertResults(events, results);
+
+        const series = await fetchRecords(
+            warp10,
+            'utapi.event',
+            { node: prefix },
+            { end: stop, count: 100 },
+            '@utapi/decodeEvent',
+        );
+        assertResults(events, series);
     });
 
     it('should ingest metrics for multiple shards', async () => {
@@ -96,10 +95,16 @@ describe('Test IngestShards', function () {
 
         await Promise.all(events.map(e => cacheClient.pushMetric(e)));
         await ingestTask.execute();
-        const results = await warp10.fetch({
-            className: 'utapi.event', labels: { node: prefix }, start: stop, stop: -100,
-        });
-        assertResults(events, results);
+
+        const series = await fetchRecords(
+            warp10,
+            'utapi.event',
+            { node: prefix },
+            { end: stop, count: 100 },
+            '@utapi/decodeEvent',
+        );
+
+        assertResults(events, series);
     });
 
     it('should ingest old metrics as repair', async () => {
@@ -109,10 +114,17 @@ describe('Test IngestShards', function () {
 
         await Promise.all(events.map(e => cacheClient.pushMetric(e)));
         await ingestTask.execute();
-        const results = await warp10.fetch({
-            className: 'utapi.repair.event', labels: { node: prefix }, start: new Date().getTime() * 1000, stop: -100,
-        });
-        assertResults(events, results);
+
+        const series = await fetchRecords(
+            warp10,
+            'utapi.repair.event',
+            { node: prefix },
+            { end: now(), count: 100 },
+            '@utapi/decodeEvent',
+        );
+        assertResults(events, series);
     });
+
+
 });
 
