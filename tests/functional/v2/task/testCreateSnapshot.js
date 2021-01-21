@@ -5,7 +5,7 @@ const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
 const { CreateCheckpoint, CreateSnapshot, RepairTask } = require('../../../../libV2/tasks');
 
-const { generateCustomEvents, protobuf } = require('../../../utils/v2Data');
+const { generateCustomEvents, fetchRecords } = require('../../../utils/v2Data');
 
 const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
@@ -26,13 +26,13 @@ function assertSnapshot(expected, snapshot) {
 
 function assertResults(totals, series) {
     series.forEach(checkpoint => {
-        const [[label, id]] = Object.entries(checkpoint.l)
+        const [[label, id]] = Object.entries(checkpoint.labels)
             .filter(([k]) => snapshotLabelToLevel[k] !== undefined);
         const level = snapshotLabelToLevel[label];
-        assert.strictEqual(checkpoint.v.length, 1);
+        assert.strictEqual(checkpoint.values.length, 1);
         assertSnapshot(
             totals[level][id],
-            protobuf.decode('Record', checkpoint.v[0][1]),
+            checkpoint.values[0],
         );
     });
 }
@@ -71,11 +71,13 @@ describe('Test CreateSnapshot', function () {
         await checkpointTask._execute(getTs(-1));
         await snapshotTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.snapshot', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
+        const series = await fetchRecords(
+            warp10,
+            'utapi.snapshot',
+            { node: prefix },
+            { end: getTs(1), count: 1 },
+        );
 
-        const series = JSON.parse(results.result[0]);
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -95,11 +97,12 @@ describe('Test CreateSnapshot', function () {
 
         await snapshotTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.snapshot', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
-
-        const series = JSON.parse(results.result[0]);
+        const series = await fetchRecords(
+            warp10,
+            'utapi.snapshot',
+            { node: prefix },
+            { end: getTs(1), count: 1 },
+        );
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -117,11 +120,12 @@ describe('Test CreateSnapshot', function () {
         await checkpointTask._execute(getTs(-1));
         await snapshotTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.snapshot', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
-
-        const series = JSON.parse(results.result[0]);
+        const series = await fetchRecords(
+            warp10,
+            'utapi.snapshot',
+            { node: prefix },
+            { end: getTs(1), count: 1 },
+        );
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -141,11 +145,12 @@ describe('Test CreateSnapshot', function () {
 
         await snapshotTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.snapshot', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
-
-        const series = JSON.parse(results.result[0]);
+        const series = await fetchRecords(
+            warp10,
+            'utapi.snapshot',
+            { node: prefix },
+            { end: getTs(100), count: 1 },
+        );
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -160,11 +165,12 @@ describe('Test CreateSnapshot', function () {
         await repairTask._execute(getTs(-1));
         await snapshotTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.snapshot', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
-
-        const series = JSON.parse(results.result[0]);
+        const series = await fetchRecords(
+            warp10,
+            'utapi.snapshot',
+            { node: prefix },
+            { end: getTs(1), count: 1 },
+        );
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });

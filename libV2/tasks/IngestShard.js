@@ -15,7 +15,7 @@ const logger = new LoggerContext({
 const checkpointLagMicroseconds = convertTimestamp(checkpointLagSecs);
 
 class IngestShardTask extends BaseTask {
-    constructor(...options) {
+    constructor(options) {
         super({
             warp10: {
                 requestTimeout: 30000,
