@@ -32,11 +32,12 @@ describe('Test MonitorDiskUsage', () => {
     let task;
     let path;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
         task = new MonitorDiskUsageShim();
         task._path = path;
         task._enabled = true;
+        await task.setup();
     });
 
     testCases.map(testCase =>

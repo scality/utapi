@@ -5,7 +5,7 @@ const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
 const { RepairTask } = require('../../../../libV2/tasks');
 
-const { generateCustomEvents, protobuf } = require('../../../utils/v2Data');
+const { generateCustomEvents, fetchRecords } = require('../../../utils/v2Data');
 
 // Ten minutes in the past
 const _now = Math.floor(new Date().getTime() / 1000) - (600);
@@ -27,13 +27,13 @@ function assertCheckpoint(expected, checkpoint) {
 
 function assertResults(totals, series) {
     series.forEach(checkpoint => {
-        const [[label, id]] = Object.entries(checkpoint.l)
+        const [[label, id]] = Object.entries(checkpoint.labels)
             .filter(([k]) => checkpointLabelToLevel[k] !== undefined);
         const level = checkpointLabelToLevel[label];
-        assert.strictEqual(checkpoint.v.length, 1);
+        assert.strictEqual(checkpoint.values.length, 1);
         assertCheckpoint(
             totals[level][id],
-            protobuf.decode('Record', checkpoint.v[0][1]),
+            checkpoint.values[0],
         );
     });
 }
@@ -63,11 +63,14 @@ describe('Test Repair', function () {
         await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.repair.correction', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
+        const series = await fetchRecords(
+            warp10,
+            'utapi.repair.correction',
+            { node: prefix },
+            { end: getTs(1), count: -1 },
+            '@utapi/decodeRecord',
+        );
 
-        const series = JSON.parse(results.result[0]);
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -94,10 +97,13 @@ describe('Test Repair', function () {
         await repairTask._execute(getTs(-400));
         await repairTask._execute(getTs(0));
 
-        const results = await warp10.fetch({
-            className: 'utapi.repair.correction', labels: { node: prefix }, start: getTs(1), stop: 10 * 1000 * 1000,
-        });
-        const series = JSON.parse(results.result[0]);
+        const series = await fetchRecords(
+            warp10,
+            'utapi.repair.correction',
+            { node: prefix },
+            { end: getTs(1), count: 1 },
+            '@utapi/decodeRecord',
+        );
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
     });
@@ -113,16 +119,18 @@ describe('Test Repair', function () {
         await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(-100));
 
-        let results = await warp10.fetch({
-            className: 'utapi.repair.correction', labels: { node: prefix }, start: getTs(1), stop: -1,
-        });
-
-        const series = JSON.parse(results.result[0]);
+        const series = await fetchRecords(
+            warp10,
+            'utapi.repair.correction',
+            { node: prefix },
+            { end: getTs(1), count: -1 },
+            '@utapi/decodeRecord',
+        );
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
 
         await repairTask._execute(getTs(0));
-        results = await warp10.fetch({
+        const results = await warp10.fetch({
             className: 'utapi.repair.correction', labels: { node: prefix }, start: getTs(1), stop: 10 * 1000 * 1000,
         });
 

@@ -5,7 +5,7 @@ const uuid = require('uuid');
 const aws4 = require('aws4');
 
 const { client: warp10 } = require('../../../../libV2/warp10');
-const { convertTimestamp } = require('../../../../libV2/utils');
+const { convertTimestamp, now } = require('../../../../libV2/utils');
 const { operationToResponse } = require('../../../../libV2/constants');
 
 const { generateCustomEvents } = require('../../../utils/v2Data');
@@ -114,13 +114,21 @@ describe('Test listMetric', function () {
                 assert(await ingestEvents(events));
             });
 
+            after(async () => {
+                await warp10.delete({
+                    className: '~.*',
+                    start: 0,
+                    end: now(),
+                });
+            });
+
             const accounts = [];
             const users = [];
             const buckets = [];
 
             Object.entries(testCase.args)
                 .forEach(([account, _users]) => {
-                    accounts.push(account);
+                    accounts.push(`account:${account}`);
                     Object.entries(_users).forEach(([user, _buckets]) => {
                         users.push(user);
                         buckets.push(..._buckets);
@@ -145,7 +153,8 @@ describe('Test listMetric', function () {
 
                         body.forEach(metric => {
                             const key = metric[metricResponseKeys[level]];
-                            const expected = totals[level][key];
+                            const _key = level === 'accounts' ? key.split(':')[1] : key;
+                            const expected = totals[level][_key];
                             assert.deepStrictEqual(metric.operations, opsToResp(expected.ops));
                             assert.strictEqual(metric.incomingBytes, expected.in);
                             assert.strictEqual(metric.outgoingBytes, expected.out);
