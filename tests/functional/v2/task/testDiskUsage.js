@@ -3,6 +3,7 @@ const uuid = require('uuid');
 const fs = require('fs');
 
 const { MonitorDiskUsage } = require('../../../../libV2/tasks');
+const { getFolderSize } = require('../../../../libV2/utils');
 
 class MonitorDiskUsageShim extends MonitorDiskUsage {
     async _getUsage() {
@@ -20,17 +21,32 @@ function fillDir(path, { count, size }) {
 }
 
 const testCases = [
-    { count: 1, size: 100, expected: 160 },
-    { count: 2, size: 200, expected: 480 },
-    { count: 3, size: 150, expected: 550 },
-    { count: 4, size: 111, expected: 564 },
-    { count: 100, size: 1024 * 1024, expected: 104859640 },
+    { count: 1, size: 100, expected: 100 },
+    { count: 2, size: 200, expected: 400 },
+    { count: 3, size: 150, expected: 450 },
+    { count: 4, size: 111, expected: 444 },
+    { count: 100, size: 1024 * 1024, expected: 104857600 },
 ];
 
 // eslint-disable-next-line func-names
 describe('Test MonitorDiskUsage', () => {
     let task;
     let path;
+    let emptyDirSize;
+    let emptyFileSize;
+
+    // Different file systems can have slightly different overheads per file and
+    // directory which can lead to flaky tests when testing computed file size.
+    // In an effort to mitigate this we calculate the size of an empty directory
+    // and file and add it to our expected values.
+    before(async () => {
+        let dir = `/tmp/diskusage-${uuid.v4()}`;
+        fillDir(dir, { count: 0, size: 1 });
+        emptyDirSize = await getFolderSize(dir);
+        dir = `/tmp/diskusage-${uuid.v4()}`;
+        fillDir(dir, { count: 1, size: 1 });
+        emptyFileSize = await getFolderSize(dir) - emptyDirSize - 1;
+    });
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
@@ -45,6 +61,6 @@ describe('Test MonitorDiskUsage', () => {
             async () => {
                 fillDir(path, testCase);
                 await task._execute();
-                assert.strictEqual(task.usage, testCase.expected);
+                assert.strictEqual(task.usage, testCase.expected + emptyDirSize + (emptyFileSize * testCase.count));
             }));
 });
