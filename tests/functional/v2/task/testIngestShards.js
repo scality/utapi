@@ -124,7 +124,5 @@ describe('Test IngestShards', function () {
         );
         assertResults(events, series);
     });
-
-
 });
 

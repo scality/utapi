@@ -37,7 +37,7 @@ describe('Test getStorage handler', function () {
 
         const { events: _events, totals: _totals } = generateCustomEvents(
             now() - (120 * 1000000), now() - (30 * 1000000), 50, {
-                hello: { [uuid.v4()]: [uuid.v4()] },
+                [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] },
             },
         );
         events = _events;
@@ -75,7 +75,6 @@ describe('Test getStorage handler', function () {
 
     it('should get the current storage for an account using the cache', async () => {
         const firstHalfTotal = events.slice(0, 24).reduce((prev, ev) => {
-            // console.log(ev)
             if (prev[ev.account] === undefined) {
                 prev[ev.account] = 0;
             }
@@ -86,7 +85,6 @@ describe('Test getStorage handler', function () {
         }, {});
 
         const secondHalfTotal = events.slice(25).reduce((prev, ev) => {
-            // console.log(ev)
             if (ev.sizeDelta !== undefined) {
                 if (prev[ev.account] === undefined) {
                     prev[ev.account] = 0;
