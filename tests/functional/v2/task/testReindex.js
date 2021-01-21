@@ -6,7 +6,7 @@ const { Warp10Client } = require('../../../../libV2/warp10');
 const { ReindexTask } = require('../../../../libV2/tasks');
 const { now } = require('../../../../libV2/utils');
 const { BucketD, values } = require('../../../utils/mock/');
-const { protobuf, fetchRecords } = require('../../../utils/v2Data');
+const { fetchRecords } = require('../../../utils/v2Data');
 
 const { CANONICAL_ID, BUCKET_NAME } = values;
 const bucketCounts = [1, 251];
@@ -44,13 +44,6 @@ describe('Test ReindexTask', function () {
     });
 
     async function assertResult(labels, value) {
-        // const results = await warp10.fetch({
-        //     className: 'utapi.repair.reindex',
-        //     labels,
-        //     start: 'now',
-        //     stop: -100,
-        // });
-
         const series = await fetchRecords(
             warp10,
             'utapi.repair.reindex',
@@ -59,12 +52,8 @@ describe('Test ReindexTask', function () {
             '@utapi/decodeRecord',
         );
 
-        // assert.strictEqual(results.result.length, 1);
-        // assert.notStrictEqual(results.result[0], '');
-        // const series = JSON.parse(results.result[0]);
         assert.strictEqual(series.length, 1);
         assert.strictEqual(series[0].values.length, 1);
-        // const record = protobuf.decode('Record', series[0].v[0][1]);
         assert.deepStrictEqual(series[0].values[0], value);
     }
 
