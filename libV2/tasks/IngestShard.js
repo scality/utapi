@@ -16,13 +16,7 @@ const checkpointLagMicroseconds = convertTimestamp(checkpointLagSecs);
 
 class IngestShardTask extends BaseTask {
     constructor(options) {
-        super({
-            warp10: {
-                requestTimeout: 30000,
-                connectTimeout: 30000,
-            },
-            ...options,
-        });
+        super(options);
         this._defaultSchedule = config.ingestionSchedule;
         this._defaultLag = config.ingestionLagSeconds;
     }
@@ -65,9 +59,15 @@ class IngestShardTask extends BaseTask {
                                     return new UtapiMetric(metric);
                                 });
                         }
-                        const status = await this._warp10.ingest({ className: metricClass }, records);
+                        let nodeId;
+                        const status = await this.withWarp10(async warp10 => {
+                            // eslint-disable-next-line prefer-destructuring
+                            nodeId = warp10.nodeId;
+                            return warp10.ingest({ className: metricClass }, records);
+                        });
                         assert.strictEqual(status, records.length);
                         await this._cache.deleteShard(shard);
+                        logger.info(`ingested ${status} records into ${nodeId}`);
                     } else {
                         logger.debug('No events found in shard, cleaning up');
                     }

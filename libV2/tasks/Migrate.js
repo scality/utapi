@@ -42,14 +42,7 @@ const LEVELS_TO_MIGRATE = [
 
 class MigrateTask extends BaseTask {
     constructor(options) {
-        super({
-            warp10: {
-                requestTimeout: 30000,
-                connectTimeout: 30000,
-            },
-            ...options,
-        });
-
+        super(options);
         this._failedCorrections = [];
         this._redis = new RedisClient(config.redis);
     }
@@ -194,14 +187,14 @@ class MigrateTask extends BaseTask {
     }
 
     async _findLatestSnapshot(level, resource) {
-        const resp = await this._warp10.fetch({
+        const resp = await this.withWarp10(async warp10 => warp10.fetch({
             className: 'utapi.snapshot',
             labels: {
                 [serviceToWarp10Label[level]]: resource,
             },
             start: 'now',
             stop: -1,
-        });
+        }));
 
         if (resp.result && (resp.result.length === 0 || resp.result[0] === '' || resp.result[0] === '[]')) {
             return null;
@@ -215,14 +208,14 @@ class MigrateTask extends BaseTask {
         let pos = beginTimestamp;
         // eslint-disable-next-line no-constant-condition
         while (true) {
-            const resp = await this._warp10.fetch({
+            const resp = await this.withWarp10(async warp10 => warp10.fetch({
                 className: 'utapi.snapshot',
                 labels: {
                     [serviceToWarp10Label[level]]: resource,
                 },
                 start: pos - 1,
                 stop: -WARP10_SCAN_SIZE,
-            });
+            }));
             if (resp.result && resp.result.length === 0) {
                 return pos;
             }
@@ -238,7 +231,7 @@ class MigrateTask extends BaseTask {
     }
 
     async _migrateMetric(className, level, resource, metric) {
-        return this._warp10.ingest(
+        return this.withWarp10(async warp10 => warp10.ingest(
             {
                 className,
                 labels: {
@@ -247,7 +240,7 @@ class MigrateTask extends BaseTask {
                 valueType: warp10RecordType,
             },
             [metric],
-        );
+        ));
     }
 
     static _sumRecord(a, b) {
