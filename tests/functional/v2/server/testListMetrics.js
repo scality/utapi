@@ -4,12 +4,13 @@ const needle = require('needle');
 const uuid = require('uuid');
 const aws4 = require('aws4');
 
-const { client: warp10 } = require('../../../../libV2/warp10');
+const { clients: warp10Clients } = require('../../../../libV2/warp10');
 const { convertTimestamp, now } = require('../../../../libV2/utils');
 const { operationToResponse } = require('../../../../libV2/constants');
 
 const { generateCustomEvents } = require('../../../utils/v2Data');
 
+const warp10 = warp10Clients[0];
 const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
 

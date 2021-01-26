@@ -1,8 +1,7 @@
 const errors = require('../../../errors');
 const { serviceToWarp10Label, operationToResponse } = require('../../../constants');
-const { convertTimestamp } = require('../../../utils');
-const { client: warp10 } = require('../../../warp10');
-const config = require('../../../config');
+const { convertTimestamp, iterIfError } = require('../../../utils');
+const { clients: warp10Clients } = require('../../../warp10');
 
 const emptyOperationsResponse = Object.values(operationToResponse)
     .reduce((prev, key) => {
@@ -28,16 +27,20 @@ async function listMetric(ctx, params) {
     const results = await Promise.all(
         resources.map(async ({ resource, id }) => {
             const labels = { [labelName]: id };
-            const options = {
-                params: {
-                    start,
-                    end,
-                    labels,
-                    node: config.nodeId,
-                },
-                macro: 'utapi/getMetrics',
-            };
-            const res = await warp10.exec(options);
+
+            const res = await iterIfError(warp10Clients, warp10 => {
+                const options = {
+                    params: {
+                        start,
+                        end,
+                        labels,
+                        node: warp10.nodeId,
+                    },
+                    macro: 'utapi/getMetrics',
+                };
+                return warp10.exec(options);
+            });
+
             if (res.result.length === 0) {
                 ctx.logger.error('unable to retrieve metrics', { resource, type: params.level });
                 throw errors.InternalError;

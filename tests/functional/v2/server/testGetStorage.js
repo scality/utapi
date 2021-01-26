@@ -3,7 +3,7 @@ const async = require('async');
 const uuid = require('uuid');
 
 const UtapiClient = require('../../../../libV2/client');
-const { client: warp10 } = require('../../../../libV2/warp10');
+const { clients: warp10Clients } = require('../../../../libV2/warp10');
 const config = require('../../../../libV2/config');
 const { CacheClient, backends: cacheBackends } = require('../../../../libV2/cache');
 const { IngestShard } = require('../../../../libV2/tasks');
@@ -18,6 +18,8 @@ const getClient = () => new CacheClient({
         config.cache,
     ),
 });
+
+const warp10 = warp10Clients[0];
 
 // eslint-disable-next-line func-names
 describe('Test getStorage handler', function () {
@@ -46,7 +48,7 @@ describe('Test getStorage handler', function () {
         cacheClient = getClient();
         await cacheClient.connect();
 
-        ingestTask = new IngestShard();
+        ingestTask = new IngestShard({ warp10: [warp10Clients[0]] });
         ingestTask._program = { lag: 0 };
         await ingestTask._cache.connect();
     });

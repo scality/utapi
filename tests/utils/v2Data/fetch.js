@@ -1,5 +1,5 @@
 async function fetchRecords(warp10, className, labels, params, decodeMacro = '@utapi/decodeRecord') {
-    const _labels = warp10._clients[0].formatLabels(labels);
+    const _labels = warp10._client.formatLabels(labels);
     const _params = Object.entries(params).map(([k, v]) => `'${k}' ${v}`).join('\n');
     const script = `
     DROP DROP

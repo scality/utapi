@@ -9,13 +9,7 @@ const logger = new LoggerContext({
 
 class CreateSnapshot extends BaseTask {
     constructor(options) {
-        super({
-            warp10: {
-                requestTimeout: 30000,
-                connectTimeout: 30000,
-            },
-            ...options,
-        });
+        super(options);
         this._defaultSchedule = config.snapshotSchedule;
         this._defaultLag = snapshotLagSecs;
     }
@@ -23,14 +17,16 @@ class CreateSnapshot extends BaseTask {
     async _execute(timestamp) {
         logger.debug('creating snapshots', { snapshotTimestamp: timestamp });
 
-        const params = {
-            params: {
-                nodeId: this.nodeId,
-                end: timestamp.toString(),
-            },
-            macro: 'utapi/createSnapshot',
-        };
-        const status = await this._warp10.exec(params);
+        const status = await this.withWarp10(async warp10 => {
+            const params = {
+                params: {
+                    nodeId: warp10.nodeId,
+                    end: timestamp.toString(),
+                },
+                macro: 'utapi/createSnapshot',
+            };
+            return warp10.exec(params);
+        });
         if (status.result[0]) {
             logger.info(`created ${status.result[0]} snapshots`);
         }
