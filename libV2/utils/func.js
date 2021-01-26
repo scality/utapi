@@ -30,7 +30,39 @@ function comprehend(data, func) {
     }, {});
 }
 
+/**
+ * Calls func with items in sequence, advancing if an error is thrown.
+ * The result from the first successful call is returned.
+ *
+ * onError, if passed, is called on every error thrown by func;
+ *
+ * @param {Array} items - items to iterate
+ * @param {AsyncFunction} func - function to apply to each item
+ * @param {Function|undefined} onError - optional function called if an error is thrown
+ * @returns {*} -
+ */
+async function iterIfError(items, func, onError) {
+    // console.log(items)
+    // eslint-disable-next-line no-restricted-syntax
+    for (const item of items) {
+        // console.log(item)
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            const resp = await func(item);
+            return resp;
+        } catch (error) {
+            if (onError) {
+                onError(error);
+            }
+        }
+        // console.log('-'.repeat(50))
+        // console.log(item)
+    }
+    throw new Error('unable to complete request');
+}
+
 module.exports = {
     asyncOrCallback,
     comprehend,
+    iterIfError,
 };
