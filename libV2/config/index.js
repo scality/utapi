@@ -8,20 +8,34 @@ const configSchema = require('./schema');
 // We need to require the specific file rather than the parent module to avoid a circular require
 const { parseDiskSizeSpec } = require('../utils/disk');
 
+function _splitTrim(char, text) {
+    return text.split(char).map(v => v.trim());
+}
+
 function _splitServer(text) {
     assert.notStrictEqual(text.indexOf(':'), -1);
-    const [host, port] = text.split(':').map(v => v.trim());
+    const [host, port] = _splitTrim(':', text);
     return {
         host,
         port: Number.parseInt(port, 10),
     };
 }
 
+function _splitNode(text) {
+    assert.notStrictEqual(text.indexOf('='), -1);
+    const [nodeId, hostname] = _splitTrim('=', text);
+    return {
+        nodeId,
+        ..._splitServer(hostname),
+    };
+}
+
 const _typeCasts = {
     bool: val => truthy.has(val.toLowerCase()),
     int: val => parseInt(val, 10),
-    list: val => val.split(',').map(v => v.trim()),
-    serverList: val => val.split(',').map(v => v.trim()).map(_splitServer),
+    list: val => _splitTrim(',', val),
+    serverList: val => _splitTrim(',', val).map(_splitServer),
+    nodeList: val => _splitTrim(',', val).map(_splitNode),
     diskSize: parseDiskSizeSpec,
 };
 
@@ -161,38 +175,31 @@ class Config {
         return this._recursiveUpdateObject(defaultConf, userConf);
     }
 
-    static _parseRedisConfig(config) {
+    static _parseRedisConfig(prefix, config) {
         const redisConf = {};
-        if (config.sentinels || _definedInEnv('REDIS_SENTINELS')) {
-            redisConf.name = _loadFromEnv('REDIS_NAME', config.name);
-            const sentinels = _loadFromEnv(
-                'REDIS_SENTINELS',
+        if (config.sentinels || _definedInEnv(`${prefix}_SENTINELS`)) {
+            redisConf.name = _loadFromEnv(`${prefix}_NAME`, config.name);
+            redisConf.sentinels = _loadFromEnv(
+                `${prefix}_SENTINELS`,
                 config.sentinels,
-                _typeCasts.list,
+                _typeCasts.serverList,
             );
-            redisConf.sentinels = sentinels.map(v => {
-                if (typeof v === 'string') {
-                    const [host, port] = v.split(':');
-                    return { host, port: Number.parseInt(port, 10) };
-                }
-                return v;
-            });
             redisConf.sentinelPassword = _loadFromEnv(
-                'REDIS_SENTINEL_PASSWORD',
+                `${prefix}_SENTINEL_PASSWORD`,
                 config.sentinelPassword,
             );
         } else {
             redisConf.host = _loadFromEnv(
-                'REDIS_HOST',
+                `${prefix}_HOST`,
                 config.host,
             );
             redisConf.port = _loadFromEnv(
-                'REDIS_PORT',
+                `${prefix}_PORT`,
                 config.port,
                 _typeCasts.int,
             );
             redisConf.password = _loadFromEnv(
-                'REDIS_PASSWORD',
+                `${prefix}_PASSWORD`,
                 config.password,
             );
         }
@@ -248,9 +255,9 @@ class Config {
             throw new Error('bad config: both certFilePaths.key and certFilePaths.cert must be defined');
         }
 
-        parsedConfig.redis = Config._parseRedisConfig(config.redis);
+        parsedConfig.redis = Config._parseRedisConfig('REDIS', config.redis);
 
-        parsedConfig.cache = Config._parseRedisConfig(config.localCache);
+        parsedConfig.cache = Config._parseRedisConfig('REDIS_CACHE', config.localCache);
         parsedConfig.cache.backend = _loadFromEnv('CACHE_BACKEND', config.cacheBackend);
 
         const warp10Conf = {
@@ -258,14 +265,17 @@ class Config {
             writeToken: _loadFromEnv('WARP10_WRITE_TOKEN', config.warp10.writeToken),
         };
 
-        parsedConfig.warp10 = warp10Conf;
-
         if (Array.isArray(config.warp10.hosts) || _definedInEnv('WARP10_HOSTS')) {
-            warp10Conf.hosts = _loadFromEnv('WARP10_HOSTS', config.warp10.hosts, _typeCasts.serverList);
+            warp10Conf.hosts = _loadFromEnv('WARP10_HOSTS', config.warp10.hosts, _typeCasts.nodeList);
         } else {
-            warp10Conf.host = _loadFromEnv('WARP10_HOST', config.warp10.host);
-            warp10Conf.port = _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int);
+            warp10Conf.hosts = [{
+                host: _loadFromEnv('WARP10_HOST', config.warp10.host),
+                port: _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int),
+                nodeId: parsedConfig.nodeId,
+            }];
         }
+
+        parsedConfig.warp10 = warp10Conf;
 
         parsedConfig.logging = {
             level: parsedConfig.development
