@@ -117,8 +117,7 @@ class MonitorDiskUsage extends BaseTask {
             moduleLogger.debug(`using ${formatDiskSize(size)}`, { usage: size });
         }
 
-
-        if (this._softLimit !== undefined) {
+        if (this._softLimit !== null) {
             let shouldDelete = false;
             if (this._mode === 'local') {
                 moduleLogger.debug('Operating in local mode, only checking the current node');
