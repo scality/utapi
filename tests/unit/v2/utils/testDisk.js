@@ -1,4 +1,3 @@
-const { describe } = require('@hapi/joi/lib/manifest');
 const assert = require('assert');
 const { parseDiskSizeSpec, formatDiskSize } = require('../../../../libV2/utils/disk');
 

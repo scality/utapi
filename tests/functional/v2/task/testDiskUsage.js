@@ -1,22 +1,15 @@
 const assert = require('assert');
 const uuid = require('uuid');
-const fs = require('fs');
 
 const { MonitorDiskUsage } = require('../../../../libV2/tasks');
 const { getFolderSize } = require('../../../../libV2/utils');
+
+const { fillDir } = require('../../../utils/v2Data');
 
 class MonitorDiskUsageShim extends MonitorDiskUsage {
     async _getUsage() {
         this.usage = await super._getUsage();
         return this.usage;
-    }
-}
-
-function fillDir(path, { count, size }) {
-    fs.mkdirSync(path);
-    const data = Buffer.alloc(size);
-    for (let i = 0; i < count; i += 1) {
-        fs.writeFileSync(`${path}/${i}`, data);
     }
 }
 
