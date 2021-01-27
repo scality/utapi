@@ -130,9 +130,13 @@ describe('Test Repair', function () {
         assertResults(totals, series);
 
         await repairTask._execute(getTs(0));
-        const results = await warp10.fetch({
-            className: 'utapi.repair.correction', labels: { node: prefix }, start: getTs(1), stop: 10 * 1000 * 1000,
-        });
+        const results = await fetchRecords(
+            warp10,
+            'utapi.repair.correction',
+            { node: prefix },
+            { end: getTs(1), count: -10000000 },
+            '@utapi/decodeRecord',
+        );
 
         assert.strictEqual(JSON.parse(results.result[0]).length, 0);
     });
