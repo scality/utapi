@@ -134,10 +134,9 @@ describe('Test Repair', function () {
             warp10,
             'utapi.repair.correction',
             { node: prefix },
-            { end: getTs(1), count: -10000000 },
+            { start: getTs(1), end: getTs(10 * 1000 * 1000) },
             '@utapi/decodeRecord',
         );
-
         assert.strictEqual(results.length, 0);
     });
 });
