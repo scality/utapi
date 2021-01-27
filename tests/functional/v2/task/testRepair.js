@@ -39,7 +39,7 @@ function assertResults(totals, series) {
 }
 
 // eslint-disable-next-line func-names
-describe('Test Repair', function () {
+describe.only('Test Repair', function () {
     this.timeout(10000);
 
     let prefix;
@@ -134,10 +134,9 @@ describe('Test Repair', function () {
             warp10,
             'utapi.repair.correction',
             { node: prefix },
-            { end: getTs(1), count: -10000000 },
+            { start: getTs(1), end: getTs(10 * 1000 * 1000) },
             '@utapi/decodeRecord',
         );
-
         assert.strictEqual(results.length, 0);
     });
 });
