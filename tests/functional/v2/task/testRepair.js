@@ -138,6 +138,6 @@ describe('Test Repair', function () {
             '@utapi/decodeRecord',
         );
 
-        assert.strictEqual(JSON.parse(results.result[0]).length, 0);
+        assert.strictEqual(results.length, 0);
     });
 });
