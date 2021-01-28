@@ -39,5 +39,9 @@
     "reindex": {
         "enabled": true,
         "schedule": "0 0 0 * * 6"
+    },
+    "diskUsage": {
+        "expirationBlockSize": "24",
+        "mode": "local"
     }
 }
