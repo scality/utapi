@@ -20,19 +20,6 @@ describe('Test MonitorDiskUsage hard limit', function () {
         task._enabled = true;
     });
 
-    it('should trigger a database unlock if below the limit', async () => {
-        fillDir(path, { count: 1, size: 100 });
-        task._hardLimit = 10240;
-        const checkSpy = sinon.spy(task, '_checkHardLimit');
-        const lockSpy = sinon.spy(task, '_disableWarp10Updates');
-        const unlockSpy = sinon.spy(task, '_enableWarp10Updates');
-        await task.execute();
-        assert(checkSpy.calledOnce);
-        assert(checkSpy.returned(false));
-        assert(lockSpy.notCalled);
-        assert(unlockSpy.calledOnce);
-    });
-
     it('should trigger a database lock if above the limit', async () => {
         fillDir(path, { count: 1, size: 100 });
         task._hardLimit = 1;
@@ -46,5 +33,18 @@ describe('Test MonitorDiskUsage hard limit', function () {
         assert(lockSpy.calledOnce);
         assert(unlockSpy.notCalled);
         assert(execStub.calledOnce);
+    });
+
+    it('should trigger a database unlock if below the limit', async () => {
+        fillDir(path, { count: 1, size: 100 });
+        task._hardLimit = 10240;
+        const checkSpy = sinon.spy(task, '_checkHardLimit');
+        const lockSpy = sinon.spy(task, '_disableWarp10Updates');
+        const unlockSpy = sinon.spy(task, '_enableWarp10Updates');
+        await task.execute();
+        assert(checkSpy.calledOnce);
+        assert(checkSpy.returned(false));
+        assert(lockSpy.notCalled);
+        assert(unlockSpy.calledOnce);
     });
 });
