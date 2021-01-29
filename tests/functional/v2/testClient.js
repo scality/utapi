@@ -4,12 +4,14 @@ const sinon = require('sinon');
 const uuid = require('uuid');
 
 const UtapiClient = require('../../../libV2/client');
-const { client: warp10 } = require('../../../libV2/warp10');
+const { clients: warp10Clients } = require('../../../libV2/warp10');
 const config = require('../../../libV2/config');
 const { CacheClient, backends: cacheBackends } = require('../../../libV2/cache');
 const { IngestShard } = require('../../../libV2/tasks');
 const { now } = require('../../../libV2/utils');
 const { generateCustomEvents } = require('../../utils/v2Data');
+
+const warp10 = warp10Clients[0];
 
 const getClient = () => new CacheClient({
     cacheBackend: new cacheBackends.RedisCache(
@@ -103,7 +105,7 @@ describe('Test UtapiClient', function () {
             cacheClient = getClient();
             await cacheClient.connect();
 
-            ingestTask = new IngestShard();
+            ingestTask = new IngestShard({ warp10: [warp10] });
             ingestTask._program = { lag: 0 };
             await ingestTask._cache.connect();
         });
