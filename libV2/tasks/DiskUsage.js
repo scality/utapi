@@ -68,6 +68,7 @@ class MonitorDiskUsage extends BaseTask {
         return false;
     }
 
+
     async _expireMetrics() {
         const resp = await this._warp10.exec({
             macro: 'utapi/findOldestRecord',
@@ -97,6 +98,45 @@ class MonitorDiskUsage extends BaseTask {
             className: '~.*',
             start: oldestTimestamp - 1,
             end: endTimestamp,
+        });
+    }
+
+    _checkHardLimit(size, nodeId) {
+        const hardPercentage = (size / this._hardLimit).toFixed(2);
+        const hardLimitHuman = formatDiskSize(this._hardLimit);
+        const hardLogger = moduleLogger.with({
+            size,
+            sizeHuman: formatDiskSize(size),
+            hardPercentage,
+            hardLimit: this._hardLimit,
+            hardLimitHuman,
+            nodeId,
+        });
+
+        const msg = `Using ${hardPercentage * 100}% of the ${hardLimitHuman} soft limit on ${nodeId}`;
+
+        if (hardPercentage < WARN_THRESHOLD) {
+            hardLogger.debug(msg);
+        } else if (hardPercentage >= WARN_THRESHOLD && hardPercentage < ACTION_THRESHOLD) {
+            hardLogger.warn(msg);
+        } else {
+            hardLogger.error(msg);
+            return true;
+        }
+        return false;
+    }
+
+    async _disableWarp10Updates() {
+        return this._warp10.exec({
+            script: "DROP DROP 'Hard limit has been reached. Further updates have been disabled.' 'scality' UPDATEOFF",
+            params: {},
+        });
+    }
+
+    async _enableWarp10Updates() {
+        return this._warp10.exec({
+            script: "DROP DROP 'scality' UPDATEON",
+            params: {},
         });
     }
 
@@ -163,6 +203,18 @@ class MonitorDiskUsage extends BaseTask {
             if (shouldDelete) {
                 moduleLogger.error('soft limit exceeded, expiring oldest block of metrics');
                 await this._expireMetrics();
+            }
+        }
+
+        if (this._hardLimit !== undefined) {
+            const shouldLock = this._checkHardLimit(size, this.nodeId);
+            if (shouldLock) {
+                moduleLogger.error('hard limit exceeded, disabling writes to warp 10', { nodeId: this.nodeId });
+                await this._disableWarp10Updates();
+            } else {
+                moduleLogger.error('usage below hard limit, ensuring writes to warp 10 are enabled',
+                    { nodeId: this.nodeId });
+                await this._enableWarp10Updates();
             }
         }
     }
