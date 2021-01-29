@@ -27,6 +27,7 @@ const warp10MultiHost = Joi.object({
     hosts: Joi.array().items(Joi.object({
         host: Joi.alternatives(Joi.string().hostname(), Joi.string().ip()),
         port: Joi.number().port(),
+        nodeId: Joi.string(),
     })),
     readToken: Joi.string(),
     writeToken: Joi.string(),

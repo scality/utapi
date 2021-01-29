@@ -15,13 +15,7 @@ const logger = new LoggerContext({
 
 class ReindexTask extends BaseTask {
     constructor(options) {
-        super({
-            warp10: {
-                requestTimeout: 30000,
-                connectTimeout: 30000,
-            },
-            ...options,
-        });
+        super(options);
         this._defaultSchedule = config.reindexSchedule;
         this._defaultLag = 0;
     }
@@ -67,18 +61,20 @@ class ReindexTask extends BaseTask {
 
     async _fetchCurrentMetrics(level, resource) {
         const timestamp = convertTimestamp(new Date().getTime());
-        const options = {
-            params: {
-                start: timestamp,
-                end: timestamp,
-                node: this._nodeId,
-                labels: {
-                    [level]: resource,
+        const res = await this.withWarp10(warp10 => {
+            const options = {
+                params: {
+                    start: timestamp,
+                    end: timestamp,
+                    node: warp10.nodeId,
+                    labels: {
+                        [level]: resource,
+                    },
                 },
-            },
-            macro: 'utapi/getMetrics',
-        };
-        const res = await this._warp10.exec(options);
+                macro: 'utapi/getMetrics',
+            };
+            return warp10.exec(options);
+        });
         return { timestamp, value: JSON.parse(res.result[0]) };
     }
 
@@ -97,8 +93,7 @@ class ReindexTask extends BaseTask {
                 sizeDelta,
                 timestamp,
             });
-
-            await this._warp10.ingest(
+            await this.withWarp10(warp10 => warp10.ingest(
                 {
                     className: 'utapi.repair.reindex',
                     labels: {
@@ -107,7 +102,7 @@ class ReindexTask extends BaseTask {
                     valueType: warp10RecordType,
                 },
                 [record],
-            );
+            ));
         }
     }
 

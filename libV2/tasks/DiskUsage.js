@@ -87,13 +87,14 @@ class MonitorDiskUsage extends BaseTask {
 
 
     async _expireMetrics() {
-        const resp = await this._warp10.exec({
-            macro: 'utapi/findOldestRecord',
-            params: {
-                class: '~.*',
-                labels: {},
-            },
-        });
+        const resp = await this.withWarp10(async warp10 =>
+            warp10.exec({
+                macro: 'utapi/findOldestRecord',
+                params: {
+                    class: '~.*',
+                    labels: {},
+                },
+            }));
 
         if (!resp.result || resp.result.length !== 1) {
             moduleLogger.error('failed to fetch oldest record timestamp. expiration failed');
@@ -111,11 +112,12 @@ class MonitorDiskUsage extends BaseTask {
             start: oldestTimestamp, stop: endTimestamp,
         });
 
-        await this._warp10.delete({
-            className: '~.*',
-            start: oldestTimestamp - 1,
-            end: endTimestamp,
-        });
+        await this.withWarp10(async warp10 =>
+            warp10.delete({
+                className: '~.*',
+                start: oldestTimestamp - 1,
+                end: endTimestamp,
+            }));
     }
 
     _checkHardLimit(size, nodeId) {
@@ -144,17 +146,23 @@ class MonitorDiskUsage extends BaseTask {
     }
 
     async _disableWarp10Updates() {
-        return this._warp10.exec({
-            script: "DROP DROP 'Hard limit has been reached. Further updates have been disabled.' 'scality' UPDATEOFF",
-            params: {},
-        });
+        return this.withWarp10(async warp10 =>
+            warp10.exec({
+                script: `
+                DROP DROP
+                'Hard limit has been reached. Further updates have been disabled.'
+                'scality'
+                UPDATEOFF`,
+                params: {},
+            }));
     }
 
     async _enableWarp10Updates() {
-        return this._warp10.exec({
-            script: "DROP DROP 'scality' UPDATEON",
-            params: {},
-        });
+        return this.withWarp10(async warp10 =>
+            warp10.exec({
+                script: "DROP DROP 'scality' UPDATEON",
+                params: {},
+            }));
     }
 
     async _execute(timestamp) {
@@ -194,11 +202,12 @@ class MonitorDiskUsage extends BaseTask {
             } else if (this._mode === 'distributed') {
                 if (this.isLeader) {
                     try {
-                        const resp = await this._warp10.fetch({
-                            className: 'utapi.disk.monitor',
-                            start: 'now',
-                            stop: -1,
-                        });
+                        const resp = await this.withWarp10(async warp10 =>
+                            warp10.fetch({
+                                className: 'utapi.disk.monitor',
+                                start: 'now',
+                                stop: -1,
+                            }));
 
                         assert.notStrictEqual(resp.result, undefined);
                         assert.notStrictEqual(resp.result.length, 0);
@@ -216,12 +225,13 @@ class MonitorDiskUsage extends BaseTask {
                     }
                 } else {
                     try {
-                        const { count } = await this._warp10.update([{
-                            timestamp,
-                            className: 'utapi.disk.monitor',
-                            value: size,
-                            labels: { node: this.nodeId },
-                        }]);
+                        const { count } = await this.withWarp10(async warp10 =>
+                            warp10.update([{
+                                timestamp,
+                                className: 'utapi.disk.monitor',
+                                value: size,
+                                labels: { node: this.nodeId },
+                            }]));
                         assert.strictEqual(count, 1);
                     } catch (error) {
                         moduleLogger.error('failed to write disk usage to warp 10', { error });

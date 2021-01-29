@@ -2,6 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon');
 const uuid = require('uuid');
 
+const { clients: warp10Clients } = require('../../../libV2/warp10');
 const { MonitorDiskUsage } = require('../../../libV2/tasks');
 const { UtapiMetric } = require('../../../libV2/models');
 const { now } = require('../../../libV2/utils');
@@ -9,10 +10,10 @@ const { now } = require('../../../libV2/utils');
 const { fillDir } = require('../../utils/v2Data');
 
 async function writeEvent(task) {
-    await task._warp10.ingest({ className: 'workaround' }, [
+    await task._warp10Clients[0].ingest({ className: 'workaround' }, [
         new UtapiMetric({ timestamp: now(), bucket: 'foo' }),
     ]);
-    return task._warp10.ingest({ className: 'utapi.event' }, [
+    return task._warp10Clients[0].ingest({ className: 'utapi.event' }, [
         new UtapiMetric({ timestamp: now(), bucket: 'foo' }),
     ]);
 }
@@ -25,10 +26,14 @@ describe('Test MonitorDiskUsage soft limit', function () {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
-        task = new MonitorDiskUsage();
+        task = new MonitorDiskUsage({ warp10: warp10Clients });
         await task.setup();
         task._path = path;
         task._enabled = true;
+    });
+
+    afterEach(() => {
+        sinon.restore();
     });
 
     it('should not trigger delete if below the limit', async () => {
@@ -47,7 +52,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
         task._softLimit = 1;
         const checkSpy = sinon.spy(task, '_checkSoftLimit');
         const expireSpy = sinon.spy(task, '_expireMetrics');
-        const deleteStub = sinon.spy(task._warp10, 'delete');
+        const deleteStub = sinon.spy(task._warp10Clients[0], 'delete');
         await writeEvent(task);
         await task.execute();
         assert(checkSpy.calledOnce);
@@ -90,7 +95,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
         task._mode = 'distributed';
         const usageSpy = sinon.spy(task, '_getUsage');
         const checkSpy = sinon.spy(task, '_checkSoftLimit');
-        const updateSpy = sinon.spy(task._warp10, 'update');
+        const updateSpy = sinon.spy(task._warp10Clients[0], 'update');
         const timestamp = now();
         await task._execute(timestamp);
         assert(usageSpy.calledOnce);
@@ -112,7 +117,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
         task._softLimit = 1;
         task._mode = 'distributed';
         task._program.leader = true;
-        sinon.stub(task._warp10, 'fetch').throws();
+        sinon.stub(task._warp10Clients[0], 'fetch').throws();
         await writeEvent(task);
         const _task = task.execute();
         assert.doesNotReject(_task);
@@ -122,7 +127,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
         fillDir(path, { count: 1, size: 100 });
         task._softLimit = 1;
         task._mode = 'distributed';
-        sinon.stub(task._warp10, 'update').throws();
+        sinon.stub(task._warp10Clients[0], 'update').throws();
         const _task = task.execute();
         assert.doesNotReject(_task);
     });
