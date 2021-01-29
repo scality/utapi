@@ -47,10 +47,10 @@ describe('Test CreateCheckpoint', function () {
 
     beforeEach(async () => {
         prefix = uuid.v4();
-        checkpointTask = new CreateCheckpoint({ warp10: { nodeId: prefix } });
-        checkpointTask._program = { lag: 0, nodeId: prefix };
 
         warp10 = new Warp10Client({ nodeId: prefix });
+        checkpointTask = new CreateCheckpoint({ warp10: [warp10] });
+        checkpointTask._program = { lag: 0, nodeId: prefix };
     });
 
     it('should create checkpoints from events', async () => {

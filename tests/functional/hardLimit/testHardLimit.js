@@ -2,6 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon');
 const uuid = require('uuid');
 
+const { clients: warp10Clients } = require('../../../libV2/warp10');
 const { MonitorDiskUsage } = require('../../../libV2/tasks');
 
 const { fillDir } = require('../../utils/v2Data');
@@ -14,7 +15,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
-        task = new MonitorDiskUsage();
+        task = new MonitorDiskUsage({ warp10: warp10Clients });
         await task.setup();
         task._path = path;
         task._enabled = true;
@@ -26,7 +27,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
         const checkSpy = sinon.spy(task, '_checkHardLimit');
         const lockSpy = sinon.spy(task, '_disableWarp10Updates');
         const unlockSpy = sinon.spy(task, '_enableWarp10Updates');
-        const execStub = sinon.spy(task._warp10, 'exec');
+        const execStub = sinon.spy(task._warp10Clients[0], 'exec');
         await task.execute();
         assert(checkSpy.calledOnce);
         assert(checkSpy.returned(true));
