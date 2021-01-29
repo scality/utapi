@@ -49,16 +49,17 @@ describe('Test CreateSnapshot', function () {
 
     beforeEach(async () => {
         prefix = uuid.v4();
-        checkpointTask = new CreateCheckpoint({ warp10: { nodeId: prefix } });
+        warp10 = new Warp10Client({ nodeId: prefix });
+
+        checkpointTask = new CreateCheckpoint({ warp10: [warp10] });
         checkpointTask._program = { lag: 0, nodeId: prefix };
 
-        snapshotTask = new CreateSnapshot({ warp10: { nodeId: prefix } });
+        snapshotTask = new CreateSnapshot({ warp10: [warp10] });
         snapshotTask._program = { lag: 0, nodeId: prefix };
 
-        repairTask = new RepairTask({ warp10: { nodeId: prefix } });
+        repairTask = new RepairTask({ warp10: [warp10] });
         repairTask._program = { lag: 0, nodeId: prefix };
 
-        warp10 = new Warp10Client({ nodeId: prefix });
     });
 
     it('should create a snapshot from a checkpoint', async () => {

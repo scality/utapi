@@ -48,10 +48,10 @@ describe('Test Repair', function () {
 
     beforeEach(async () => {
         prefix = uuid.v4();
-        repairTask = new RepairTask({ warp10: { nodeId: prefix } });
+        warp10 = new Warp10Client({ nodeId: prefix });
+        repairTask = new RepairTask({ warp10: [warp10] });
         repairTask._program = { lag: 0, nodeId: prefix };
 
-        warp10 = new Warp10Client({ nodeId: prefix });
     });
 
     it('should create corrections from events', async () => {

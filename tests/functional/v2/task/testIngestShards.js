@@ -57,12 +57,12 @@ describe('Test IngestShards', function () {
         cacheClient = getClient(prefix);
         await cacheClient.connect();
 
-        ingestTask = new IngestShard({ warp10: { nodeId: prefix } });
+        warp10 = new Warp10Client({ nodeId: prefix });
+        ingestTask = new IngestShard({ warp10: [warp10] });
         ingestTask._cache._cacheBackend._prefix = prefix;
         ingestTask._program = { lag: 0 };
         await ingestTask._cache.connect();
 
-        warp10 = new Warp10Client({ nodeId: prefix });
     });
 
     this.afterEach(async () => {
