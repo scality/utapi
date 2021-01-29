@@ -31,11 +31,28 @@ class MonitorDiskUsage extends BaseTask {
 
     async _setup() {
         await super._setup();
-        this._program.option('--leader', 'Mark this process as the leader if operating in distributed mode.');
+        this._program
+            .option('--leader', 'Mark this process as the leader if operating in distributed mode.')
+            .option(
+                '--lock',
+                'Manually trigger a lock of the warp 10 database. This will cause all other options to be ignored.',
+            )
+            .option(
+                '--unlock',
+                'Manually trigger an unlock of the warp 10 database. This will cause all other options to be ignored.',
+            );
     }
 
     get isLeader() {
         return this._program.leader !== undefined;
+    }
+
+    get isManualUnlock() {
+        return this._program.unlock !== undefined;
+    }
+
+    get isManualLock() {
+        return this._program.lock !== undefined;
     }
 
     _getUsage() {
@@ -67,6 +84,7 @@ class MonitorDiskUsage extends BaseTask {
         }
         return false;
     }
+
 
     async _expireMetrics() {
         const resp = await this._warp10.exec({
@@ -100,7 +118,58 @@ class MonitorDiskUsage extends BaseTask {
         });
     }
 
+    _checkHardLimit(size, nodeId) {
+        const hardPercentage = (size / this._hardLimit).toFixed(2);
+        const hardLimitHuman = formatDiskSize(this._hardLimit);
+        const hardLogger = moduleLogger.with({
+            size,
+            sizeHuman: formatDiskSize(size),
+            hardPercentage,
+            hardLimit: this._hardLimit,
+            hardLimitHuman,
+            nodeId,
+        });
+
+        const msg = `Using ${hardPercentage * 100}% of the ${hardLimitHuman} hard limit on ${nodeId}`;
+
+        if (hardPercentage < WARN_THRESHOLD) {
+            hardLogger.debug(msg);
+        } else if (hardPercentage >= WARN_THRESHOLD && hardPercentage < ACTION_THRESHOLD) {
+            hardLogger.warn(msg);
+        } else {
+            hardLogger.error(msg);
+            return true;
+        }
+        return false;
+    }
+
+    async _disableWarp10Updates() {
+        return this._warp10.exec({
+            script: "DROP DROP 'Hard limit has been reached. Further updates have been disabled.' 'scality' UPDATEOFF",
+            params: {},
+        });
+    }
+
+    async _enableWarp10Updates() {
+        return this._warp10.exec({
+            script: "DROP DROP 'scality' UPDATEON",
+            params: {},
+        });
+    }
+
     async _execute(timestamp) {
+        if (this.isManualUnlock) {
+            moduleLogger.info('manually unlocking warp 10', { nodeId: this.nodeId });
+            await this._enableWarp10Updates();
+            return;
+        }
+
+        if (this.isManualLock) {
+            moduleLogger.info('manually locking warp 10', { nodeId: this.nodeId });
+            await this._disableWarp10Updates();
+            return;
+        }
+
         if (!this._enabled) {
             moduleLogger.debug('disk usage monitoring not enabled, skipping check');
             return;
@@ -163,6 +232,18 @@ class MonitorDiskUsage extends BaseTask {
             if (shouldDelete) {
                 moduleLogger.error('soft limit exceeded, expiring oldest block of metrics');
                 await this._expireMetrics();
+            }
+        }
+
+        if (this._hardLimit !== undefined) {
+            const shouldLock = this._checkHardLimit(size, this.nodeId);
+            if (shouldLock) {
+                moduleLogger.error('hard limit exceeded, disabling writes to warp 10', { nodeId: this.nodeId });
+                await this._disableWarp10Updates();
+            } else {
+                moduleLogger.error('usage below hard limit, ensuring writes to warp 10 are enabled',
+                    { nodeId: this.nodeId });
+                await this._enableWarp10Updates();
             }
         }
     }
