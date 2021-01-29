@@ -62,7 +62,6 @@ describe('Test IngestShards', function () {
         ingestTask._cache._cacheBackend._prefix = prefix;
         ingestTask._program = { lag: 0 };
         await ingestTask._cache.connect();
-
     });
 
     this.afterEach(async () => {

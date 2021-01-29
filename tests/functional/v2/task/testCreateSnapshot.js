@@ -59,7 +59,6 @@ describe('Test CreateSnapshot', function () {
 
         repairTask = new RepairTask({ warp10: [warp10] });
         repairTask._program = { lag: 0, nodeId: prefix };
-
     });
 
     it('should create a snapshot from a checkpoint', async () => {
