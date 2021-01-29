@@ -31,11 +31,28 @@ class MonitorDiskUsage extends BaseTask {
 
     async _setup() {
         await super._setup();
-        this._program.option('--leader', 'Mark this process as the leader if operating in distributed mode.');
+        this._program
+            .option('--leader', 'Mark this process as the leader if operating in distributed mode.')
+            .option(
+                '--lock',
+                'Manually trigger a lock of the warp 10 database. This will cause all other options to be ignored.',
+            )
+            .option(
+                '--unlock',
+                'Manually trigger an unlock of the warp 10 database. This will cause all other options to be ignored.',
+            );
     }
 
     get isLeader() {
         return this._program.leader !== undefined;
+    }
+
+    get isManualUnlock() {
+        return this._program.unlock !== undefined;
+    }
+
+    get isManualLock() {
+        return this._program.lock !== undefined;
     }
 
     _getUsage() {
@@ -141,6 +158,18 @@ class MonitorDiskUsage extends BaseTask {
     }
 
     async _execute(timestamp) {
+        if (this.isManualUnlock) {
+            moduleLogger.info('manually unlocking warp 10', { nodeId: this.nodeId });
+            await this._enableWarp10Updates();
+            return;
+        }
+
+        if (this.isManualLock) {
+            moduleLogger.info('manually locking warp 10', { nodeId: this.nodeId });
+            await this._disableWarp10Updates();
+            return;
+        }
+
         if (!this._enabled) {
             moduleLogger.debug('disk usage monitoring not enabled, skipping check');
             return;
