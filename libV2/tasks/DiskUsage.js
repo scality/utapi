@@ -130,7 +130,7 @@ class MonitorDiskUsage extends BaseTask {
             nodeId,
         });
 
-        const msg = `Using ${hardPercentage * 100}% of the ${hardLimitHuman} soft limit on ${nodeId}`;
+        const msg = `Using ${hardPercentage * 100}% of the ${hardLimitHuman} hard limit on ${nodeId}`;
 
         if (hardPercentage < WARN_THRESHOLD) {
             hardLogger.debug(msg);
