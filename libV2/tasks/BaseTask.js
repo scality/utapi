@@ -97,16 +97,17 @@ class BaseTask extends Process {
 
     withWarp10(func, onError) {
         return iterIfError(this._warp10Clients, func, error => {
-            const {
-                name, code, message, stack,
-            } = error;
-            logger.error('error during warp 10 request', {
-                error: {
-                    name, code, errmsg: message, stack: name !== 'RequestError' ? stack : undefined,
-                },
-            });
             if (onError) {
                 onError(error);
+            } else {
+                const {
+                    name, code, message, stack,
+                } = error;
+                logger.error('error during warp 10 request', {
+                    error: {
+                        name, code, errmsg: message, stack: name !== 'RequestError' ? stack : undefined,
+                    },
+                });
             }
         });
     }
