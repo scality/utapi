@@ -34,9 +34,9 @@ describe('Test ReindexTask', function () {
 
     beforeEach(() => {
         prefix = uuid.v4();
-        reindexTask = new ReindexTask({ warp10: { nodeId: prefix } });
-        reindexTask._program = { nodeId: prefix };
         warp10 = new Warp10Client({ nodeId: prefix });
+        reindexTask = new ReindexTask({ warp10: [warp10] });
+        reindexTask._program = { nodeId: prefix };
     });
 
     afterEach(() => {

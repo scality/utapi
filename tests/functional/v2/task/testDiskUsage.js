@@ -43,7 +43,7 @@ describe('Test MonitorDiskUsage', () => {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
-        task = new MonitorDiskUsageShim();
+        task = new MonitorDiskUsageShim({ warp10: [] });
         task._path = path;
         task._enabled = true;
         await task.setup();

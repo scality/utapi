@@ -1,11 +1,10 @@
+const assert = require('assert');
 const cron = require('node-schedule');
 const cronparser = require('cron-parser');
 
-const config = require('../config');
 const { client: cacheClient } = require('../cache');
 const Process = require('../process');
-const { LoggerContext } = require('../utils');
-const { Warp10Client } = require('../warp10');
+const { LoggerContext, iterIfError } = require('../utils');
 
 const logger = new LoggerContext({
     module: 'BaseTask',
@@ -16,15 +15,13 @@ class Now {}
 class BaseTask extends Process {
     constructor(options) {
         super();
+        assert.notStrictEqual(options, undefined);
+        assert(Array.isArray(options.warp10), 'you must provide an array of warp 10 clients');
         this._cache = cacheClient;
-        this._warp10 = new Warp10Client({
-            ...config.warp10,
-            ...((options && options.warp10) || {}),
-        });
+        this._warp10Clients = options.warp10;
         this._scheduler = null;
         this._defaultSchedule = Now;
         this._defaultLag = 0;
-        this._nodeId = config.nodeId;
     }
 
     async _setup() {
@@ -57,13 +54,6 @@ class BaseTask extends Process {
             return this._program.lag;
         }
         return this._defaultLag;
-    }
-
-    get nodeId() {
-        if (this._program.nodeId) {
-            return this._program.nodeId;
-        }
-        return this._nodeId;
     }
 
     async _start() {
@@ -103,6 +93,23 @@ class BaseTask extends Process {
 
     async _join() {
         return this._cache.disconnect();
+    }
+
+    withWarp10(func, onError) {
+        return iterIfError(this._warp10Clients, func, error => {
+            if (onError) {
+                onError(error);
+            } else {
+                const {
+                    name, code, message, stack,
+                } = error;
+                logger.error('error during warp 10 request', {
+                    error: {
+                        name, code, errmsg: message, stack: name !== 'RequestError' ? stack : undefined,
+                    },
+                });
+            }
+        });
     }
 }
 
