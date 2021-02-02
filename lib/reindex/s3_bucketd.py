@@ -320,16 +320,24 @@ def update_redis(client, resource, name, obj_count, total_size):
     client.set(obj_count_key + ':counter', obj_count)
     client.set(total_size_key + ':counter', total_size)
 
+def read_bucket_size(client, name):
+    return int(client.zrange('s3:buckets:%s:storageUtilized' % name,-1,-1)[0].split(":")[0])
+
+def read_bucket_obj_count(client, name):
+    return int(client.zrange('s3:buckets:%s:numberOfObjects' % name,-1,-1)[0].split(":")[0])
+
 def get_resources_from_redis(client, resource):
     for key in redis_client.scan_iter('s3:%s:*:storageUtilized' % resource):
         yield key.decode('utf-8').split(':')[2]
 
-def log_report(resource, name, obj_count, total_size):
-    print('%s:%s:%s:%s'%(
+def log_report(resource, name, obj_count, total_size, delta_obj_count="", delta_total_size=""):
+    print('%s:%s:%s:%s:%s:%s'%(
         resource,
         name,
         obj_count,
-        total_size
+        total_size,
+        delta_obj_count,
+        delta_total_size
     ))
 
 if __name__ == '__main__':
@@ -354,8 +362,11 @@ if __name__ == '__main__':
             # Bucket reports can be updated as we get them
             pipeline = redis_client.pipeline(transaction=False)  # No transaction to reduce redis load
             for bucket, report in bucket_reports.items():
+                delta_total_size=report['total_size'] - read_bucket_size(pipeline, bucket)
+                delta_obj_count=report['obj_count'] - read_bucket_obj_count(pipeline, bucket)
                 update_redis(pipeline, 'buckets', bucket, report['obj_count'], report['total_size'])
-                log_report('buckets', bucket, report['obj_count'], report['total_size'])
+                log_report('buckets', bucket, report['obj_count'], report['total_size'], delta_obj_count, delta_total_size
+                        )
             pipeline.execute()
 
     recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
