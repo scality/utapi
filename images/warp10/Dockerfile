@@ -1,4 +1,4 @@
-FROM warp10io/warp10:2.7.2
+FROM warp10io/warp10:2.7.3
 
 ENV S6_VERSION 2.0.0.1
 
