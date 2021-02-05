@@ -27,7 +27,7 @@ class ReindexTask extends BaseTask {
         let lastMasterSize = null;
 
         for await (const obj of metadata.listObjects(bucket)) {
-            if (obj.value.isDeleteMarker) {
+            if (obj.value.isDeleteMarker || obj.value.isPHD) {
                 // eslint-disable-next-line no-continue
                 continue;
             }
