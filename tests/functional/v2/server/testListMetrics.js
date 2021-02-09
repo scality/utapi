@@ -201,6 +201,5 @@ describe('Test listMetric', function () {
         assert.deepStrictEqual(accountMetric.numberOfObjects, [0, 0]);
         assert.deepStrictEqual(accountMetric.incomingBytes, 0);
         assert.deepStrictEqual(accountMetric.outgoingBytes, 0);
-
     });
 });
