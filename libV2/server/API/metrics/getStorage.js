@@ -54,7 +54,7 @@ async function getStorage(ctx, params) {
 
     ctx.results.statusCode = 200;
     ctx.results.body = {
-        storageUtilized,
+        storageUtilized: storageUtilized > 0 ? storageUtilized : 0,
         resource,
         level,
     };
