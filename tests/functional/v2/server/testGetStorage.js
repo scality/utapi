@@ -9,6 +9,7 @@ const { CacheClient, backends: cacheBackends } = require('../../../../libV2/cach
 const { IngestShard } = require('../../../../libV2/tasks');
 const { now } = require('../../../../libV2/utils');
 const { generateCustomEvents } = require('../../../utils/v2Data');
+const { UtapiMetric } = require('../../../../libV2/models');
 
 const getClient = () => new CacheClient({
     cacheBackend: new cacheBackends.RedisCache(
@@ -118,5 +119,23 @@ describe('Test getStorage handler', function () {
             assert.strictEqual(counterVal, secondHalfTotal[acc]);
             assert.strictEqual(baseVal, firstHalfTotal[acc]);
         });
+    });
+
+    it('should return a 0 instead of a negative value', async () => {
+        const account = `imaaccount-${uuid.v4()}`;
+        const event = new UtapiMetric({
+            timestamp: now(),
+            account,
+            objectDelta: -1,
+            sizeDelta: -1,
+            incomingBytes: -1,
+            outgoingBytes: -1,
+            operationId: 'putObject',
+        });
+
+        await warp10.ingest({ className: 'utapi.event' }, [event]);
+
+        const resp = await client.getStorage('accounts', account);
+        assert.strictEqual(resp.storageUtilized, 0);
     });
 });
