@@ -9,6 +9,7 @@ const { convertTimestamp, now } = require('../../../../libV2/utils');
 const { operationToResponse } = require('../../../../libV2/constants');
 
 const { generateCustomEvents } = require('../../../utils/v2Data');
+const { UtapiMetric } = require('../../../../libV2/models');
 
 const warp10 = warp10Clients[0];
 const _now = Math.floor(new Date().getTime() / 1000);
@@ -165,5 +166,40 @@ describe('Test listMetric', function () {
                     });
                 });
         });
+    });
+
+    it('should return 0 in metrics are negative', async () => {
+        const bucket = `imabucket-${uuid.v4()}`;
+        const account = `imaaccount-${uuid.v4()}`;
+        const event = new UtapiMetric({
+            timestamp: getTs(0),
+            bucket,
+            account,
+            objectDelta: -1,
+            sizeDelta: -1,
+            incomingBytes: -1,
+            outgoingBytes: -1,
+            operationId: 'putObject',
+        });
+
+        await ingestEvents([event]);
+
+        const bucketResp = await listMetrics('buckets', [bucket], getTs(-1), getTs(1));
+        assert(Array.isArray(bucketResp.body));
+
+        const [bucketMetric] = bucketResp.body;
+        assert.deepStrictEqual(bucketMetric.storageUtilized, [0, 0]);
+        assert.deepStrictEqual(bucketMetric.numberOfObjects, [0, 0]);
+        assert.deepStrictEqual(bucketMetric.incomingBytes, 0);
+        assert.deepStrictEqual(bucketMetric.outgoingBytes, 0);
+
+        const accountResp = await listMetrics('accounts', [account], getTs(-1), getTs(1));
+        assert(Array.isArray(accountResp.body));
+
+        const [accountMetric] = accountResp.body;
+        assert.deepStrictEqual(accountMetric.storageUtilized, [0, 0]);
+        assert.deepStrictEqual(accountMetric.numberOfObjects, [0, 0]);
+        assert.deepStrictEqual(accountMetric.incomingBytes, 0);
+        assert.deepStrictEqual(accountMetric.outgoingBytes, 0);
     });
 });
