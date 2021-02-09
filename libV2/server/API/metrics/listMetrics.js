@@ -16,6 +16,14 @@ const metricResponseKeys = {
     service: 'serviceName',
 };
 
+function positiveOrZero(value) {
+    if (value < 0) {
+        return 0;
+    }
+
+    return value;
+}
+
 async function listMetric(ctx, params) {
     const labelName = serviceToWarp10Label[params.level];
     const resources = params.body[params.level];
@@ -45,9 +53,22 @@ async function listMetric(ctx, params) {
                 ctx.logger.error('unable to retrieve metrics', { resource, type: params.level });
                 throw errors.InternalError;
             }
+
+            const rawMetrics = JSON.parse(res.result[0]);
+
+            // Due to various error cases it is possible for metrics in utapi to go negative.
+            // As this is nonsensical to the user we replace any negative values with zero.
+            const metrics = {
+                storageUtilized: rawMetrics.storageUtilized.map(positiveOrZero),
+                numberOfObjects: rawMetrics.numberOfObjects.map(positiveOrZero),
+                incomingBytes: positiveOrZero(rawMetrics.incomingBytes),
+                outgoingBytes: positiveOrZero(rawMetrics.outgoingBytes),
+                operations: rawMetrics.operations,
+            };
+
             return {
                 resource,
-                metrics: JSON.parse(res.result[0]),
+                metrics,
             };
         }),
     );
