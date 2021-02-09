@@ -17,11 +17,7 @@ const metricResponseKeys = {
 };
 
 function positiveOrZero(value) {
-    if (value < 0) {
-        return 0;
-    }
-
-    return value;
+    return Math.max(value, 0);
 }
 
 async function listMetric(ctx, params) {
