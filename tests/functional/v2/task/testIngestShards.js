@@ -73,6 +73,7 @@ describe('Test IngestShards', function () {
         const start = shardFromTimestamp(getTs(-120));
         const stop = start + 9000000;
         const events = generateFakeEvents(start, stop, 100);
+        ingestTask._stripEventUUID = false;
 
         await Promise.all(events.map(e => cacheClient.pushMetric(e)));
         await ingestTask.execute();
@@ -91,6 +92,7 @@ describe('Test IngestShards', function () {
         const start = getTs(-300);
         const stop = getTs(-120);
         const events = generateFakeEvents(start, stop, 100);
+        ingestTask._stripEventUUID = false;
 
         await Promise.all(events.map(e => cacheClient.pushMetric(e)));
         await ingestTask.execute();
@@ -110,6 +112,7 @@ describe('Test IngestShards', function () {
         const start = shardFromTimestamp(getTs(-720));
         const stop = start + 9000000;
         const events = generateFakeEvents(start, stop, 100);
+        ingestTask._stripEventUUID = false;
 
         await Promise.all(events.map(e => cacheClient.pushMetric(e)));
         await ingestTask.execute();
@@ -122,6 +125,24 @@ describe('Test IngestShards', function () {
             '@utapi/decodeEvent',
         );
         assertResults(events, series);
+    });
+
+    it('should strip the event uuid during ingestion', async () => {
+        const start = shardFromTimestamp(getTs(-120));
+        const stop = start + 9000000;
+        const events = generateFakeEvents(start, stop, 100);
+
+        await Promise.all(events.map(e => cacheClient.pushMetric(e)));
+        await ingestTask.execute();
+
+        const series = await fetchRecords(
+            warp10,
+            'utapi.event',
+            { node: prefix },
+            { end: stop, count: 100 },
+            '@utapi/decodeEvent',
+        );
+        series[0].values.forEach(val => assert.strictEqual(val.id, undefined));
     });
 });
 
