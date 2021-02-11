@@ -698,12 +698,13 @@ arsenal@scality/Arsenal#580e25a:
   optionalDependencies:
     ioctl "2.0.0"
 
-arsenal@scality/Arsenal#aa9c9e5:
+arsenal@scality/Arsenal#65966f5:
   version "7.7.0"
-  resolved "https://codeload.github.com/scality/Arsenal/tar.gz/aa9c9e54ff27211131ec823a34a3d8d77dc55cf2"
+  resolved "https://codeload.github.com/scality/Arsenal/tar.gz/65966f5ddf93b048906d14a8c26056abfd4c22ba"
   dependencies:
     "@hapi/joi" "^15.1.0"
     JSONStream "^1.0.0"
+    agentkeepalive "^4.1.3"
     ajv "6.12.2"
     async "~2.1.5"
     debug "~2.6.9"

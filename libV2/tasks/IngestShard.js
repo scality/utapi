@@ -19,6 +19,15 @@ class IngestShardTask extends BaseTask {
         super(options);
         this._defaultSchedule = config.ingestionSchedule;
         this._defaultLag = config.ingestionLagSeconds;
+        this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
+    }
+
+    _hydrateEvent(data) {
+        const event = JSON.parse(data);
+        if (this._stripEventUUID) {
+            delete event.uuid;
+        }
+        return new UtapiMetric(event);
     }
 
     async _execute(timestamp) {
@@ -47,16 +56,16 @@ class IngestShardTask extends BaseTask {
                         if (shardAge < checkpointLagMicroseconds) {
                             metricClass = 'utapi.event';
                             records = metrics
-                                .map(m => new UtapiMetric(JSON.parse(m)));
+                                .map(m => this._hydrateEvent(m));
                         } else {
                             logger.info('Detected slow records, ingesting as repair');
                             metricClass = 'utapi.repair.event';
                             const clock = new InterpolatedClock();
                             records = metrics
                                 .map(data => {
-                                    const metric = JSON.parse(data);
+                                    const metric = this._hydrateEvent(data);
                                     metric.timestamp = clock.getTs();
-                                    return new UtapiMetric(metric);
+                                    return metric;
                                 });
                         }
                         let nodeId;

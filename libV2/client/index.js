@@ -80,6 +80,7 @@ class UtapiClient {
         this._drainTimer = null;
         this._drainCanSchedule = true;
         this._drainDelay = (config && config.drainDelay) || 30000;
+        this._suppressedEventFields = (config && config.suppressedEventFields) || null;
     }
 
     async join() {
@@ -232,7 +233,7 @@ class UtapiClient {
     }
 
     async _pushMetric(data) {
-        const metric = data instanceof UtapiMetric
+        let metric = data instanceof UtapiMetric
             ? data
             : new UtapiMetric(data);
 
@@ -244,6 +245,16 @@ class UtapiClient {
         // Assign a timestamp if one isn't passed
         if (!metric.timestamp) {
             metric.timestamp = new Date().getTime();
+        }
+
+        if (this._suppressedEventFields !== null) {
+            const filteredData = Object.entries(metric.getValue())
+                .filter(([key]) => !this._suppressedEventFields.includes(key))
+                .reduce((obj, [key, value]) => {
+                    obj[key] = value;
+                    return obj;
+                }, {});
+            metric = new UtapiMetric(filteredData);
         }
 
         try {

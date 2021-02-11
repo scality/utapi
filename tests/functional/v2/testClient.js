@@ -77,6 +77,23 @@ describe('Test UtapiClient', function () {
                 }, 6000);
             });
         });
+
+        it('should prevent configured event fields from being pushed', async () => {
+            client = new UtapiClient({
+                drainDelay: 5000,
+                suppressedEventFields: ['object'],
+            });
+
+            const pushSpy = sandbox.spy(UtapiClient.prototype, '_pushToUtapi');
+            const retrySpy = sandbox.spy(UtapiClient.prototype, '_addToRetryCache');
+
+            await client.pushMetric(events[0]);
+
+            assert.strictEqual(retrySpy.callCount, 0);
+            assert.strictEqual(pushSpy.callCount, 1);
+            assert.strictEqual(pushSpy.firstCall.args[0][0].object, undefined);
+            assert.strictEqual(pushSpy.firstCall.threw(), false);
+        });
     });
 
 
