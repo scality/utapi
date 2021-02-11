@@ -29,10 +29,6 @@
     $auth_info 'write' GET 'write_token' STORE
     $auth_info 'read' GET 'read_token' STORE
 
-    // Raise the max operations for a executing script
-    $read_token AUTHENTICATE
-    // 10000000 MAXOPS // Investigate to find worst expected case
-
     // Grab our passed nodeId, wrap in a map and store it as the variable `filterLabels`
     $operation_info 'nodeId' GET  'nodeId' STORE
     { 'node' $nodeId } 'filterLabels' STORE
@@ -48,8 +44,14 @@
     'utapi.event' 'metric_class' STORE
 
     $read_token $master_checkpoint_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore // Fetch latest master checkpoint
-    FIRSTTICK 'startTimestamp' STORE // Grab our starting timestamp from the last checkpoint (0 if no checkpoints)
+    FIRSTTICK
+    // If we found a checkpoint, increment its timestamp
+    <% DUP 0 > %>
+    <%  1 + %> IFT
+    'startTimestamp' STORE // Grab our starting timestamp from the last checkpoint (0 if no checkpoints)
+
     // 'Using ' $startTimestamp TOSTRING + ' as startTimestamp' + LOGMSG
+    // 'Using ' $endTimestamp TOSTRING + ' as endTimestamp' + LOGMSG
     {} 'results' STORE # Create an empty map for results
 
     $fieldsToIndex
@@ -72,7 +74,7 @@
       <% // Iter over events
         'event' STORE // Store the event
         $event 4 GET @utapi/decodeEvent 'decoded' STORE
-        // 'Including event ' $decoded 'id' GET + LOGMSG
+        // 'Including event ' $event 0 GET TOSTRING + ' ' + $decoded ->JSON + LOGMSG
         $decoded KEYLIST 'eventFields' STORE // Extract and store available event fields
         $decoded 'op' GET 'operationId' STORE
 
