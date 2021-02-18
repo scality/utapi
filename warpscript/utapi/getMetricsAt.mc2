@@ -28,20 +28,16 @@
     JSON-> 'operation_info' STORE
     JSON-> 'auth_info' STORE
 
-  // $operation_info ->JSON LOGMSG
-
     $auth_info 'read' GET 'read_token' STORE
 
     $operation_info 'end' GET TOLONG 'endTimestamp' STORE
     $operation_info 'labels' GET 'labels' STORE
-    $operation_info 'node' GET 'nodeID' STORE
 
-    // Raise the max operations for a executing script
-    // $read_token AUTHENTICATE
-    // 10000000 MAXOPS
+    $operation_info 'node' GET 'nodeID' STORE
 
     'utapi.event' 'event_class' STORE
     'utapi.checkpoint' 'checkpoint_class' STORE
+    'utapi.checkpoint.master' 'master_checkpoint_class' STORE
     'utapi.snapshot' 'snapshot_class' STORE
     'utapi.repair.correction' 'correction_class' STORE
     'utapi.repair.reindex' 'reindex_class' STORE
@@ -58,34 +54,52 @@
 
     // Find all nodes containing snapshots
     'load_snapshots' SECTION
-    [
-      $read_token
-      $snapshot_class
-      $labels
-    ] FINDSETS
-    DROP SWAP DROP
-    'node' GET
-    <% DUP ISNULL %>
-    <% DROP [] %> IFT
-    // Load the latest snapshot from each node
+
+    // Define our macro to sum the snapshots and save their timestamp
     <%
-      'value' STORE
-      // Adds the `node` label to the map
-      $labels UNMAP 'node' $value } 'filterLabels' STORE
+      DUP 7 GET
+      <%
+        @utapi/decodeRecord
+        $results @util/sumRecord
+        'results' STORE
+      %> FOREACH
+      $snapshots SWAP
+      DUP 0 GET DUP 'tick' STORE SWAP
+      // Get the 3rd element from the list
+      // Get the last element from resulting list
+      // Get 'node' from resulting map
+      2 GET DUP SIZE 1 - GET 'node' GET
+      PUT DROP
+      [ $tick NaN NaN NaN NULL ]
+    %> 'sumSnapshot' STORE
 
-      $read_token $snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
-      DUP FIRSTTICK $snapshots SWAP $value PUT DROP
-      VALUES 0 GET @utapi/decodeRecord
-      $results @util/sumRecord 'results' STORE
-    %> FOREACH
+    // Fetch the last snapshot for every node
+    {
+      'token' $read_token
+      'class' $snapshot_class
+      'labels' $labels UNMAP }
+      'end' $endTimestamp
+      'count' 1
+    } FETCH
 
-    // $snapshots ->JSON LOGMSG
-    // $results ->JSON LOGMSG
+    // Apply our macro over the snapshots
+    // Drop the result as we don't need it
+    [
+      SWAP
+      [ 'node' ]
+      $sumSnapshot MACROREDUCER
+      true
+    ] REDUCE
+    DROP
+
+    'load_checkpoints' SECTION
 
     {} 'checkpoints' STORE
 
+    // 'snapshots: ' $snapshots ->JSON + LOGMSG
+    // 'results: ' $results ->JSON + LOGMSG
+
     // Find all nodes containing checkpoints
-    'load_checkpoints' SECTION
     [
       $read_token
       $checkpoint_class
@@ -95,53 +109,74 @@
     'node' GET
     <% DUP ISNULL %>
     <% DROP [] %> IFT
-    // Load checkpoints from each node
+
+    [ SWAP // Push a mark onto the stack
     <%
       'key' STORE
       // Adds the `node` label to the map
       $labels UNMAP 'node' $key } 'filterLabels' STORE
 
-      -1 'checkpointTimestamp' STORE
-
       // Get the timestamp of the corresponding snapshot if it exists otherwise use 0
       $snapshots $key GET
       <% DUP TYPEOF 'LONG' != %>
-      <% DROP 0 %> IFT
+      <% DROP -1 %> IFT
       'startTimestamp' STORE
       {
         'token' $read_token
         'class' $checkpoint_class
         'labels' $filterLabels
         'end' $endTimestamp
-        'start' $startTimestamp
+        'start' $startTimestamp 1 +
       } FETCH
 
-      <% // Handle multiple GTS
 
-        DUP LASTTICK
-        <% DUP $checkpointTimestamp > %>
-        <% 'checkpointTimestamp' STORE %>
-        <% DROP %> IFTE
-
-
-        // DUP ->JSON LOGMSG
-        VALUES
-        <% // For each checkpoint
-          @utapi/decodeRecord
-          // DUP 'Loaded checkpoint ' SWAP ->JSON + LOGMSG
-          $results @util/sumRecord 'results' STORE
-        %> FOREACH
-      %> FOREACH
-
-      // Only add an entry if a checkpoint is found
-      <% $checkpointTimestamp -1 > %>
-      <%
-        $checkpoints $checkpointTimestamp $key PUT DROP
-      %> IFT
     %> FOREACH
 
-    // $checkpoints ->JSON LOGMSG
-    // $results ->JSON LOGMSG
+    ]
+    FLATTEN
+
+    <%
+      DUP 7 GET
+      <%
+        @utapi/decodeRecord
+        $results @util/sumRecord
+        'results' STORE
+      %> FOREACH
+      [ SWAP 0 GET NaN NaN NaN NULL ]
+    %> 'sumCheckpoint' STORE
+
+    [
+      SWAP
+      [ 'node' ]
+      $sumCheckpoint MACROREDUCER
+      true
+    ] REDUCE
+    DROP
+
+    // 'results: ' $results ->JSON + LOGMSG
+
+    // 'loading master checkpoints' LOGMSG
+
+    // Load the most recent master checkpoint before our target timestamp from each node
+    {} 'masterCheckpoints' STORE
+    {
+      'token' $read_token
+      'class' $master_checkpoint_class
+      'labels' {}
+      'end' $endTimestamp
+      'count' 1
+    }
+    FETCH
+    <%
+      $masterCheckpoints SWAP
+      DUP LASTTICK SWAP
+      LABELS 'node' GET
+      PUT DROP
+    %> FOREACH
+
+    // 'loaded master checkpoints: '
+    // $masterCheckpoints ->JSON + LOGMSG
+    // $labels ->JSON LOGMSG
 
     // Find all nodes containing events
     'load_events' SECTION
@@ -158,24 +193,19 @@
     <%
       'key' STORE
 
-      // Get the timestamp of the latest checkpoint for the node if it exists
-      // otherwise look for a snapshot
-      // If all else fails use 0
-      $checkpoints $key GET
+      // Get the timestamp of the master checkpoint for the node if it exists
+      // If no master checkpoint exists for a node then we can infer that no
+      // snapshots exists for that node as well, and we must start at 0
+      $masterCheckpoints $key GET
       <% DUP TYPEOF 'LONG' != %>
-      <%
-        DROP
-        $snapshots $key GET
-        <% DUP TYPEOF 'LONG' != %>
-        <% DROP 0 %> IFT
-      %> IFT
+      <% DROP -1 %> IFT
       'startTimestamp' STORE
       {
         'token' $read_token
         'class' $event_class
         'labels' { 'node' $key }
         'end' $endTimestamp
-        'start' $startTimestamp
+        'start' $startTimestamp 1 +
       } FETCH
       <% // Handle multiple GTS
         VALUES
@@ -194,7 +224,6 @@
 
           <% $passed %>
           <%
-            // $event ->JSON LOGMSG
             $results
             'objD' $event 'objD' 0 @util/getDefault @util/sumField
             'sizeD' $event 'sizeD' 0 @util/getDefault @util/sumField
@@ -233,14 +262,14 @@
       // Get the timestamp of the corresponding snapshot if it exists otherwise use 0
       $snapshots $key GET
       <% DUP TYPEOF 'LONG' != %>
-      <% DROP 0 %> IFT
+      <% DROP -1 %> IFT
       'startTimestamp' STORE
       {
         'token' $read_token
         'class' $correction_class
         'labels' $filterLabels
         'end' $endTimestamp
-        'start' $startTimestamp
+        'start' $startTimestamp 1 +
       } FETCH
 
       <% // Handle multiple GTS
@@ -278,6 +307,7 @@
     %> FOREACH
 
     $results // Leave results on the stack
+
 
   %>
   <% // catch any exception

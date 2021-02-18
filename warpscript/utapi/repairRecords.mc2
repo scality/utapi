@@ -41,6 +41,9 @@
     'utapi.repair.event' 'metric_class' STORE
 
     $read_token $master_repair_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore // Fetch latest master repair
+    // If we found a repair, increment its timestamp so we start at the tick immediatly after
+    <% DUP 0 > %>
+    <%  1 + %> IFT
     FIRSTTICK 'startTimestamp' STORE // Grab our starting timestamp from the last repair (0 if no repairs)
     // 'Using ' $startTimestamp TOSTRING + ' as startTimestamp' + LOGMSG
 
