@@ -28,10 +28,6 @@
     $auth_info 'write' GET 'write_token' STORE
     $auth_info 'read' GET 'read_token' STORE
 
-    // Raise the max operations for a executing script
-    $read_token AUTHENTICATE
-    // 10000000 MAXOPS // Investigate to find worst expected case
-
     // Grab our passed nodeId, wrap in a map and store it as the variable `filterLabels`
     $operation_info 'nodeId' GET  'nodeId' STORE
     { 'node' $nodeId } 'filterLabels' STORE
@@ -47,8 +43,11 @@
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
 
-    FIRSTTICK 'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
-    // $masterSnapshotTimestamp TOSTRING LOGMSG
+    FIRSTTICK
+    // If we found a snapshot, increment its timestamp so we start at the tick immediatly after
+    <% DUP 0 > %>
+    <%  1 + %> IFT
+    'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
 
     [
       "node"
