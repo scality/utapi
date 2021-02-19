@@ -308,7 +308,6 @@
 
     $results // Leave results on the stack
 
-
   %>
   <% // catch any exception
     RETHROW
