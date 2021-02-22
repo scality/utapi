@@ -9,8 +9,6 @@ const startTime = new Date().getTime();
 const endTime = startTime + 30000; // Add 30 seconds;
 const testValues = generateFakeEvents(startTime, endTime, 50);
 
-describe('test', async () => true);
-
 describe('Test cache redis backend', () => {
     let cache;
     let prefix;
