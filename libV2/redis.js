@@ -103,7 +103,9 @@ class RedisClient extends EventEmitter {
 
     _onError(error) {
         moduleLogger.error('error connecting to redis', { error });
-        this.emit('error', error);
+        if (this.listenerCount('error') > 0) {
+            this.emit('error', error);
+        }
     }
 
     _createCommandTimeout() {
