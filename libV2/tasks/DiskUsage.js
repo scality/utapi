@@ -27,6 +27,7 @@ class MonitorDiskUsage extends BaseTask {
         this._enabled = config.diskUsage.enabled;
         this._mode = config.diskUsage.mode;
         this._softLimit = config.diskUsage.softLimit || null;
+        this._hardLimit = config.diskUsage.hardLimit || null;
     }
 
     async _setup() {
@@ -245,7 +246,7 @@ class MonitorDiskUsage extends BaseTask {
             }
         }
 
-        if (this._hardLimit !== undefined) {
+        if (this._hardLimit !== null) {
             const shouldLock = this._checkHardLimit(size, this.nodeId);
             if (shouldLock) {
                 moduleLogger.error('hard limit exceeded, disabling writes to warp 10', { nodeId: this.nodeId });
