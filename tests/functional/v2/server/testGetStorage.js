@@ -87,7 +87,7 @@ describe('Test getStorage handler', function () {
             return prev;
         }, {});
 
-        const secondHalfTotal = events.slice(25).reduce((prev, ev) => {
+        const secondHalfTotal = events.slice(24).reduce((prev, ev) => {
             if (ev.sizeDelta !== undefined) {
                 if (prev[ev.account] === undefined) {
                     prev[ev.account] = 0;
@@ -110,7 +110,7 @@ describe('Test getStorage handler', function () {
         });
 
         // Push remaining events to increment counter in cache
-        await async.each(events.slice(25), async ev => cacheClient.pushMetric(ev));
+        await async.each(events.slice(24), async ev => cacheClient.pushMetric(ev));
 
         await async.eachOf(totals.accounts, async (total, acc) => {
             const resp = await client.getStorage('accounts', acc);
