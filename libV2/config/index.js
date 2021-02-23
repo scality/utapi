@@ -308,24 +308,24 @@ class Config {
         const diskUsage = {
             path: _loadFromEnv('DISK_USAGE_PATH', (config.diskUsage || {}).path),
             mode: _loadFromEnv('DISK_USAGE_MODE', (config.diskUsage || {}).mode),
-            softLimit: _loadFromEnv('DISK_USAGE_SOFT_LIMIT', (config.diskUsage || {}).softLimit, _typeCasts.diskSize),
             hardLimit: _loadFromEnv('DISK_USAGE_HARD_LIMIT', (config.diskUsage || {}).hardLimit, _typeCasts.diskSize),
-            expirationBlockSize: _loadFromEnv(
-                'DISK_USAGE_EXPIRATION_BLOCK_SIZE',
-                (config.diskUsage || {}).expirationBlockSize,
-                _typeCasts.int,
+            retentionDays: _loadFromEnv(
+                'METRIC_RETENTION_PERIOD',
+                (config.diskUsage || {}).retentionDays, _typeCasts.int,
+            ),
+            expirationEnabled: _loadFromEnv(
+                'METRIC_EXPIRATION_ENABLED',
+                (config.diskUsage || {}).expirationEnabled, _typeCasts.bool,
             ),
         };
 
 
-        if (!diskUsage.path && (diskUsage.softLimit !== undefined || diskUsage.hardLimit !== undefined)) {
+        if (!diskUsage.path && diskUsage.hardLimit !== undefined) {
             throw Error('You must specify diskUsage.path to monitor for disk usage');
-        } else if (diskUsage.path && (diskUsage.softLimit === undefined && diskUsage.hardLimit === undefined)) {
-            throw Error('One of diskUsage.softLimit or diskUsage.hardLimit must be specified');
-        }
-
-        if (diskUsage.mode !== 'local' && diskUsage.mode !== 'distributed') {
-            throw Error('diskUsage.mode must be either "local" or "distributed"');
+        } else if (diskUsage.path && diskUsage.hardLimit === undefined) {
+            throw Error('diskUsage.hardLimit must be specified');
+        } else if (diskUsage.expirationEnabled && diskUsage.retentionDays === undefined) {
+            throw Error('diskUsage.retentionDays must be specified');
         }
 
         diskUsage.enabled = diskUsage.path !== undefined;
