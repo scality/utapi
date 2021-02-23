@@ -330,7 +330,6 @@ class Config {
             throw Error('diskUsage.retentionDays must be specified');
         }
 
-        diskUsage.enabled = diskUsage.path !== undefined;
         parsedConfig.diskUsage = diskUsage;
 
         parsedConfig.vaultd = {
