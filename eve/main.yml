@@ -154,7 +154,7 @@ stages:
               filename: "/artifacts/warp10.log"
               follow: true
       - ShellCommand:
-          name: run v2 functional tests
+          name: run v2 soft limit tests
           command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:softLimit
           env:
             UTAPI_CACHE_BACKEND: redis
@@ -166,7 +166,7 @@ stages:
             utapi:
               filename: "/artifacts/setup_ft_test:softLimit.log"
       - ShellCommand:
-          name: run v2 functional tests
+          name: run v2 hard limit tests
           command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:hardLimit
           env:
             UTAPI_CACHE_BACKEND: redis
