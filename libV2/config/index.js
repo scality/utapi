@@ -7,6 +7,7 @@ const { truthy, envNamespace } = require('../constants');
 const configSchema = require('./schema');
 // We need to require the specific file rather than the parent module to avoid a circular require
 const { parseDiskSizeSpec } = require('../utils/disk');
+const disk = require('../utils/disk');
 
 function _splitTrim(char, text) {
     return text.split(char).map(v => v.trim());
@@ -307,8 +308,7 @@ class Config {
 
         const diskUsage = {
             path: _loadFromEnv('DISK_USAGE_PATH', (config.diskUsage || {}).path),
-            mode: _loadFromEnv('DISK_USAGE_MODE', (config.diskUsage || {}).mode),
-            hardLimit: _loadFromEnv('DISK_USAGE_HARD_LIMIT', (config.diskUsage || {}).hardLimit, _typeCasts.diskSize),
+            hardLimit: _loadFromEnv('DISK_USAGE_HARD_LIMIT', (config.diskUsage || {}).hardLimit),
             retentionDays: _loadFromEnv(
                 'METRIC_RETENTION_PERIOD',
                 (config.diskUsage || {}).retentionDays, _typeCasts.int,
@@ -319,6 +319,9 @@ class Config {
             ),
         };
 
+        if (diskUsage.hardLimit !== undefined) {
+            diskUsage.hardLimit = parseDiskSizeSpec(diskUsage.hardLimit);
+        }
 
         if (!diskUsage.path && diskUsage.hardLimit !== undefined) {
             throw Error('You must specify diskUsage.path to monitor for disk usage');
