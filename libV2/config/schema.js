@@ -81,9 +81,8 @@ const schema = Joi.object({
     diskUsageSchedule: Joi.string(),
     diskUsage: Joi.object({
         path: Joi.string(),
-        mode: Joi.alternatives().try('local', 'distributed'),
-        softLimit: Joi.string(),
-        expirationBlockSize: Joi.number(),
+        retentionDays: Joi.number().greater(0),
+        expirationEnabled: Joi.boolean(),
         hardLimit: Joi.string(),
     }),
 });
