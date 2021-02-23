@@ -174,7 +174,7 @@ class MonitorDiskUsage extends BaseTask {
                 return;
             }
 
-            moduleLogger.info(`using ${formatDiskSize(size)} of disk space`, { usage: size });
+            moduleLogger.info(`warp 10 leveldb using ${formatDiskSize(size)} of disk space`, { usage: size });
 
             const shouldLock = this._checkHardLimit(size, this.nodeId);
             if (shouldLock) {
