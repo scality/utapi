@@ -22,7 +22,7 @@ class MonitorDiskUsage extends BaseTask {
         this._path = config.diskUsage.path;
         this._enabled = config.diskUsage.enabled;
         this._expirationEnabled = config.diskUsage.expirationEnabled;
-        this._metricRetentionPeriod = config.diskUsage.retentionPeriod * 24 * 60 * 60 * 1000000;
+        this._metricRetentionMicroSecs = config.diskUsage.retentionDays * 24 * 60 * 60 * 1000000;
         this._hardLimit = config.diskUsage.hardLimit || null;
     }
 
@@ -78,7 +78,7 @@ class MonitorDiskUsage extends BaseTask {
             return;
         }
 
-        const endTimestamp = timestamp - this._metricRetentionPeriod;
+        const endTimestamp = timestamp - this._metricRetentionMicroSecs;
         if (oldestTimestamp > endTimestamp) {
             moduleLogger.info('No records exceed retention period, nothing to delete.');
             return;
@@ -160,22 +160,22 @@ class MonitorDiskUsage extends BaseTask {
         }
 
         if (this._expirationEnabled && this.isLeader) {
-            moduleLogger.info(`expiring metrics older than ${config.diskUsage.retentionPeriod} days`);
+            moduleLogger.info(`expiring metrics older than ${config.diskUsage.retentionDays} days`);
             await this._expireMetrics(timestamp);
             return;
         }
 
-        let size = null;
-        try {
-            size = await this._getUsage();
-        } catch (error) {
-            moduleLogger.error(`error calculating disk usage for ${this._path}`, { error });
-            return;
-        }
-
-        moduleLogger.info(`using ${formatDiskSize(size)}`, { usage: size });
-
         if (this._hardLimit !== null) {
+            let size = null;
+            try {
+                size = await this._getUsage();
+            } catch (error) {
+                moduleLogger.error(`error calculating disk usage for ${this._path}`, { error });
+                return;
+            }
+
+            moduleLogger.info(`using ${formatDiskSize(size)} of disk space`, { usage: size });
+
             const shouldLock = this._checkHardLimit(size, this.nodeId);
             if (shouldLock) {
                 moduleLogger.warn('hard limit exceeded, disabling writes to warp 10', { nodeId: this.nodeId });

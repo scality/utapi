@@ -41,7 +41,7 @@
         "schedule": "0 0 0 * * 6"
     },
     "diskUsage": {
-        "retentionPeriod": 45,
+        "retentionDays": 45,
         "expirationEnabled": false
     }
 }

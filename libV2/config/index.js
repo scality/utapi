@@ -309,9 +309,9 @@ class Config {
             path: _loadFromEnv('DISK_USAGE_PATH', (config.diskUsage || {}).path),
             mode: _loadFromEnv('DISK_USAGE_MODE', (config.diskUsage || {}).mode),
             hardLimit: _loadFromEnv('DISK_USAGE_HARD_LIMIT', (config.diskUsage || {}).hardLimit, _typeCasts.diskSize),
-            retentionPeriod: _loadFromEnv(
+            retentionDays: _loadFromEnv(
                 'METRIC_RETENTION_PERIOD',
-                (config.diskUsage || {}).retentionPeriod, _typeCasts.int,
+                (config.diskUsage || {}).retentionDays, _typeCasts.int,
             ),
             expirationEnabled: _loadFromEnv(
                 'METRIC_EXPIRATION_ENABLED',
@@ -324,8 +324,8 @@ class Config {
             throw Error('You must specify diskUsage.path to monitor for disk usage');
         } else if (diskUsage.path && diskUsage.hardLimit === undefined) {
             throw Error('diskUsage.hardLimit must be specified');
-        } else if (diskUsage.expirationEnabled && diskUsage.retentionPeriod === undefined) {
-            throw Error('diskUsage.retentionPeriod must be specified');
+        } else if (diskUsage.expirationEnabled && diskUsage.retentionDays === undefined) {
+            throw Error('diskUsage.retentionDays must be specified');
         }
 
         diskUsage.enabled = diskUsage.path !== undefined;
