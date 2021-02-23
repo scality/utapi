@@ -30,7 +30,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
     it('should delete metrics older than the retention period', async () => {
         task._expirationEnabled = true;
         task._program.leader = true;
-        task._metricRetentionPeriod = 0; // Force it to expire everything older than the given timestamp
+        task._metricRetentionMicroSecs = 0; // Force it to expire everything older than the given timestamp
         const expireSpy = sinon.spy(task, '_expireMetrics');
         const deleteStub = sinon.spy(task._warp10Clients[0], 'delete');
 
