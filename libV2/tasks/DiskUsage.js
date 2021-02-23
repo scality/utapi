@@ -20,7 +20,6 @@ class MonitorDiskUsage extends BaseTask {
         this._defaultSchedule = config.diskUsageSchedule;
         this._defaultLag = 0;
         this._path = config.diskUsage.path;
-        this._enabled = config.diskUsage.enabled;
         this._expirationEnabled = config.diskUsage.expirationEnabled;
         this._metricRetentionMicroSecs = config.diskUsage.retentionDays * 24 * 60 * 60 * 1000000;
         this._hardLimit = config.diskUsage.hardLimit || null;
@@ -151,11 +150,6 @@ class MonitorDiskUsage extends BaseTask {
         if (this.isManualLock) {
             moduleLogger.info('manually locking warp 10', { nodeId: this.nodeId });
             await this._disableWarp10Updates();
-            return;
-        }
-
-        if (!this._enabled) {
-            moduleLogger.debug('disk usage monitoring not enabled, skipping check');
             return;
         }
 
