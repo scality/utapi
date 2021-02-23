@@ -46,6 +46,7 @@ describe('Test MonitorDiskUsage', () => {
         task = new MonitorDiskUsageShim({ warp10: [] });
         task._path = path;
         task._enabled = true;
+        task._hardLimit = 1000000000000;
         await task.setup();
     });
 
