@@ -48,4 +48,12 @@ describe('Test MonitorDiskUsage hard limit', function () {
         assert(lockSpy.notCalled);
         assert(unlockSpy.calledOnce);
     });
+
+    it('should not throw when failing to calculate disk usage', async () => {
+        fillDir(path, { count: 1, size: 100 });
+        task._hardLimit = 1;
+        sinon.stub(task, '_getUsage').throws();
+        const _task = task.execute();
+        assert.doesNotReject(_task);
+    });
 });
