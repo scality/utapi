@@ -24,6 +24,9 @@ class IngestShardTask extends BaseTask {
 
     _hydrateEvent(data) {
         const event = JSON.parse(data);
+        if (data.bucket && data.bucket.startsWith('benchmark-utapiv2-accuracy-4kb-')) {
+            console.log(data.timestamp);
+        }
         if (this._stripEventUUID) {
             delete event.uuid;
         }
