@@ -33,6 +33,19 @@ describe('Test InterpolatedClock', () => {
         const initial = iClock.getTs();
         fakeClock.tick(1);
         const second = iClock.getTs();
-        assert.strictEqual(second - initial, 1000);
+        assert.strictEqual(second - initial, 1000000);
+    });
+
+    it('should not increment the provided timestamp if not conflicted', () => {
+        const initial = 1000;
+        const second = iClock.getTs(initial);
+        assert.strictEqual(second, initial * 1000000);
+    });
+
+    it('should increment the provided timestamp if conflicted', () => {
+        const initial = 1000;
+        iClock.getTs(initial);
+        const second = iClock.getTs(initial);
+        assert.strictEqual(second, initial * 1000000 + 1);
     });
 });
