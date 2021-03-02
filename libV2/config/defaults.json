@@ -15,7 +15,8 @@
     },
     "warp10": {
         "host": "127.0.0.1",
-        "port": 4802
+        "port": 4802,
+        "nodeId": "single_node"
     },
     "healthChecks": {
         "allowFrom": ["127.0.0.1/8", "::1"]
