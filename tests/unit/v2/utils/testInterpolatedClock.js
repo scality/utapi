@@ -26,7 +26,10 @@ describe('Test InterpolatedClock', () => {
     it('should interpolate microseconds if called too fast', () => {
         const initial = iClock.getTs();
         const second = iClock.getTs();
+        const third = iClock.getTs();
         assert.strictEqual(second - initial, 1);
+        assert.strictEqual(third - initial, 2);
+        assert.strictEqual(third - second, 1);
     });
 
     it('should not interpolate if last call >= 1ms ago', () => {
