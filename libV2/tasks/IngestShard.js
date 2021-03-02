@@ -22,10 +22,13 @@ class IngestShardTask extends BaseTask {
         this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
     }
 
-    _hydrateEvent(data) {
+    _hydrateEvent(data, stripTimestamp = false) {
         const event = JSON.parse(data);
         if (this._stripEventUUID) {
             delete event.uuid;
+        }
+        if (stripTimestamp) {
+            delete event.timestamp;
         }
         return new UtapiMetric(event);
     }
@@ -51,32 +54,34 @@ class IngestShardTask extends BaseTask {
                     if (metrics.length > 0) {
                         logger.info(`Ingesting ${metrics.length} events from shard`, { shard });
                         const shardAge = now() - shard;
-                        let metricClass;
-                        let records;
-                        if (shardAge < checkpointLagMicroseconds) {
-                            metricClass = 'utapi.event';
-                            records = metrics
-                                .map(m => this._hydrateEvent(m));
-                        } else {
+                        const areSlowEvents = shardAge >= checkpointLagMicroseconds;
+                        const metricClass = areSlowEvents ? 'utapi.repair.event' : 'utapi.event';
+
+                        if (areSlowEvents) {
                             logger.info('Detected slow records, ingesting as repair');
-                            metricClass = 'utapi.repair.event';
-                            const clock = new InterpolatedClock();
-                            records = metrics
-                                .map(data => {
-                                    const metric = this._hydrateEvent(data);
-                                    metric.timestamp = clock.getTs();
-                                    return metric;
-                                });
                         }
-                        let nodeId;
+
+                        const clock = new InterpolatedClock();
+                        const records = metrics.map(m => {
+                            const ev = this._hydrateEvent(m, areSlowEvents);
+                            ev.timestamp = clock.getTs(ev.timestamp);
+                            return ev;
+                        });
+
+                        let ingestedIntoNodeId;
                         const status = await this.withWarp10(async warp10 => {
                             // eslint-disable-next-line prefer-destructuring
-                            nodeId = warp10.nodeId;
-                            return warp10.ingest({ className: metricClass }, records);
+                            ingestedIntoNodeId = warp10.nodeId;
+                            return warp10.ingest(
+                                {
+                                    className: metricClass,
+                                    labels: { origin: config.nodeId },
+                                }, records,
+                            );
                         });
                         assert.strictEqual(status, records.length);
                         await this._cache.deleteShard(shard);
-                        logger.info(`ingested ${status} records into ${nodeId}`);
+                        logger.info(`ingested ${status} records from ${config.nodeId} into ${ingestedIntoNodeId}`);
                     } else {
                         logger.debug('No events found in shard, cleaning up');
                     }

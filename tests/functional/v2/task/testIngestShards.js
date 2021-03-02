@@ -144,5 +144,46 @@ describe('Test IngestShards', function () {
         );
         series[0].values.forEach(val => assert.strictEqual(val.id, undefined));
     });
+
+    it('should increment microseconds for duplicate timestamps', async () => {
+        const start = shardFromTimestamp(getTs(-120));
+        const events = generateFakeEvents(start, start + 1, 2)
+            .map(ev => { ev.timestamp = start; return ev; });
+
+        await Promise.all(events.map(e => cacheClient.pushMetric(e)));
+        await ingestTask.execute();
+
+        const results = await warp10.fetch({
+            className: 'utapi.event', labels: { node: prefix }, start: start + 1, stop: -2,
+        });
+
+        const series = JSON.parse(results.result[0])[0];
+        const timestamps = series.v.map(ev => ev[0]);
+        assert.deepStrictEqual([
+            start + 1,
+            start,
+        ], timestamps);
+    });
+
+    it('should not increment microseconds for different timestamps', async () => {
+        const start = shardFromTimestamp(getTs(-120));
+        const events = generateFakeEvents(start, start + 1, 2);
+
+        events[1].timestamp = start + 5;
+
+        await Promise.all(events.map(e => cacheClient.pushMetric(e)));
+        await ingestTask.execute();
+
+        const results = await warp10.fetch({
+            className: 'utapi.event', labels: { node: prefix }, start: start + 10, stop: -2,
+        });
+
+        const series = JSON.parse(results.result[0])[0];
+        const timestamps = series.v.map(ev => ev[0]);
+        assert.deepStrictEqual([
+            start + 5,
+            start,
+        ], timestamps);
+    });
 });
 
