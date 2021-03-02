@@ -165,6 +165,29 @@ describe('Test IngestShards', function () {
         ], timestamps);
     });
 
+    it('should increment microseconds for several duplicate timestamps', async () => {
+        const start = shardFromTimestamp(getTs(-120));
+        const events = generateFakeEvents(start, start + 5, 5)
+            .map(ev => { ev.timestamp = start; return ev; });
+
+        await Promise.all(events.map(e => cacheClient.pushMetric(e)));
+        await ingestTask.execute();
+
+        const results = await warp10.fetch({
+            className: 'utapi.event', labels: { node: prefix }, start: start + 5, stop: -5,
+        });
+
+        const series = JSON.parse(results.result[0])[0];
+        const timestamps = series.v.map(ev => ev[0]);
+        assert.deepStrictEqual([
+            start + 4,
+            start + 3,
+            start + 2,
+            start + 1,
+            start,
+        ], timestamps);
+    });
+
     it('should not increment microseconds for different timestamps', async () => {
         const start = shardFromTimestamp(getTs(-120));
         const events = generateFakeEvents(start, start + 1, 2);
