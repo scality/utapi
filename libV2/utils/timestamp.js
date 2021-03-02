@@ -19,16 +19,16 @@ class InterpolatedClock {
         this._step = 1;
     }
 
-    getTs() {
-        const ts = Date.now();
+    getTs(timestamp) {
+        const ts = timestamp !== undefined ? timestamp : Date.now();
         if (ts === this._now) {
             // If this is the same millisecond as the last call
             this._step += 1;
-            return ts * 1000 + (this._step - 1);
+            return convertTimestamp(ts) + (this._step - 1);
         }
         this._now = ts;
         this._step = 1;
-        return ts * 1000;
+        return convertTimestamp(ts);
     }
 }
 
