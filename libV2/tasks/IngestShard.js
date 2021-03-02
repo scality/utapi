@@ -61,11 +61,13 @@ class IngestShardTask extends BaseTask {
                             logger.info('Detected slow records, ingesting as repair');
                         }
 
+                        const records = metrics.map(m => this._hydrateEvent(m, areSlowEvents))
+
+                        records.sort((a, b) => a.timestamp - b.timestamp)
+
                         const clock = new InterpolatedClock();
-                        const records = metrics.map(m => {
-                            const ev = this._hydrateEvent(m, areSlowEvents);
-                            ev.timestamp = clock.getTs(ev.timestamp);
-                            return ev;
+                        records.forEach(r => {
+                           r.timestamp = clock.getTs(r.timestamp);
                         });
 
                         let ingestedIntoNodeId;
