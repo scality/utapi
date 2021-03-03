@@ -99,6 +99,7 @@ const constants = {
     migrationOpTranslationMap: {
         listBucketMultipartUploads: 'listMultipartUploads',
     },
+    expirationChunkDuration: 900000000, // 15 minutes in microseconds
 };
 
 constants.operationToResponse = constants.operations
