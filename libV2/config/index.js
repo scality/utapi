@@ -271,7 +271,7 @@ class Config {
             warp10Conf.hosts = [{
                 host: _loadFromEnv('WARP10_HOST', config.warp10.host),
                 port: _loadFromEnv('WARP10_PORT', config.warp10.port, _typeCasts.int),
-                nodeId: parsedConfig.nodeId,
+                nodeId: _loadFromEnv('WARP10_NODE_ID', config.warp10.nodeId),
             }];
         }
 
