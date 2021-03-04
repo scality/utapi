@@ -1,7 +1,9 @@
+const async = require('async');
 const BaseTask = require('./BaseTask');
 const config = require('../config');
+const { expirationChunkDuration } = require('../constants');
 const {
-    LoggerContext, getFolderSize, formatDiskSize,
+    LoggerContext, getFolderSize, formatDiskSize, sliceTimeRange,
 } = require('../utils');
 
 const moduleLogger = new LoggerContext({
@@ -84,16 +86,19 @@ class MonitorDiskUsage extends BaseTask {
             return;
         }
 
-        moduleLogger.info('deleting metrics', {
-            start: oldestTimestamp, stop: endTimestamp,
-        });
-
-        await this.withWarp10(async warp10 =>
-            warp10.delete({
-                className: '~.*',
-                start: oldestTimestamp - 1,
-                end: endTimestamp,
-            }));
+        await async.eachSeries(
+            sliceTimeRange(oldestTimestamp - 1, endTimestamp, expirationChunkDuration),
+            async ([start, end]) => {
+                moduleLogger.info('deleting metrics',
+                    { start: oldestTimestamp, stop: endTimestamp });
+                return this.withWarp10(async warp10 =>
+                    warp10.delete({
+                        className: '~.*',
+                        start,
+                        end,
+                    }));
+            },
+        );
     }
 
     _checkHardLimit(size, nodeId) {
