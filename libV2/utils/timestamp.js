@@ -42,8 +42,37 @@ function now() {
     return Date.now() * 1000;
 }
 
+/**
+ * Slice the time range represented by the passed timestamps
+ * into slices of at most `step` duration.
+ *
+ * Both `start` and `end` are included in the returned slices.
+ * Slice timestamps are inclusive and non overlapping.
+ *
+ * For example sliceTimeRange(0, 5, 2) will yield
+ * [0, 1]
+ * [2, 3]
+ * [4, 5]
+ *
+ * @param {Number} start
+ * @param {Number} end
+ * @param {Number} step
+ */
+
+function* sliceTimeRange(start, end, step) {
+    let spos = start;
+    let epos = start + step - 1;
+    while (epos < end) {
+        yield [spos, epos];
+        spos += step;
+        epos += step;
+    }
+    yield [spos, end];
+}
+
 module.exports = {
     convertTimestamp,
     InterpolatedClock,
     now,
+    sliceTimeRange,
 };
