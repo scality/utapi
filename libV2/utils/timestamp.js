@@ -62,20 +62,12 @@ function now() {
 function* sliceTimeRange(start, end, step) {
     let spos = start;
     let epos = start + step - 1;
-    while (true) {
-        if (spos > end) {
-            break;
-        }
-
-        if (epos > end) {
-            yield [spos, end];
-            break;
-        }
-
+    while (epos < end) {
         yield [spos, epos];
         spos += step;
         epos += step;
     }
+    yield [spos, end];
 }
 
 module.exports = {
