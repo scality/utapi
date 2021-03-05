@@ -70,46 +70,47 @@
     } FETCH
     <% DUP SIZE 0 > %>
     <%
-      0 GET
-      <% // Iter over events
-        'event' STORE // Store the event
-        $event 4 GET @utapi/decodeEvent 'decoded' STORE
-        // 'Including event ' $event 0 GET TOSTRING + ' ' + $decoded ->JSON + LOGMSG
-        $decoded KEYLIST 'eventFields' STORE // Extract and store available event fields
-        $decoded 'op' GET 'operationId' STORE
+      <%
+        <% // Iter over events
+          'event' STORE // Store the event
+          $event 4 GET @utapi/decodeEvent 'decoded' STORE
+          // 'Including event ' $event 0 GET TOSTRING + ' ' + $decoded ->JSON + LOGMSG
+          $decoded KEYLIST 'eventFields' STORE // Extract and store available event fields
+          $decoded 'op' GET 'operationId' STORE
 
-        $decoded KEYLIST ->SET $fieldsToIndex INTERSECTION
-        <%
-          'field' STORE // Store the field
-          $decoded $field GET 'fieldValue' STORE // Store the fields value
-          $results $field GET 'fieldResults' STORE // Grad the corresponding field map from the results
-          <% $fieldResults $fieldValue CONTAINSKEY SWAP DROP %> // If we've see this fieldValue before
+          $decoded KEYLIST ->SET $fieldsToIndex INTERSECTION
           <%
-            $fieldResults $fieldValue GET // Grab the existing map for the checkpoint and leave it on the stack
-          %>
-          <%
-            // Push empty checkpoint onto stack
-            {
-              'objD' 0
-              'sizeD' 0
-              'inB' 0
-              'outB' 0
-              'ops' {}
-            } 'fieldValueResults' STORE
-            $fieldResults $fieldValueResults $fieldValue PUT DROP // Add it to our results
-            $fieldValueResults // Leave it on the stack
-          %> IFTE
-          // Consumes a map off the stack summing the specified field and the passed value
-          // Leaves the modified map on the stack
-          'objD' $decoded 'objD' 0 @util/getDefault  @util/sumField
-          'sizeD' $decoded 'sizeD' 0 @util/getDefault @util/sumField
-          'inB' $decoded 'inB' 0 @util/getDefault @util/sumField
-          'outB'  $decoded 'outB' 0 @util/getDefault @util/sumField
+            'field' STORE // Store the field
+            $decoded $field GET 'fieldValue' STORE // Store the fields value
+            $results $field GET 'fieldResults' STORE // Grad the corresponding field map from the results
+            <% $fieldResults $fieldValue CONTAINSKEY SWAP DROP %> // If we've see this fieldValue before
+            <%
+              $fieldResults $fieldValue GET // Grab the existing map for the checkpoint and leave it on the stack
+            %>
+            <%
+              // Push empty checkpoint onto stack
+              {
+                'objD' 0
+                'sizeD' 0
+                'inB' 0
+                'outB' 0
+                'ops' {}
+              } 'fieldValueResults' STORE
+              $fieldResults $fieldValueResults $fieldValue PUT DROP // Add it to our results
+              $fieldValueResults // Leave it on the stack
+            %> IFTE
+            // Consumes a map off the stack summing the specified field and the passed value
+            // Leaves the modified map on the stack
+            'objD' $decoded 'objD' 0 @util/getDefault  @util/sumField
+            'sizeD' $decoded 'sizeD' 0 @util/getDefault @util/sumField
+            'inB' $decoded 'inB' 0 @util/getDefault @util/sumField
+            'outB'  $decoded 'outB' 0 @util/getDefault @util/sumField
 
-          // Grab our op count map
-          'ops' GET 'opsCount' STORE
-          $opsCount $operationId 1 @util/sumField
-          DROP // Drop the returned map from sumField
+            // Grab our op count map
+            'ops' GET 'opsCount' STORE
+            $opsCount $operationId 1 @util/sumField
+            DROP // Drop the returned map from sumField
+          %> FOREACH
         %> FOREACH
       %> FOREACH
      %>
