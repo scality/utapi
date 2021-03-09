@@ -24,19 +24,21 @@ class BaseTask extends Process {
         this._defaultLag = 0;
     }
 
-    async _setup() {
-        this._program
-            .option('-n, --now', 'Execute the task immediately and then exit. Overrides --schedule.')
-            .option(
-                '-s, --schedule <crontab>',
-                'Execute task using this crontab.  Overrides configured schedule',
-                value => {
-                    cronparser.parseExpression(value);
-                    return value;
-                },
-            )
-            .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10))
-            .option('-n, --node-id <id>', 'Set a custom node id');
+    async _setup(includeDefaultOpts = true) {
+        if (includeDefaultOpts) {
+            this._program
+                .option('-n, --now', 'Execute the task immediately and then exit. Overrides --schedule.')
+                .option(
+                    '-s, --schedule <crontab>',
+                    'Execute task using this crontab.  Overrides configured schedule',
+                    value => {
+                        cronparser.parseExpression(value);
+                        return value;
+                    },
+                )
+                .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10))
+                .option('-n, --node-id <id>', 'Set a custom node id');
+        }
     }
 
     get schedule() {
