@@ -3,15 +3,32 @@ const url = require('url');
 
 const port = process.env.VAULT_PORT || 8500;
 
+const unauthResp = {
+    ErrorResponse: {
+        $: {
+            xmlns: 'https://iam.amazonaws.com/doc/2010-05-08/',
+        },
+        Error: {
+            Code: 'InvalidAccessKeyId',
+            Message: 'The AWS access key Id you provided does not exist in our records.',
+        },
+        RequestId: '97f22e2dba45bca2a5cd:fb375c22ed4ea7500691',
+    },
+};
+
+
 class Vault {
     constructor() {
         this._server = null;
     }
 
     static _onRequest(req, res) {
-        res.writeHead(200);
         const { query } = url.parse(req.url, true);
-        if (query.Action === 'AccountsCanonicalIds') {
+        if (query.accessKey === 'invalidKey') {
+            res.writeHead(403);
+            res.write(JSON.stringify(unauthResp));
+        } else if (query.Action === 'AccountsCanonicalIds') {
+            res.writeHead(200);
             let body;
             if (Array.isArray(query.accountIds)) {
                 body = query.accountIds.map(id => ({
