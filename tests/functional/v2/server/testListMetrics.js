@@ -28,7 +28,7 @@ const emptyOperationsResponse = Object.values(operationToResponse)
         return prev;
     }, {});
 
-async function listMetrics(level, resources, start, end) {
+async function listMetrics(level, resources, start, end, force403 = false) {
     const body = {
         timeRange: [start, end],
         [level]: resources,
@@ -46,7 +46,7 @@ async function listMetrics(level, resources, start, end) {
     };
 
     const credentials = {
-        accessKeyId: 'accessKey1',
+        accessKeyId: force403 ? 'invalidKey' : 'accessKey1',
         secretAccessKey: 'verySecretKey1',
     };
 
@@ -201,5 +201,11 @@ describe('Test listMetric', function () {
         assert.deepStrictEqual(accountMetric.numberOfObjects, [0, 0]);
         assert.deepStrictEqual(accountMetric.incomingBytes, 0);
         assert.deepStrictEqual(accountMetric.outgoingBytes, 0);
+    });
+
+    it('should return a 403 if unauthorized', async () => {
+        const resp = await listMetrics('buckets', ['test'], getTs(-1), getTs(1), true);
+        assert.strictEqual(resp.statusCode, 403);
+
     });
 });
