@@ -206,6 +206,5 @@ describe('Test listMetric', function () {
     it('should return a 403 if unauthorized', async () => {
         const resp = await listMetrics('buckets', ['test'], getTs(-1), getTs(1), true);
         assert.strictEqual(resp.statusCode, 403);
-
     });
 });
