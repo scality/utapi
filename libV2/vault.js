@@ -164,6 +164,9 @@ async function authenticateRequest(request, action, level, resources) {
 
 async function translateAndAuthorize(request, action, level, resources) {
     const [authed, authorizedResources] = await authenticateRequest(request, action, level, resources);
+    if (!authed) {
+        return [authed];
+    }
     const translated = await translateResourceIds(level, authorizedResources, request.logger.logger);
     return [authed, translated];
 }
