@@ -76,7 +76,10 @@ class UtapiClient {
         this._logger = (config && config.logger) || moduleLogger;
         this._maxCachedMetrics = (config && config.maxCachedMetrics) || 200000; // roughly 100MB
         this._numCachedMetrics = 0;
-        this._retryCache = levelup(encode(memdown(), { valueEncoding: 'json' }));
+        this._disableRetryCache = config && config.disableRetryCache;
+        this._retryCache = this._disableRetryCache
+            ? null
+            : levelup(encode(memdown(), { valueEncoding: 'json' }));
         this._drainTimer = null;
         this._drainCanSchedule = true;
         this._drainDelay = (config && config.drainDelay) || 30000;
@@ -260,9 +263,13 @@ class UtapiClient {
         try {
             await this._pushToUtapi([metric]);
         } catch (error) {
-            this._logger.error('unable to push metric, adding to retry cache', { error });
-            if (!await this._addToRetryCache(metric)) {
-                throw new Error('unable to store metric');
+            if (!this._disableRetryCache) {
+                this._logger.error('unable to push metric, adding to retry cache', { error });
+                if (!await this._addToRetryCache(metric)) {
+                    throw new Error('unable to store metric');
+                }
+            } else {
+                this._logger.debug('unable to push metric. retry cache disabled, not retrying ingestion.', { error });
             }
         }
     }
