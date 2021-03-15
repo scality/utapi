@@ -50,30 +50,24 @@ describe('Test middleware', () => {
             middleware.errorMiddleware({}, req, resp);
             assert.strictEqual(resp._status, 500);
             assert.deepStrictEqual(resp._body, {
-                error: {
-                    code: '500',
-                    message: 'Internal Error',
-                },
+                code: '500',
+                message: 'Internal Error',
             });
         });
 
         it('should set the correct info from an error', () => {
             middleware.errorMiddleware({ code: 123, message: 'Hello World!', utapiError: true }, req, resp);
             assert.deepStrictEqual(resp._body, {
-                error: {
-                    code: '123',
-                    message: 'Hello World!',
-                },
+                code: '123',
+                message: 'Hello World!',
             });
         });
 
         it("should replace an error's message if it's internal and not in development mode", () => {
             middleware.errorMiddleware({ code: 123, message: 'Hello World!' }, req, resp);
             assert.deepStrictEqual(resp._body, {
-                error: {
-                    code: '123',
-                    message: 'Internal Error',
-                },
+                code: '123',
+                message: 'Internal Error',
             });
         });
 
