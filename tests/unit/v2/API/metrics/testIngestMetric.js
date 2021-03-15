@@ -43,4 +43,19 @@ describe('Test ingestMetric', () => {
             err => err.code === 503 && err.ServiceUnavailable,
         );
     });
+
+    it('should translate putDeleteMarkerObject to deleteObject', async () => {
+        const spy = sinon.spy(cacheClient, 'pushMetric');
+        const metric = new UtapiMetric({
+            operationId: 'putDeleteMarkerObject',
+        });
+        await ingestMetric(ctx, { body: [metric.getValue()] });
+        assert.strictEqual(ctx.results.statusCode, 200);
+        assert(spy.calledWith(
+            new UtapiMetric({
+                operationId: 'deleteObject',
+                timestamp: convertTimestamp(metric.timestamp),
+            }),
+        ));
+    });
 });
