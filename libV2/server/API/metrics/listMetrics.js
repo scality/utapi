@@ -1,6 +1,6 @@
 const errors = require('../../../errors');
 const { serviceToWarp10Label, operationToResponse } = require('../../../constants');
-const { convertTimestamp, iterIfError, now } = require('../../../utils');
+const { convertTimestamp, iterIfError } = require('../../../utils');
 const { clients: warp10Clients } = require('../../../warp10');
 
 const emptyOperationsResponse = Object.values(operationToResponse)
@@ -23,7 +23,7 @@ function positiveOrZero(value) {
 async function listMetric(ctx, params) {
     const labelName = serviceToWarp10Label[params.level];
     const resources = params.body[params.level];
-    let [start, end] = params.body.timeRange
+    let [start, end] = params.body.timeRange;
     if (end === undefined) {
         end = Date.now();
     }
