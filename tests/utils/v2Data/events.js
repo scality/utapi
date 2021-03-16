@@ -124,7 +124,6 @@ const eventTemplateToOperation = {
         'getObjectRetention',
         'getObjectTagging',
         'headObject',
-        'putDeleteMarkerObject',
         'putObjectAcl',
         'putObjectLegalHold',
         'putObjectRetention',
