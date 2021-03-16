@@ -30,9 +30,14 @@ const emptyOperationsResponse = Object.values(operationToResponse)
 
 async function listMetrics(level, resources, start, end, force403 = false) {
     const body = {
-        timeRange: [start, end],
         [level]: resources,
     };
+
+    if (end !== undefined) {
+        body.timeRange = [start, end];
+    } else {
+        body.timeRange = [start];
+    }
 
     const headers = {
         host: 'localhost',
@@ -206,5 +211,10 @@ describe('Test listMetric', function () {
     it('should return a 403 if unauthorized', async () => {
         const resp = await listMetrics('buckets', ['test'], getTs(-1), getTs(1), true);
         assert.strictEqual(resp.statusCode, 403);
+    });
+
+    it('should use the current timestamp for "end" if it is not provided', async () => {
+        const resp = await listMetrics('buckets', ['test'], getTs(-1));
+        assert.strictEqual(resp.body[0].timeRange.length, 2);
     });
 });

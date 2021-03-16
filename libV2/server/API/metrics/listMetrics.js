@@ -23,9 +23,10 @@ function positiveOrZero(value) {
 async function listMetric(ctx, params) {
     const labelName = serviceToWarp10Label[params.level];
     const resources = params.body[params.level];
-    const [start, end] = params.body.timeRange
-        .map(convertTimestamp)
-        .map(v => v.toString());
+    let [start, end] = params.body.timeRange;
+    if (end === undefined) {
+        end = Date.now();
+    }
 
     // A separate request will be made to warp 10 per requested resource
     const results = await Promise.all(
@@ -35,8 +36,8 @@ async function listMetric(ctx, params) {
             const res = await iterIfError(warp10Clients, warp10 => {
                 const options = {
                     params: {
-                        start,
-                        end,
+                        start: convertTimestamp(start).toString(),
+                        end: convertTimestamp(end).toString(),
                         labels,
                         node: warp10.nodeId,
                     },
@@ -80,7 +81,7 @@ async function listMetric(ctx, params) {
 
             const metric = {
                 ...result.metrics,
-                timeRange: params.body.timeRange,
+                timeRange: [ start, end ],
                 operations: {
                     ...emptyOperationsResponse,
                     ...operations,
