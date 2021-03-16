@@ -58,15 +58,17 @@ function responseLoggerMiddleware(req, res, next) {
 // next is purposely not called as all error responses are handled here
 // eslint-disable-next-line no-unused-vars
 function errorMiddleware(err, req, res, next) {
-    let code = err.code || 500;
-    let message = err.message || 'Internal Error';
+    let statusCode = err.code || 500;
+    let code = err.message || 'InternalError';
+    let message = err.description || 'Internal Error';
 
     // failed request validation by oas-tools
     if (err.failedValidation) {
         // You can't actually use destructing here
         /* eslint-disable prefer-destructuring */
-        code = errors.InvalidRequest.code;
-        message = errors.InvalidRequest.message;
+        statusCode = errors.InvalidRequest.code;
+        code = errors.InvalidRequest.message;
+        message = errors.InvalidRequest.description;
         /* eslint-enable prefer-destructuring */
     }
 
@@ -75,8 +77,8 @@ function errorMiddleware(err, req, res, next) {
         message = 'Internal Error';
     }
 
-    res.status(code).send({
-        code: code.toString(),
+    res.status(statusCode).send({
+        code,
         message,
     });
     responseLoggerMiddleware(req, res);
