@@ -45,10 +45,6 @@ class ManualAdjust extends BaseTask {
         const objectDelta = this._program.objects;
         const sizeDelta = this._program.storage;
 
-        if (!objectDelta && !sizeDelta) {
-            throw Error('You must provided at least one of --objects or --storage');
-        }
-
         if (!this._program.bucket.length && !this._program.account.length && !this._program.user.length) {
             throw Error('You must provided at least one of --bucket, --account or --user');
         }
