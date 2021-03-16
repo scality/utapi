@@ -6,6 +6,7 @@ const RepairTask = require('./Repair');
 const ReindexTask = require('./Reindex');
 const MigrateTask = require('./Migrate');
 const MonitorDiskUsage = require('./DiskUsage');
+const ManualAdjust = require('./ManualAdjust');
 
 module.exports = {
     IngestShard,
@@ -16,4 +17,5 @@ module.exports = {
     ReindexTask,
     MigrateTask,
     MonitorDiskUsage,
+    ManualAdjust,
 };
