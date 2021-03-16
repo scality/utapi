@@ -76,10 +76,8 @@ function errorMiddleware(err, req, res, next) {
     }
 
     res.status(code).send({
-        error: {
-            code: code.toString(),
-            message,
-        },
+        code: code.toString(),
+        message,
     });
     responseLoggerMiddleware(req, res);
 }
