@@ -2,6 +2,7 @@ const errors = require('../../../errors');
 const { UtapiMetric } = require('../../../models');
 const { client: cacheClient } = require('../../../cache');
 const { convertTimestamp } = require('../../../utils');
+const { ingestionOpTranslationMap } = require('../../../constants');
 
 async function ingestMetric(ctx, params) {
     let metrics;
@@ -9,6 +10,7 @@ async function ingestMetric(ctx, params) {
         metrics = params.body.map(m => new UtapiMetric({
             ...m,
             timestamp: convertTimestamp(m.timestamp),
+            operationId: ingestionOpTranslationMap[m.operationId] || m.operationId,
         }));
     } catch (error) {
         throw errors.InvalidRequest;

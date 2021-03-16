@@ -99,6 +99,9 @@ const constants = {
     migrationOpTranslationMap: {
         listBucketMultipartUploads: 'listMultipartUploads',
     },
+    ingestionOpTranslationMap: {
+        putDeleteMarkerObject: 'deleteObject',
+    },
     expirationChunkDuration: 900000000, // 15 minutes in microseconds
 };
 
