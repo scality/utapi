@@ -361,7 +361,7 @@ if __name__ == '__main__':
     recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
     if options.bucket is None:
         stale_buckets = recorded_buckets.difference(observed_buckets)
-    elif observed_buckets and options.bucket in recorded_buckets:
+    elif observed_buckets and options.bucket not in recorded_buckets:
         # The provided bucket does not exist, so clean up any metrics
         stale_buckets = { options.bucket }
     else:
