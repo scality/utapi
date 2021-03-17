@@ -195,7 +195,7 @@ class BucketDClient:
 
                 # If versioned, subtract the size of the master to avoid double counting
                 if last_master is not None and obj['key'].startswith(last_master + '\x00'):
-                    _log.info('Detected versioned key: %s - subtracting master size: %i'% (
+                    _log.debug('Detected versioned key: %s - subtracting master size: %i'% (
                         obj['key'],
                         last_size,
                     ))
