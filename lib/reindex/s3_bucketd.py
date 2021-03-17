@@ -196,7 +196,7 @@ class BucketDClient:
                 else:
                     # bucketd v7 returns an encoded string
                     data = json.loads(obj['value'])
-                    size = data["content-length"]
+                    size = data.get('content-length', 0)
                 total_size += size
 
                 # If versioned, subtract the size of the master to avoid double counting
