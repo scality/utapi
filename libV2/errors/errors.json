@@ -1,7 +1,7 @@
 {
     "AccessDenied": {
         "code": 403,
-        "description": "Access denied"
+        "description": "Access Denied"
     },
     "InternalError": {
         "code": 500,
