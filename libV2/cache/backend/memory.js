@@ -12,9 +12,12 @@ function orNull(value) {
     return value === undefined ? null : value;
 }
 
+
+const _multiprocessDB = {};
+
 class MemoryCache {
-    constructor() {
-        this._data = {};
+    constructor(config) {
+        this._data = config && config.multiprocess ? _multiprocessDB : {};
         this._shards = {};
         this._prefix = 'utapi';
         this._expirations = {};

@@ -4,8 +4,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { ciphers, dhparam } = require('arsenal').https;
 
-const Process = require('../process');
-const config = require('../config');
+const SubSystem = require('../subsystem');
+
+// const config = require('../config');
 const { initializeOasTools, middleware } = require('./middleware');
 const { spec: apiSpec } = require('./spec');
 const { client: cacheClient } = require('../cache');
@@ -15,11 +16,12 @@ const moduleLogger = new LoggerContext({
     module: 'server',
 });
 
-class UtapiServer extends Process {
-    constructor() {
+class UtapiServer extends SubSystem {
+    constructor(config) {
         super();
         this._app = null;
         this._server = null;
+        this._config = config;
     }
 
     static async _createApp(spec) {
@@ -32,13 +34,13 @@ class UtapiServer extends Process {
         return app;
     }
 
-    static _createHttpsAgent() {
+    _createHttpsAgent() {
         const conf = {
             ciphers: ciphers.ciphers,
             dhparam,
-            cert: config.tls.cert,
-            key: config.tls.key,
-            ca: config.tls.ca ? [config.tls.ca] : null,
+            cert: this._config.tls.cert,
+            key: this._config.tls.key,
+            ca: this._config.tls.ca ? [this._config.tls.ca] : null,
             requestCert: false,
             rejectUnauthorized: true,
         };
@@ -47,31 +49,31 @@ class UtapiServer extends Process {
         return conf;
     }
 
-    static async _createServer(app) {
-        if (config.tls) {
+    async _createServer(app) {
+        if (this._config.tls) {
             return https.createServer(UtapiServer._createHttpsAgent(), app);
         }
         return http.createServer(app);
     }
 
-    static async _startServer(server) {
+    async _startServer(server) {
         moduleLogger
             .with({
                 method: 'UtapiServer::_startServer',
-                cacheBackend: config.cacheBackend,
+                cacheBackend: this._config.cacheBackend,
             })
-            .info(`Server listening on ${config.port}`);
-        await server.listen(config.port);
+            .info(`Server listening on ${this._config.port}`);
+        await server.listen(this._config.port);
     }
 
     async _setup() {
         this._app = await UtapiServer._createApp(apiSpec);
-        this._server = await UtapiServer._createServer(this._app);
+        this._server = await this._createServer(this._app);
     }
 
     async _start() {
         await cacheClient.connect();
-        await UtapiServer._startServer(this._server);
+        await this._startServer(this._server);
     }
 
     async _join() {

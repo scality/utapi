@@ -2,7 +2,7 @@ const assert = require('assert');
 const async = require('async');
 const BaseTask = require('./BaseTask');
 const { UtapiMetric } = require('../models');
-const config = require('../config');
+// const config = require('../config');
 const { checkpointLagSecs } = require('../constants');
 const {
     LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock, now,
@@ -15,11 +15,15 @@ const logger = new LoggerContext({
 const checkpointLagMicroseconds = convertTimestamp(checkpointLagSecs);
 
 class IngestShardTask extends BaseTask {
-    constructor(options) {
-        super(options);
+    constructor(config, stripEventUUID = true) {
+        super(config);
+        this._stripEventUUID = stripEventUUID;
+    }
+
+    async _setup(config) {
+        await super._setup(config);
         this._defaultSchedule = config.ingestionSchedule;
         this._defaultLag = config.ingestionLagSeconds;
-        this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
     }
 
     _hydrateEvent(data, stripTimestamp = false) {
@@ -77,13 +81,13 @@ class IngestShardTask extends BaseTask {
                             return warp10.ingest(
                                 {
                                     className: metricClass,
-                                    labels: { origin: config.nodeId },
+                                    labels: { origin: this._nodeId },
                                 }, records,
                             );
                         });
                         assert.strictEqual(status, records.length);
                         await this._cache.deleteShard(shard);
-                        logger.info(`ingested ${status} records from ${config.nodeId} into ${ingestedIntoNodeId}`);
+                        logger.info(`ingested ${status} records from ${this._nodeId} into ${ingestedIntoNodeId}`);
                     } else {
                         logger.debug('No events found in shard, cleaning up');
                     }

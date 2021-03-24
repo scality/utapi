@@ -1,16 +1,39 @@
 const { EventEmitter } = require('events');
 const os = require('os');
-const { Command } = require('commander');
-const { logger } = require('./utils');
+const async = require('async');
+const { logger, comprehend } = require('./utils');
+const UtapiCLI = require('./cli');
+const { UtapiServer } = require('./server');
+const {
+    IngestShard,
+    CreateCheckpoint,
+    CreateSnapshot,
+    RepairTask,
+    ReindexTask,
+    MonitorDiskUsage,
+} = require('./tasks');
+
+const subsystems = {
+    server: UtapiServer,
+    ingest: IngestShard,
+    checkpoint: CreateCheckpoint,
+    snapshot: CreateSnapshot,
+    repair: RepairTask,
+    reindex: ReindexTask,
+    limit: MonitorDiskUsage,
+    // TODO split expiration into separate task
+    // expiration:
+};
 
 class Process extends EventEmitter {
-    constructor(...options) {
-        super(...options);
-        this._program = null;
+    constructor() {
+        super();
+        this._config = null;
+        this._subsystems = null;
     }
 
-    async setup() {
-        const cleanUpFunc = this.join.bind(this);
+    _registerSignalHandlers() {
+        const cleanUpFunc = this.join.bind(this, 1);
         ['SIGINT', 'SIGQUIT', 'SIGTERM'].forEach(eventName => {
             process.on(eventName, cleanUpFunc);
         });
@@ -19,27 +42,78 @@ class Process extends EventEmitter {
                 { error, stack: error.stack.split(os.EOL) });
             cleanUpFunc();
         });
-        this._program = new Command();
-        await this._setup();
+    }
+
+    async setup() {
+        this._registerSignalHandlers();
+        try {
+            this._config = UtapiCLI.parse(process.argv);
+        } catch(error) {
+            console.log(error.message);
+            return false;
+        }
+        // console.log(this._config)
+        this._subsystems = await Process._setupSubSystems(this._config);
+        return true;
+    }
+
+    static async _setupSubSystems(config) {
+        return async.reduce(config.subsystems, {},
+        // const systems = comprehend(
+        //     config.subsystems,
+            async (systems, key) => {
+                const sys = new subsystems[key](config);
+                await sys.setup();
+                systems[key] = sys;
+                return systems;
+            },
+        );
     }
 
     async start() {
-        this._program.parse(process.argv);
-        await this._start();
+        if (!this._subsystems) {
+            throw new Error('The process must be setup before starting!');
+        }
+        // console.log(this._subsystems)
+        await Promise.all(
+            Object.entries(this._subsystems).map(async ([name, sys]) => {
+                try {
+                    await sys.start();
+                } catch (error) {
+                    const msg = `Error starting subsystem ${name}`;
+                    logger.error(msg, { error });
+                    throw new Error(msg);
+                }
+            }),
+        );
     }
 
-    async join() {
+    async join(returnCode = 0) {
         this.emit('exit');
-        await this._join();
+        console.log('-'.repeat(50))
+        if (this._subsystems) {
+            const results = await Promise.all(
+                Object.entries(this._subsystems).map(async ([name, sys]) => {
+                    try {
+                        await sys.join();
+                    } catch (error) {
+                        logger.error(`Error stopping subsystem ${name}`, { error });
+                        return name;
+                    }
+                    return null;
+                }),
+            );
+
+            const errors = results.filter(e => e !== null);
+            if (errors.length) {
+                logger.error(`Error stopping subsystems: ${errors.join(', ')}`, { subsystems: errors });
+                process.exit(1);
+            }
+        }
+
+        process.exit(returnCode);
     }
-
-    /* eslint-disable class-methods-use-this,no-empty-function */
-    async _setup() {}
-
-    async _start() {}
-
-    async _join() {}
-    /* eslint-enable class-methods-use-this,no-empty-function */
 }
+
 
 module.exports = Process;
