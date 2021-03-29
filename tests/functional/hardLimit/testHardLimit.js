@@ -2,7 +2,6 @@ const assert = require('assert');
 const sinon = require('sinon');
 const uuid = require('uuid');
 
-const { clients: warp10Clients } = require('../../../libV2/warp10');
 const { MonitorDiskUsage } = require('../../../libV2/tasks');
 const config = require('../../../libV2/config');
 

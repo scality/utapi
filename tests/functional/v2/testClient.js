@@ -7,7 +7,6 @@ const UtapiClient = require('../../../libV2/client');
 const { clients: warp10Clients } = require('../../../libV2/warp10');
 const config = require('../../../libV2/config');
 const { CacheClient, backends: cacheBackends } = require('../../../libV2/cache');
-const { IngestShard } = require('../../../libV2/tasks');
 const { now } = require('../../../libV2/utils');
 const { generateCustomEvents } = require('../../utils/v2Data');
 
