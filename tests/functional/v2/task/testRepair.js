@@ -4,6 +4,7 @@ const uuid = require('uuid');
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
 const { RepairTask } = require('../../../../libV2/tasks');
+const config = require('../../../../libV2/config');
 
 const { generateCustomEvents, fetchRecords } = require('../../../utils/v2Data');
 
@@ -49,7 +50,8 @@ describe('Test Repair', function () {
     beforeEach(async () => {
         prefix = uuid.v4();
         warp10 = new Warp10Client({ nodeId: prefix });
-        repairTask = new RepairTask({ warp10: [warp10] });
+        repairTask = new RepairTask(config.merge({ warp10: { hosts: [{ nodeId: prefix }] } }));
+        await repairTask.setup();
         repairTask._program = { lag: 0, nodeId: prefix };
     });
 

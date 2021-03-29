@@ -3,6 +3,7 @@ const uuid = require('uuid');
 
 const { MonitorDiskUsage } = require('../../../../libV2/tasks');
 const { getFolderSize } = require('../../../../libV2/utils');
+const config = require('../../../../libV2/config');
 
 const { fillDir } = require('../../../utils/v2Data');
 
@@ -43,7 +44,7 @@ describe('Test MonitorDiskUsage', () => {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
-        task = new MonitorDiskUsageShim({ warp10: [] });
+        task = new MonitorDiskUsageShim(config);
         task._path = path;
         task._enabled = true;
         await task.setup();

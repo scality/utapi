@@ -104,7 +104,6 @@ describe('Test UtapiClient', function () {
         let totals;
 
         let cacheClient;
-        let ingestTask;
 
         beforeEach(async () => {
             client = new UtapiClient({
@@ -121,10 +120,6 @@ describe('Test UtapiClient', function () {
 
             cacheClient = getClient();
             await cacheClient.connect();
-
-            ingestTask = new IngestShard({ warp10: [warp10] });
-            ingestTask._program = { lag: 0 };
-            await ingestTask._cache.connect();
         });
 
         it('should get the current storage for an account with a empty cache', async () => {

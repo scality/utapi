@@ -4,6 +4,7 @@ const uuid = require('uuid');
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
 const { CreateCheckpoint } = require('../../../../libV2/tasks');
+const config = require('../../../../libV2/config');
 
 const { generateCustomEvents, fetchRecords } = require('../../../utils/v2Data');
 
@@ -49,7 +50,8 @@ describe('Test CreateCheckpoint', function () {
         prefix = uuid.v4();
 
         warp10 = new Warp10Client({ nodeId: prefix });
-        checkpointTask = new CreateCheckpoint({ warp10: [warp10] });
+        checkpointTask = new CreateCheckpoint(config.merge({ warp10: { hosts: [{ nodeId: prefix }] } }));
+        await checkpointTask.setup();
         checkpointTask._program = { lag: 0, nodeId: prefix };
     });
 

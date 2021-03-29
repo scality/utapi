@@ -58,7 +58,8 @@ describe('Test IngestShards', function () {
         await cacheClient.connect();
 
         warp10 = new Warp10Client({ nodeId: prefix });
-        ingestTask = new IngestShard({ warp10: [warp10] });
+        ingestTask = new IngestShard(config.merge({ warp10: { hosts: [{ nodeId: prefix }] } }));
+        await ingestTask.setup();
         ingestTask._cache._cacheBackend._prefix = prefix;
         ingestTask._program = { lag: 0 };
         await ingestTask._cache.connect();

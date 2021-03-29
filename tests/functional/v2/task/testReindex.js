@@ -4,6 +4,7 @@ const { mpuBucketPrefix } = require('arsenal').constants;
 
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { ReindexTask } = require('../../../../libV2/tasks');
+const config = require('../../../../libV2/config');
 const { now } = require('../../../../libV2/utils');
 const { BucketD, values } = require('../../../utils/mock/');
 const { fetchRecords } = require('../../../utils/v2Data');
@@ -32,10 +33,11 @@ describe('Test ReindexTask', function () {
 
     before(() => bucketd.start());
 
-    beforeEach(() => {
+    beforeEach(async () => {
         prefix = uuid.v4();
         warp10 = new Warp10Client({ nodeId: prefix });
-        reindexTask = new ReindexTask({ warp10: [warp10] });
+        reindexTask = new ReindexTask(config.merge({ warp10: { hosts: [{ nodeId: prefix }] } }));
+        await reindexTask.setup();
         reindexTask._program = { nodeId: prefix };
     });
 
