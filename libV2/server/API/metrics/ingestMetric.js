@@ -1,6 +1,5 @@
 const errors = require('../../../errors');
 const { UtapiMetric } = require('../../../models');
-const { client: cacheClient } = require('../../../cache');
 const { convertTimestamp } = require('../../../utils');
 const { ingestionOpTranslationMap } = require('../../../constants');
 
@@ -16,7 +15,7 @@ async function ingestMetric(ctx, params) {
         throw errors.InvalidRequest;
     }
     try {
-        await Promise.all(metrics.map(m => cacheClient.pushMetric(m)));
+        await Promise.all(metrics.map(m => this.cacheClient.pushMetric(m)));
     } catch (error) {
         throw errors.ServiceUnavailable;
     }

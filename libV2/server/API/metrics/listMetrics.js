@@ -1,7 +1,6 @@
 const errors = require('../../../errors');
 const { serviceToWarp10Label, operationToResponse } = require('../../../constants');
 const { convertTimestamp, iterIfError } = require('../../../utils');
-const { clients: warp10Clients } = require('../../../warp10');
 
 const emptyOperationsResponse = Object.values(operationToResponse)
     .reduce((prev, key) => {
@@ -33,7 +32,7 @@ async function listMetric(ctx, params) {
         resources.map(async ({ resource, id }) => {
             const labels = { [labelName]: id };
 
-            const res = await iterIfError(warp10Clients, warp10 => {
+            const res = await iterIfError(this.warp10Clients, warp10 => {
                 const options = {
                     params: {
                         start: convertTimestamp(start).toString(),
