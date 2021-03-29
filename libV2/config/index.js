@@ -350,7 +350,8 @@ class Config {
      * @param {object} newConfig - an object using the same structure as the config file
      * @returns {Config} - New Config instance
      */
-    static merge(newConfig) {
+    // eslint-disable-next-line class-methods-use-this
+    merge(newConfig) {
         return new Config(newConfig);
     }
 }

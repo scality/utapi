@@ -4,8 +4,9 @@ const { Command } = require('commander');
 const { logger } = require('./utils');
 
 class Process extends EventEmitter {
-    constructor(...options) {
-        super(...options);
+    constructor(config) {
+        super();
+        this._config = config;
         this._program = null;
     }
 
@@ -20,7 +21,7 @@ class Process extends EventEmitter {
             cleanUpFunc();
         });
         this._program = new Command();
-        await this._setup();
+        await this._setup(this._config);
     }
 
     async start() {
