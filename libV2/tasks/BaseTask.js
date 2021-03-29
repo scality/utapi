@@ -1,4 +1,3 @@
-const assert = require('assert');
 const cron = require('node-schedule');
 const cronparser = require('cron-parser');
 
