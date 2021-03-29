@@ -1,7 +1,5 @@
 const errors = require('../../../errors');
 const { serviceToWarp10Label } = require('../../../constants');
-const { clients: warp10Clients } = require('../../../warp10');
-const { client: cache } = require('../../../cache');
 const { now, iterIfError } = require('../../../utils');
 
 /**
@@ -20,7 +18,7 @@ async function getStorage(ctx, params) {
             .customizeDescription(`Unsupported level "${level}". Only "accounts" is currently supported`);
     }
 
-    const [counter, base] = await cache.fetchAccountSizeCounter(resource);
+    const [counter, base] = await this.cacheClient.fetchAccountSizeCounter(resource);
 
     let storageUtilized;
 
@@ -30,7 +28,7 @@ async function getStorage(ctx, params) {
         const labelName = serviceToWarp10Label[params.level];
         const labels = { [labelName]: resource };
 
-        const res = await iterIfError(warp10Clients, warp10 => {
+        const res = await iterIfError(this.warp10Clients, warp10 => {
             const options = {
                 params: {
                     end: now(),
@@ -48,7 +46,7 @@ async function getStorage(ctx, params) {
         }
 
         const { sizeD: currentSize } = res.result[0];
-        await cache.updateAccountCounterBase(resource, currentSize);
+        await this.cacheClient.updateAccountCounterBase(resource, currentSize);
         storageUtilized = currentSize;
     }
 
