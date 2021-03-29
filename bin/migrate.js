@@ -1,12 +1,18 @@
 const { tasks } = require('..');
 const { LoggerContext } = require('../libV2/utils');
-const { clients: warp10Clients } = require('../libV2/warp10');
+const config = require('../libV2/config');
 
 const logger = new LoggerContext({
     task: 'Migrate',
 });
 
-const task = new tasks.MigrateTask({ warp10: [warp10Clients[0]] });
+const taskConfig = config.merge({
+    warp10: {
+        hosts: config.warp10.hosts[0],
+    },
+});
+
+const task = new tasks.MigrateTask(taskConfig);
 
 task.setup()
     .then(() => logger.info('Starting utapi v1 => v2 migration'))

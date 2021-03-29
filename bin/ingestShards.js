@@ -1,13 +1,12 @@
 const { tasks } = require('..');
 const { LoggerContext } = require('../libV2/utils');
-const { clients: warp10Clients } = require('../libV2/warp10');
+const config = require('../libV2/config');
 
 const logger = new LoggerContext({
     task: 'IngestShard',
 });
 
-
-const task = new tasks.IngestShard({ warp10: warp10Clients });
+const task = new tasks.IngestShard(config);
 
 task.setup()
     .then(() => logger.info('Starting shard ingestion'))
