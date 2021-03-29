@@ -1,5 +1,3 @@
-const ApiController = require('../controller');
+const { internalController } = require('./controllers');
 
-const controller = new ApiController('internal');
-
-module.exports = controller.buildMap();
+module.exports = internalController.buildMap();

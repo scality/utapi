@@ -1,5 +1,3 @@
-const ApiController = require('../controller');
+const { metricController } = require('./controllers');
 
-const controller = new ApiController('metrics');
-
-module.exports = controller.buildMap();
+module.exports = metricController.buildMap();
