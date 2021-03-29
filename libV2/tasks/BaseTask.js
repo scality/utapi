@@ -16,25 +16,22 @@ class Now {}
 class BaseTask extends Process {
     constructor(config) {
         super(config);
-        // assert.notStrictEqual(options, undefined);
-        // assert(Array.isArray(options.warp10), 'you must provide an array of warp 10 clients');
-        // this._cache = cacheClient;
-        // this._warp10Clients = options.warp10;
+        this._cache = null;
+        this._warp10Clients = null;
         this._scheduler = null;
         this._defaultSchedule = Now;
         this._defaultLag = 0;
-        // }
-
-        this._cache = null;
-        this._warp10Clients = null;
     }
 
     async _setup(config, includeDefaultOpts = true) {
         this._nodeId = config.nodeId;
-        this._cache = buildCacheClient(config.cache);
+        this._cache = buildCacheClient({
+            backend: config.cache.backend,
+            cache: config.cache,
+            counter: config.redis,
+        });
         this._warp10Clients = buildWarp10Clients(config.warp10.hosts);
 
-        // async _setup(includeDefaultOpts = true) {
         if (includeDefaultOpts) {
             this._program
                 .option('-n, --now', 'Execute the task immediately and then exit. Overrides --schedule.')
