@@ -4,6 +4,7 @@ const uuid = require('uuid');
 
 const { clients: warp10Clients } = require('../../../libV2/warp10');
 const { MonitorDiskUsage } = require('../../../libV2/tasks');
+const config = require('../../../libV2/config');
 
 const { fillDir } = require('../../utils/v2Data');
 
@@ -15,7 +16,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
-        task = new MonitorDiskUsage({ warp10: warp10Clients });
+        task = new MonitorDiskUsage(config);
         await task.setup();
         task._path = path;
         task._enabled = true;

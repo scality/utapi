@@ -6,6 +6,7 @@ const { MonitorDiskUsage } = require('../../../libV2/tasks');
 const { UtapiMetric } = require('../../../libV2/models');
 const { now } = require('../../../libV2/utils');
 const { expirationChunkDuration } = require('../../../libV2/constants');
+const config = require('../../../libV2/config');
 
 const { fetchRecords } = require('../../utils/v2Data');
 
@@ -15,7 +16,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
     let task;
 
     beforeEach(async () => {
-        task = new MonitorDiskUsage({ warp10: warp10Clients });
+        task = new MonitorDiskUsage(config);
         await task.setup();
         task._expirationEnabled = true;
         task._program.leader = true;
