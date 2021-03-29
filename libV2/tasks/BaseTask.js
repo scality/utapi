@@ -101,7 +101,9 @@ class BaseTask extends Process {
     }
 
     async _join() {
-        return this._cache.disconnect();
+        if (this._cache) {
+            await this._cache.disconnect();
+        }
     }
 
     withWarp10(func, onError) {
