@@ -19,6 +19,7 @@ class APIController {
     constructor(tag) {
         this._handlers = APIController._collectHandlers(tag);
         this._middleware = APIController._collectHandlerMiddleware(tag);
+        this._handlerEnvironment = {};
     }
 
     static _safeRequire(path) {
@@ -176,12 +177,23 @@ class APIController {
      * @returns {Object} - Map of operationIds to handler
      */
     buildMap() {
+        this._built = true;
         return Object.entries(this._handlers)
             .reduce((ops, [id, handler]) => {
+                const _handler = handler.bind(this._handlerEnvironment);
                 ops[id] = (request, response, done) =>
-                    APIController.callOperation(id, handler, this._middleware[id], request, response, done);
+                    APIController.callOperation(id, _handler, this._middleware[id], request, response, done);
                 return ops;
             }, {});
+    }
+
+    setHandlerEnvironment(env) {
+        if (this._built) {
+            throw new Error(
+                'The handler environment can not be changed after ApiController.buildMap() has been called',
+            );
+        }
+        this._handlerEnvironment = env;
     }
 }
 
