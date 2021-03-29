@@ -8,7 +8,7 @@ const logger = new LoggerContext({
 
 const taskConfig = config.merge({
     warp10: {
-        hosts: config.warp10.hosts[0],
+        hosts: [config.warp10.hosts[0]],
     },
 });
 

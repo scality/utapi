@@ -28,8 +28,8 @@ class MonitorDiskUsage extends BaseTask {
         this._hardLimit = config.diskUsage.hardLimit || null;
     }
 
-    async _setup() {
-        await super._setup();
+    async _setup(config) {
+        await super._setup(config);
         this._program
             .option('--leader', 'Mark this process as the leader for metric expiration.')
             .option(
