@@ -119,15 +119,26 @@ class Warp10Client {
     }
 }
 
-const clients = _config.warp10.hosts.map(
-    val => new Warp10Client({
+function buildWarp10Clients(hosts, tokens) {
+    return hosts.map(
+        val => new Warp10Client({
+            ...tokens,
+            ...val,
+        }),
+    );
+}
+
+// TODO Remove after all users have been moved to building their own clients
+const clients = buildWarp10Clients(
+    _config.warp10.hosts,
+    {
         readToken: _config.warp10.readToken,
         writeToken: _config.warp10.writeToken,
-        ...val,
-    }),
+    },
 );
 
 module.exports = {
     Warp10Client,
     clients,
+    buildWarp10Clients,
 };

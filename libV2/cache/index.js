@@ -8,8 +8,20 @@ const cacheTypes = {
     memory: () => new MemoryCache(),
 };
 
-const cacheBackend = cacheTypes[config.cache.backend](config.cache);
-const counterBackend = cacheTypes[config.cache.backend](config.redis);
+function buildCacheClient(cacheConfig) {
+    const { backend, counter, cache } = cacheConfig;
+    return new CacheClient({
+        cacheBackend: cacheTypes[backend](cache),
+        counterBackend: cacheTypes[backend](counter),
+    });
+}
+
+// TODO remove after all users have been moved to buildCacheClient
+const { cacheBackend, counterBackend } = buildCacheClient({
+    backend: config.cache.backend,
+    cache: config.cache,
+    counter: config.redis,
+});
 
 module.exports = {
     CacheClient,
@@ -17,5 +29,7 @@ module.exports = {
         MemoryCache,
         RedisCache,
     },
+    // TODO remove after all users have been moved to buildCacheClient
     client: new CacheClient({ cacheBackend, counterBackend }),
+    buildCacheClient,
 };
