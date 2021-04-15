@@ -99,7 +99,7 @@ async function authV4Middleware(request, response, params) {
     switch (request.ctx.operationId) {
     case 'listMetrics':
         requestedResources = params.body[params.level];
-        action = params.Action.value;
+        action = params.Action;
         break;
 
     default:
