@@ -36,7 +36,7 @@ class ReindexTask extends BaseTask {
 
             // If versioned, subtract the size of the master to avoid double counting
             if (lastMaster && obj.name === lastMaster) {
-                logger.debug('Detected versioned key, subtracting master size', { lastMasterSize, key: obj.name });
+                logger.debug('Detected versioned key. subtracting master size', { lastMasterSize, key: obj.name });
                 size -= lastMasterSize;
                 count -= 1;
                 lastMaster = null;
@@ -85,7 +85,7 @@ class ReindexTask extends BaseTask {
         const sizeDelta = total.size - value.storageUtilized[0];
 
         if (objectDelta !== 0 || sizeDelta !== 0) {
-            logger.info('discrepancy detected in metrics, writing corrective record',
+            logger.info('discrepancy detected in metrics. writing corrective record',
                 { [level]: resource, objectDelta, sizeDelta });
 
             const record = new UtapiRecord({
@@ -107,13 +107,13 @@ class ReindexTask extends BaseTask {
     }
 
     async _execute() {
-        logger.debug('reindexing objects');
+        logger.info('started reindex task');
 
         const accountTotals = {};
         const ignoredAccounts = new Set();
 
         await async.eachLimit(metadata.listBuckets(), 5, async bucket => {
-            logger.trace('starting reindex of bucket', { bucket: bucket.name });
+            logger.info('started bucket reindex', { bucket: bucket.name });
 
             const mpuBucket = `${mpuBucketPrefix}${bucket.name}`;
             let bktTotal;
@@ -123,7 +123,7 @@ class ReindexTask extends BaseTask {
                 bktTotal = await async.retryable(ReindexTask._indexBucket)(bucket.name);
                 mpuTotal = await async.retryable(ReindexTask._indexMpuBucket)(mpuBucket);
             } catch (error) {
-                logger.error('failed to reindex bucket, ignoring associated account', { error, bucket: bucket.name });
+                logger.error('failed bucket reindex. associated account skipped', { error, bucket: bucket.name });
                 ignoredAccounts.add(bucket.account);
                 return;
             }
@@ -140,7 +140,7 @@ class ReindexTask extends BaseTask {
                 accountTotals[bucket.account] = { ...total };
             }
 
-            logger.trace('finished indexing bucket', { bucket: bucket.name });
+            logger.info('finished bucket reindex', { bucket: bucket.name });
 
             await this._updateMetric(
                 serviceToWarp10Label.buckets,
@@ -159,7 +159,7 @@ class ReindexTask extends BaseTask {
                 total,
             ));
 
-        logger.debug('finished reindexing');
+        logger.info('finished reindex task');
     }
 }
 
