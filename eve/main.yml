@@ -56,12 +56,23 @@ models:
         exit 1'
       haltOnFailure: true
 
+  - ShellCommand: &fetch_lfs
+      name: fetch lfs files
+      usePTY: True
+      command: |
+        git lfs pull
+      haltOnFailure: True
 
 stages:
   pre-merge:
     worker:
       type: local
     steps:
+    - ShellCommand:
+        name: Pull LFS content on Master build
+        command: |
+          git lfs pull
+        workdir: "%(prop:master_builddir)s/build"
     - TriggerStages:
         name: trigger all the tests
         stage_names:
@@ -78,6 +89,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run static analysis tools on markdown
           command: yarn run lint_md
@@ -95,6 +107,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run client tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:client
@@ -106,6 +119,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run server tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:server
@@ -117,6 +131,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run cron tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
@@ -128,6 +143,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run interval tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
@@ -142,6 +158,7 @@ stages:
         vault: enabled
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: Wait for Warp 10
           command: |
@@ -154,10 +171,11 @@ stages:
               follow: true
       - ShellCommand:
           name: run v2 functional tests
-          command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:v2
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:v2
           env:
             UTAPI_CACHE_BACKEND: redis
             UTAPI_LOG_LEVEL: trace
+            SETUP_CMD: "run start_v2:server"
           logfiles:
             warp10:
               filename: "/artifacts/warp10.log"
@@ -172,6 +190,7 @@ stages:
         vault: enabled
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: Wait for Warp 10
           command: |
@@ -184,10 +203,11 @@ stages:
               follow: true
       - ShellCommand:
           name: run v2 soft limit tests
-          command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:softLimit
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:softLimit
           env:
             UTAPI_CACHE_BACKEND: redis
             UTAPI_LOG_LEVEL: trace
+            SETUP_CMD: "run start_v2:server"
           logfiles:
             warp10:
               filename: "/artifacts/warp10.log"
@@ -196,10 +216,11 @@ stages:
               filename: "/artifacts/setup_ft_test:softLimit.log"
       - ShellCommand:
           name: run v2 hard limit tests
-          command: SETUP_CMD="run start_v2:server" bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:hardLimit
+          command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:hardLimit
           env:
             UTAPI_CACHE_BACKEND: redis
             UTAPI_LOG_LEVEL: trace
+            SETUP_CMD: "run start_v2:server"
           logfiles:
             warp10:
               filename: "/artifacts/warp10.log"
