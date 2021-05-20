@@ -15,8 +15,12 @@ WORKDIR /utapi
 
 RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz \
     && tar -xf node-v${NODE_VERSION}-linux-x64.tar.gz --directory /usr/local --strip-components 1 \
+    && apt-get update -qq \
+    && apt-get install -y apt-transport-https \
     && curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
+    && curl -sSL https://packagecloud.io/github/git-lfs/gpgkey | apt-key add - \
+    && echo "deb https://packagecloud.io/github/git-lfs/debian/ jessie main" | tee /etc/apt/sources.list.d/lfs.list \
     && apt-get update -qq \
     && cat /tmp/*packages.list | xargs apt-get install -y \
     && pip install pip==9.0.1 \
