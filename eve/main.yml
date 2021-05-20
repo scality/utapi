@@ -45,6 +45,12 @@ stages:
     worker:
       type: local
     steps:
+    - ShellCommand:
+        name: Pull LFS content on Master build
+        command: |
+          git lfs fetch
+          git lfs pull
+        workdir: "%(prop:master_builddir)s/build"
     - TriggerStages:
         name: trigger all the tests
         stage_names:
