@@ -1,4 +1,4 @@
-FROM buildpack-deps:jessie-curl
+FROM buildpack-deps:focal-curl
 
 #
 # Install apt packages needed by utapi and buildbot_worker
@@ -19,11 +19,11 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
     && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && apt-get update -qq \
     && cat /tmp/*packages.list | xargs apt-get install -y \
-    && pip install pip==9.0.1 \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /tmp/*packages.list \
     && rm -f /etc/supervisor/conf.d/*.conf \
     && rm -f node-v${NODE_VERSION}-linux-x64.tar.gz
+    # && pip install pip==9.0.1 \
 
 #
 # Install yarn dependencies
@@ -39,9 +39,11 @@ RUN yarn cache clean \
 #
 ARG BUILDBOT_VERSION
 
-RUN pip install buildbot-worker==$BUILDBOT_VERSION
-RUN pip3 install requests
-RUN pip3 install redis
+RUN pip3 install \
+    buildbot-worker==$BUILDBOT_VERSION \
+    requests \
+    redis
+
 ADD eve/workers/unit_and_feature_tests/supervisor/buildbot_worker.conf /etc/supervisor/conf.d/
 ADD eve/workers/unit_and_feature_tests/redis/sentinel.conf /etc/sentinel.conf
 

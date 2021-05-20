@@ -27,7 +27,18 @@ models:
       source: /artifacts
       urls:
         - "*"
-
+  - ShellCommand: &fetch_lfs
+      name: fetch lfs files
+      usePTY: True
+      command: >
+        set -exv;
+        unset HTTPS_PROXY;
+        unset HTTP_PROXY;
+        unset http_proxy;
+        unset https_proxy;
+        git lfs fetch;
+        git lfs pull;
+      haltOnFailure: True
 
 stages:
   pre-merge:
@@ -49,6 +60,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run static analysis tools on markdown
           command: yarn run lint_md
@@ -66,6 +78,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run client tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:client
@@ -77,6 +90,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run server tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:server
@@ -88,6 +102,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run cron tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
@@ -99,6 +114,7 @@ stages:
     worker: *workspace
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: run interval tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:interval
@@ -113,6 +129,7 @@ stages:
         vault: enabled
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: Wait for Warp 10
           command: |
@@ -143,6 +160,7 @@ stages:
         vault: enabled
     steps:
       - Git: *clone
+      - ShellCommand: *fetch_lfs
       - ShellCommand:
           name: Wait for Warp 10
           command: |
