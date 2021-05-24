@@ -1,5 +1,6 @@
 ca-certificates
 git
+git-lfs
 libffi-dev
 libssl-dev
 python2.7

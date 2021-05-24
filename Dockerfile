@@ -1,4 +1,4 @@
-FROM node:10.22.0-slim
+FROM node:10.22.0-buster-slim
 
 WORKDIR /usr/src/app
 
@@ -13,10 +13,10 @@ RUN curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 
 RUN apt-get update \
-    && apt-get install -y jq git python build-essential yarn --no-install-recommends \
+    && apt-get install -y jq git python3 build-essential yarn --no-install-recommends \
     && yarn cache clean \
     && yarn install --frozen-lockfile --production --ignore-optional \
-    && apt-get autoremove --purge -y python git build-essential \
+    && apt-get autoremove --purge -y python3 git build-essential \
     && rm -rf /var/lib/apt/lists/* \
     && yarn cache clean \
     && rm -rf ~/.node-gyp \

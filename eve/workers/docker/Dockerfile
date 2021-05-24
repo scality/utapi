@@ -17,6 +17,7 @@ RUN yum install -y epel-release \
     python36-devel \
     python36-pip \
     git \
+    git-lfs \
     docker-ce-cli-18.09.6 \
     && adduser -u 1042 --home /home/eve eve --groups docker \
     && chown -R eve:eve /home/eve \
