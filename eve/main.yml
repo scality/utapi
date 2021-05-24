@@ -31,7 +31,6 @@ models:
       name: fetch lfs files
       usePTY: True
       command: |
-        git lfs fetch
         git lfs pull
       haltOnFailure: True
 
@@ -43,7 +42,6 @@ stages:
     - ShellCommand:
         name: Pull LFS content on Master build
         command: |
-          git lfs fetch
           git lfs pull
         workdir: "%(prop:master_builddir)s/build"
     - TriggerStages:
