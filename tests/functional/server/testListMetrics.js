@@ -89,7 +89,7 @@ describe('Request ranges', function test() {
             timeRange, type, resource, expected,
         } = test;
         const msg = timeRange
-            ? `should handle a request range of ${timeRange[0] - timeRange[1]}ms`
+            ? `should handle a request range of ${timeRange[1] - timeRange[0]}ms`
             : 'should handle a ListRecentMetrics request';
         it(msg, done => {
             const headers = {
