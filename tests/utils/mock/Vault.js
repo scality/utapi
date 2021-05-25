@@ -14,7 +14,7 @@ class Vault {
         res.writeHead(200);
         const { query } = url.parse(req.url, true);
         if (query.Action === 'AccountsCanonicalIds') {
-            const body = JSON.stringify([{ canonicalId: CANONICAL_ID }]);
+            const body = JSON.stringify([{ canonicalId: CANONICAL_ID, accountId: query.accountIds }]);
             res.write(body);
         }
         return res.end();
