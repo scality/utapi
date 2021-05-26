@@ -1,4 +1,5 @@
 const assert = require('assert');
+const sinon = require('sinon');
 const uuid = require('uuid');
 const { mpuBucketPrefix } = require('arsenal').constants;
 
@@ -43,39 +44,75 @@ describe('Test ReindexTask', function () {
         bucketd.reset();
     });
 
-    async function assertResult(labels, value) {
-        const series = await fetchRecords(
-            warp10,
-            'utapi.repair.reindex',
-            labels,
-            { end: now(), count: -100 },
-            '@utapi/decodeRecord',
-        );
+    describe('test different bucket listing lengths', () => {
+        async function assertResult(labels, value) {
+            const series = await fetchRecords(
+                warp10,
+                'utapi.repair.reindex',
+                labels,
+                { end: now(), count: -100 },
+                '@utapi/decodeRecord',
+            );
 
-        assert.strictEqual(series.length, 1);
-        assert.strictEqual(series[0].values.length, 1);
-        assert.deepStrictEqual(series[0].values[0], value);
-    }
+            assert.strictEqual(series.length, 1);
+            assert.strictEqual(series[0].values.length, 1);
+            assert.deepStrictEqual(series[0].values[0], value);
+        }
 
-    bucketCounts.forEach(count => {
-        it(`should reindex bucket listing with a length of ${count}`, async () => {
-            const bucket = `${BUCKET_NAME}-${count}`;
-            const mpuBucket = `${mpuBucketPrefix}${bucket}`;
-            bucketd
-                .setBucketContent({
-                    bucketName: bucket,
-                    contentLength: 1024,
-                })
-                .setBucketContent({
-                    bucketName: mpuBucket,
-                    contentLength: 1024,
-                })
-                .setBucketCount(count)
-                .createBuckets();
+        bucketCounts.forEach(count => {
+            it(`should reindex bucket listing with a length of ${count}`, async () => {
+                const bucket = `${BUCKET_NAME}-${count}`;
+                const mpuBucket = `${mpuBucketPrefix}${bucket}`;
+                bucketd
+                    .setBucketContent({
+                        bucketName: bucket,
+                        contentLength: 1024,
+                    })
+                    .setBucketContent({
+                        bucketName: mpuBucket,
+                        contentLength: 1024,
+                    })
+                    .setBucketCount(count)
+                    .createBuckets();
 
-            await reindexTask._execute();
-            await assertResult({ bck: bucket, node: prefix }, bucketRecord);
-            await assertResult({ acc: CANONICAL_ID, node: prefix }, accountRecord);
+                await reindexTask._execute();
+                await assertResult({ bck: bucket, node: prefix }, bucketRecord);
+                await assertResult({ acc: CANONICAL_ID, node: prefix }, accountRecord);
+            });
+        });
+    });
+
+    describe('test invalid responses from warp 10', () => {
+        let warp10Stub;
+        beforeEach(() => {
+            warp10Stub = sinon.stub(warp10, 'exec');
+        });
+
+        afterEach(() => sinon.restore());
+
+        it('should rethrow an error', async () => {
+            warp10Stub = warp10Stub.rejects();
+            assert.rejects(() => reindexTask._fetchCurrentMetrics('bck', BUCKET_NAME));
+        });
+
+        it('should throw if an empty response is returned', async () => {
+            warp10Stub = warp10Stub.callsFake(async () => ({ result: undefined }));
+            assert.rejects(() => reindexTask._fetchCurrentMetrics('bck', BUCKET_NAME));
+        });
+
+        it('should throw if an empty stack is returned', async () => {
+            warp10Stub = warp10Stub.callsFake(async () => ({ result: [] }));
+            assert.rejects(() => reindexTask._fetchCurrentMetrics('bck', BUCKET_NAME));
+        });
+
+        it('should throw if objD is not an integer', async () => {
+            warp10Stub = warp10Stub.callsFake(async () => ({ result: [{ objD: null, sizeD: 1 }] }));
+            assert.rejects(() => reindexTask._fetchCurrentMetrics('bck', BUCKET_NAME));
+        });
+
+        it('should throw if sizeD is not an integer', async () => {
+            warp10Stub = warp10Stub.callsFake(async () => ({ result: [{ objD: 1, sizeD: null }] }));
+            assert.rejects(() => reindexTask._fetchCurrentMetrics('bck', BUCKET_NAME));
         });
     });
 });

@@ -64,25 +64,38 @@ class ReindexTask extends BaseTask {
         const res = await this.withWarp10(warp10 => {
             const options = {
                 params: {
-                    start: timestamp,
                     end: timestamp,
                     node: warp10.nodeId,
                     labels: {
                         [level]: resource,
                     },
                 },
-                macro: 'utapi/getMetrics',
+                macro: 'utapi/getMetricsAt',
             };
             return warp10.exec(options);
         });
-        return { timestamp, value: JSON.parse(res.result[0]) };
+
+        const [value] = res.result || [];
+        if (!value) {
+            throw new Error('unable to fetch current metrics from warp10');
+        }
+
+        if (!Number.isInteger(value.objD) || !Number.isInteger(value.sizeD)) {
+            logger.error('invalid values returned from warp 10', { response: res });
+            throw new Error('invalid values returned from warp 10');
+        }
+
+        return {
+            timestamp,
+            value,
+        };
     }
 
     async _updateMetric(level, resource, total) {
         const { timestamp, value } = await this._fetchCurrentMetrics(level, resource);
 
-        const objectDelta = total.count - value.numberOfObjects[0];
-        const sizeDelta = total.size - value.storageUtilized[0];
+        const objectDelta = total.count - value.objD;
+        const sizeDelta = total.size - value.sizeD;
 
         if (objectDelta !== 0 || sizeDelta !== 0) {
             logger.info('discrepancy detected in metrics. writing corrective record',
@@ -142,22 +155,31 @@ class ReindexTask extends BaseTask {
 
             logger.info('finished bucket reindex', { bucket: bucket.name });
 
-            await this._updateMetric(
-                serviceToWarp10Label.buckets,
-                bucket.name,
-                total,
-            );
+            try {
+                await this._updateMetric(
+                    serviceToWarp10Label.buckets,
+                    bucket.name,
+                    total,
+                );
+            } catch (error) {
+                logger.error('error updating metrics for bucket', { error, bucket: bucket.name });
+            }
         });
 
         const toUpdate = Object.entries(accountTotals)
             .filter(([account]) => !ignoredAccounts.has(account));
 
-        await async.eachLimit(toUpdate, 5, async ([account, total]) =>
-            this._updateMetric(
-                serviceToWarp10Label.accounts,
-                account,
-                total,
-            ));
+        await async.eachLimit(toUpdate, 5, async ([account, total]) => {
+            try {
+                await this._updateMetric(
+                    serviceToWarp10Label.accounts,
+                    account,
+                    total,
+                );
+            } catch (error) {
+                logger.error('error updating metrics for account', { error, account });
+            }
+        });
 
         logger.info('finished reindex task');
     }
