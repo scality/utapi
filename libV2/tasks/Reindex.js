@@ -20,6 +20,11 @@ class ReindexTask extends BaseTask {
         this._defaultLag = 0;
     }
 
+    async _setup(includeDefaultOpts = true) {
+        await super._setup(includeDefaultOpts);
+        this._program.option('--bucket <bucket>', 'Specify a single bucket to reindex.');
+    }
+
     static async _indexBucket(bucket) {
         let size = 0;
         let count = 0;
@@ -119,13 +124,20 @@ class ReindexTask extends BaseTask {
         }
     }
 
+    get targetBuckets() {
+        if (this._program.bucket) {
+            return [{ name: this._program.bucket }];
+        }
+
+        return metadata.listBuckets();
+    }
+
     async _execute() {
         logger.info('started reindex task');
 
         const accountTotals = {};
         const ignoredAccounts = new Set();
-
-        await async.eachLimit(metadata.listBuckets(), 5, async bucket => {
+        await async.eachLimit(this.targetBuckets, 5, async bucket => {
             logger.info('started bucket reindex', { bucket: bucket.name });
 
             const mpuBucket = `${mpuBucketPrefix}${bucket.name}`;
@@ -136,8 +148,14 @@ class ReindexTask extends BaseTask {
                 bktTotal = await async.retryable(ReindexTask._indexBucket)(bucket.name);
                 mpuTotal = await async.retryable(ReindexTask._indexMpuBucket)(mpuBucket);
             } catch (error) {
-                logger.error('failed bucket reindex. associated account skipped', { error, bucket: bucket.name });
-                ignoredAccounts.add(bucket.account);
+                logger.error(
+                    'failed bucket reindex. any associated account will be skipped',
+                    { error, bucket: bucket.name }
+                );
+                // buckets passed with `--bucket` won't have an account property
+                if (bucket.account) {
+                    ignoredAccounts.add(bucket.account);
+                }
                 return;
             }
 
@@ -146,11 +164,14 @@ class ReindexTask extends BaseTask {
                 count: bktTotal.count,
             };
 
-            if (accountTotals[bucket.account]) {
-                accountTotals[bucket.account].size += total.size;
-                accountTotals[bucket.account].count += total.count;
-            } else {
-                accountTotals[bucket.account] = { ...total };
+            // buckets passed with `--bucket` won't have an account property
+            if (bucket.account) {
+                if (accountTotals[bucket.account]) {
+                    accountTotals[bucket.account].size += total.size;
+                    accountTotals[bucket.account].count += total.count;
+                } else {
+                    accountTotals[bucket.account] = { ...total };
+                }
             }
 
             logger.info('finished bucket reindex', { bucket: bucket.name });
