@@ -40,7 +40,7 @@ async function getStorage(ctx, params) {
                 macro: 'utapi/getMetricsAt',
             };
             return warp10.exec(options);
-        });
+        }, error => ctx.logger.error('error while fetching metrics', { error }));
 
         if (res.result.length === 0) {
             ctx.logger.error('unable to retrieve metrics', { level, resource });
