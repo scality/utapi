@@ -22,6 +22,7 @@ const accountRecord = {
     objD: 1,
 };
 
+
 // eslint-disable-next-line func-names
 describe('Test ReindexTask', function () {
     this.timeout(120000);
@@ -44,16 +45,19 @@ describe('Test ReindexTask', function () {
         bucketd.reset();
     });
 
+    async function fetchReindex(labels) {
+        return fetchRecords(
+            warp10,
+            'utapi.repair.reindex',
+            labels,
+            { end: now(), count: -100 },
+            '@utapi/decodeRecord',
+        );
+    }
+
     describe('test different bucket listing lengths', () => {
         async function assertResult(labels, value) {
-            const series = await fetchRecords(
-                warp10,
-                'utapi.repair.reindex',
-                labels,
-                { end: now(), count: -100 },
-                '@utapi/decodeRecord',
-            );
-
+            const series = await fetchReindex(labels);
             assert.strictEqual(series.length, 1);
             assert.strictEqual(series[0].values.length, 1);
             assert.deepStrictEqual(series[0].values[0], value);
@@ -114,5 +118,33 @@ describe('Test ReindexTask', function () {
             warp10Stub = warp10Stub.callsFake(async () => ({ result: [{ objD: 1, sizeD: null }] }));
             assert.rejects(() => reindexTask._fetchCurrentMetrics('bck', BUCKET_NAME));
         });
+    });
+
+    it('should avoid calculating incorrect reindex diffs', async () => {
+        const bucketName = `${BUCKET_NAME}-1`;
+        bucketd
+            .setBucketContent({
+                bucketName,
+                contentLength: 1024,
+            })
+            .setBucketContent({
+                bucketName: `${mpuBucketPrefix}${bucketName}`,
+                contentLength: 1024,
+            })
+            .setBucketCount(2)
+            .createBuckets();
+
+        await reindexTask._execute();
+        let series = await fetchReindex({ bck: bucketName, node: prefix });
+        assert.strictEqual(series.length, 1);
+        assert.strictEqual(series[0].values.length, 1);
+        assert.deepStrictEqual(series[0].values[0], bucketRecord);
+
+        // A second run of reindex should generate the same diff
+        await reindexTask._execute();
+        series = await fetchReindex({ bck: bucketName, node: prefix });
+        assert.strictEqual(series.length, 1);
+        assert.strictEqual(series[0].values.length, 2);
+        series[0].values.map(value => assert.deepStrictEqual(value, bucketRecord));
     });
 });
