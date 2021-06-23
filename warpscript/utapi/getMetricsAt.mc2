@@ -1,6 +1,6 @@
 // @endpoint http://localhost:4802/api/v0/exec
 {
-  'name' 'utapi/getMetricsAt'
+  'name' 'debug/getMetricsAt'
   'desc'
   <'
 
@@ -290,18 +290,30 @@
     'load_reindex' SECTION
     // Only load the latest reindex for the current node
     $labels UNMAP 'node' $nodeID } 'filterLabels' STORE
+
+    [
+      $read_token
+      $reindex_class
+      $filterLabels
+    ] FIND
+    DUP SIZE TOSTRING 'FIND size: ' SWAP + LOGMSG
+    ->JSON 'FIND: ' SWAP + LOGMSG
+
     {
       'token' $read_token
       'class' $reindex_class
       'labels' $filterLabels
       'end' $endTimestamp
       'count' 1
-    } FETCH
+    }
+    DUP 'reindex query: ' SWAP ->JSON + LOGMSG
+    FETCH
+    DUP SIZE TOSTRING 'FETCH size: ' SWAP + LOGMSG
     <% // Handle multiple GTS
       VALUES
       <% // For each reindex correction
         @utapi/decodeRecord
-        // DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
+        DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
         $results @util/sumRecord 'results' STORE
       %> FOREACH
     %> FOREACH
