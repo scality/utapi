@@ -298,13 +298,13 @@
         'labels' $filterLabels
         'end' $endTimestamp
         'count' 1
-      } DUP ->JSON LOGMSG FETCH
-      DUP 'Loaded reindex records ' SWAP ->JSON + LOGMSG
+      } FETCH
+      // DUP 'Loaded reindex records ' SWAP ->JSON + LOGMSG
       <% // Handle multiple GTS
         VALUES
         <% // For each reindex correction
           @utapi/decodeRecord
-          DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
+          // DUP 'Loaded reindex correction ' SWAP ->JSON + LOGMSG
           $results @util/sumRecord 'results' STORE
         %> FOREACH
       %> FOREACH
