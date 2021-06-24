@@ -42,19 +42,21 @@ function comprehend(data, func) {
  * @returns {*} -
  */
 async function iterIfError(items, func, onError) {
+    let error;
     // eslint-disable-next-line no-restricted-syntax
     for (const item of items) {
         try {
             // eslint-disable-next-line no-await-in-loop
             const resp = await func(item);
             return resp;
-        } catch (error) {
+        } catch (_error) {
             if (onError) {
-                onError(error);
+                onError(_error);
             }
+            error = _error;
         }
     }
-    throw new Error('unable to complete request');
+    throw error || new Error('unable to complete request');
 }
 
 module.exports = {
