@@ -25,7 +25,7 @@ class ReindexTask extends BaseTask {
         this._program.option(
             '--bucket <bucket>',
             'Manually specify a bucket to reindex. Can be specified multiple times.',
-            (v, p) => p.concat([v]),
+            (bucket, previous) => previous.concat([bucket]),
             [],
         );
     }
