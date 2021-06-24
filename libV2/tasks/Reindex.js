@@ -79,6 +79,8 @@ class ReindexTask extends BaseTask {
                     labels: {
                         [level]: resource,
                     },
+                    // eslint-disable-next-line camelcase
+                    no_reindex: true,
                 },
                 macro: 'utapi/getMetricsAt',
             };
