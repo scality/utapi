@@ -5,7 +5,7 @@ const { UtapiMetric } = require('../models');
 const config = require('../config');
 const { checkpointLagSecs } = require('../constants');
 const {
-    LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock, now,
+    LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock, now, comprehend,
 } = require('../utils');
 
 const logger = new LoggerContext({
@@ -13,6 +13,37 @@ const logger = new LoggerContext({
 });
 
 const checkpointLagMicroseconds = convertTimestamp(checkpointLagSecs);
+
+function _updateCheckpoint(checkpoint, metric) {
+    return {
+        objD: checkpoint.objD + metric.objD,
+        sizeD: checkpoint.sizeD + metric.sizeD,
+        inB: checkpoint.inB + metric.inB,
+        outB: checkpoint.outB + metric.outB,
+    };
+}
+
+function _checkpointFactory(labels) {
+    const checkpoints = comprehend(labels, key => ({ key, value: {} }));
+    let oldest = NaN;
+    let newest = NaN;
+    return {
+        update: metric => {
+            oldest = metric.timestamp < oldest || NaN.isNan(oldest) ? metric.timestamp : oldest;
+            newest = metric.timestamp > newest || NaN.isNan(newest) ? metric.timestamp : newest;
+            labels
+                .filter(label => !!metric[label])
+                .forEach(label => {
+                    const value = metric[label];
+                    const checkpoint = checkpoints[label][value];
+                    checkpoints[label][value] = _updateCheckpoint(checkpoint, metric);
+                });
+        },
+        checkpoints: () => (checkpoints),
+        oldest: () => (oldest),
+        newest: () => (newest),
+    };
+}
 
 class IngestShardTask extends BaseTask {
     constructor(options) {
@@ -54,14 +85,16 @@ class IngestShardTask extends BaseTask {
                     if (metrics.length > 0) {
                         logger.info(`Ingesting ${metrics.length} events from shard`, { shard });
                         const shardAge = now() - shard;
-                        const areSlowEvents = shardAge >= checkpointLagMicroseconds;
+                        const areSlowEvents = false; //shardAge >= checkpointLagMicroseconds;
                         const metricClass = areSlowEvents ? 'utapi.repair.event' : 'utapi.event';
 
                         if (areSlowEvents) {
                             logger.info('Detected slow records, ingesting as repair');
                         }
 
-                        const records = metrics.map(m => this._hydrateEvent(m, areSlowEvents));
+                        const factory = _checkpointFactory(['bucket', 'account']);
+
+                        const records = metrics.map(m => this._hydrateEvent(m, areSlowEvents)).forEach(factory.update);
 
                         records.sort((a, b) => a.timestamp - b.timestamp);
 
