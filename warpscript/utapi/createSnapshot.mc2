@@ -54,6 +54,7 @@
       ".app"
       ".producer"
       ".owner"
+      "origin"
     ] ->SET 'ignoredLabels' STORE
 
     // Search for available snapshots
