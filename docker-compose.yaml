@@ -1,0 +1,47 @@
+version: '3.8'
+
+x-models:
+  warp10: &warp10
+    build:
+      context: .
+      dockerfile: ./images/warp10/Dockerfile
+    volumes: [ $PWD/warpscript:/usr/local/share/warpscript ]
+
+  warp10_env: &warp10_env
+    ENABLE_WARPSTUDIO: 'true'
+    ENABLE_SENSISION: 'true'
+    warpscript.repository.refresh: 1000
+    warpscript.maxops: 1000000000
+    warpscript.maxops.hard: 1000000000
+    warpscript.maxfetch: 1000000000
+    warpscript.maxfetch.hard: 1000000000
+    warpscript.extension.debug: io.warp10.script.ext.debug.DebugWarpScriptExtension
+    warpscript.maxrecursion: 1000
+    warpscript.repository.directory: /usr/local/share/warpscript
+    warpscript.extension.logEvent: io.warp10.script.ext.logging.LoggingWarpScriptExtension
+  
+  redis: &redis
+      build:
+        context: .
+        dockerfile: ./images/redis/Dockerfile
+
+services:
+  redis:
+    << : *redis
+    ports:
+      - 6379:6379
+      - 9121:9121
+
+  warp10:
+    << : *warp10
+    environment:
+      << : *warp10_env
+
+    ports:
+      - 4802:4802
+      - 8081:8081
+      - 9718:9718
+
+    volumes:
+      - /tmp/warp10:/data
+      - '${PWD}/warpscript:/usr/local/share/warpscript'
