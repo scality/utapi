@@ -3,7 +3,7 @@
 JAVA="/usr/bin/java"
 JAVA_OPTS=""
 
-VERSION=1.0.21
+VERSION=1.0.23
 SENSISION_CONFIG=${SENSISION_DATA_DIR}/conf/sensision.conf
 SENSISION_JAR=${SENSISION_HOME}/bin/sensision-${VERSION}.jar
 SENSISION_CP=${SENSISION_HOME}/etc:${SENSISION_JAR}
@@ -14,7 +14,7 @@ if [ -z "$SENSISION_HEAP" ]; then
     SENSISION_HEAP=64m
 fi
 
-SENSISION_CMD="${JAVA} ${JAVA_OPTS} -Xmx${SENSISION_HEAP} -Dsensision.server.port=0 ${SENSISION_OPTS} -Dsensision.config=${SENSISION_CONFIG} -cp ${SENSISION_CP} ${SENSISION_CLASS}"
+SENSISION_CMD="${JAVA} ${JAVA_OPTS} -Xmx${SENSISION_HEAP} -Dsensision.server.port=${SENSISION_PORT} ${SENSISION_OPTS} -Dsensision.config=${SENSISION_CONFIG} -cp ${SENSISION_CP} ${SENSISION_CLASS}"
 
 if [ -n "$ENABLE_SENSISION" ]; then
     echo "Starting Sensision with $SENSISION_CMD ..."
