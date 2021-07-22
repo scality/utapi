@@ -24,6 +24,7 @@ ENV S6_BEHAVIOUR_IF_STAGE2_FAILS 2
 
 ENV WARP10_CONF_TEMPLATES ${WARP10_HOME}/conf.templates/standalone
 ENV SENSISION_DATA_DIR /data/sensision
+ENV SENSISION_PORT 8082
 
 # Modify Warp 10 default config
 ENV standalone.host 0.0.0.0
@@ -46,7 +47,12 @@ ADD ./images/warp10/jmx_prom.yaml /opt/jmx_prom.yaml
 # Install protobuf extestion
 ADD ./images/warp10/warp10-ext-protobuf-1.2.2-uberjar.jar /opt/warp10/lib/
 
+# Install Sensision exporter
+COPY --from=builder /usr/local/go/warp10_sensision_exporter /usr/local/bin/warp10_sensision_exporter
+
 ADD ./images/warp10/s6 /etc
 ADD ./warpscript /usr/local/share/warpscript
 ADD ./images/warp10/static.tokens /
+
 CMD /init
+
