@@ -1,0 +1,11 @@
+#!/usr/bin/with-contenv sh
+
+./redis_exporter
+status=$?
+if [ $status -ne 0 ]; 
+then
+  echo "Failed to start exporter: $status from directory: ${PWD}"
+  exit $status
+else
+  echo "redis exporter started"
+fi
