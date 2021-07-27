@@ -28,7 +28,7 @@ if [ -n "$ENABLE_SENSISION" ]; then
     if [ -n "$SENSISION_LABELS" ]; then
         _SENSISION_LABELS="-Dsensision.default.labels=$SENSISION_LABELS"
     fi
-    SENSISION_OPTS="-Dsensision.server.port=0 ${_SENSISION_LABELS} -Dsensision.events.dir=/var/run/sensision/metrics -Dfile.encoding=UTF-8"
+    SENSISION_OPTS="-Dsensision.server.port=8082 ${_SENSISION_LABELS} -Dsensision.events.dir=/var/run/sensision/metrics -Dfile.encoding=UTF-8"
 fi
 
 WARP10_CMD="${JAVA} -Dlog4j.configuration=file:${LOG4J_CONF} ${JAVA_OPTS} ${SENSISION_OPTS} -cp ${WARP10_CP} ${WARP10_CLASS} ${CONFIG_FILES}"
