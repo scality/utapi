@@ -1,5 +1,0 @@
-#!/usr/bin/with-contenv sh
-echo "configuring exporter"
-pwd
-ls
-mv /warp10-sensision-exporter-master/ /run/s6/services/sensision-exporter/
