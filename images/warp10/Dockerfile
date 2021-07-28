@@ -25,11 +25,10 @@ RUN wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_V
 ADD ./images/warp10/warp10-ext-protobuf-1.2.2-uberjar.jar /opt/warp10/lib/
 
 # Install Golang
-ENV GOLANG_TAG 1.14-alpine
 ENV GOROOT /usr/local/go
 ENV GOPATH ${HOME}/go
 ENV PATH ${GOPATH}/bin:${GOROOT}/bin:${PATH}
-COPY --from=golang:{GOLANG_TAG} /usr/local/go/ /usr/local/go/
+COPY --from=golang:1.14-alpine /usr/local/go/ /usr/local/go/
 
 # Install Sensision exporter 
 RUN apk add zip && apk add unzip && apk add build-base\
