@@ -2,6 +2,7 @@ const assert = require('assert');
 
 const APIController = require('../../../../libV2/server/controller');
 const healthcheck = require('../../../../libV2/server/API/internal/healthcheck');
+const prometheusMetrics = require('../../../../libV2/server/API/internal/prometheusMetrics');
 
 const { ResponseContainer } = require('../../../../libV2/models');
 const { ExpressResponseStub, templateRequest } = require('../../../utils/v2Data');
@@ -38,9 +39,10 @@ describe('Test APIController', () => {
     });
 
     it('should load handlers for a tag', () => {
-        const handlers = APIController._collectHandlers('internal');
+        const handlers = APIController._collectHandlers('internal');        
         assert.deepStrictEqual(handlers, {
             healthcheck,
+            prometheusMetrics,
         });
     });
 
