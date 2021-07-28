@@ -39,7 +39,7 @@ describe('Test APIController', () => {
     });
 
     it('should load handlers for a tag', () => {
-        const handlers = APIController._collectHandlers('internal');        
+        const handlers = APIController._collectHandlers('internal');
         assert.deepStrictEqual(handlers, {
             healthcheck,
             prometheusMetrics,
