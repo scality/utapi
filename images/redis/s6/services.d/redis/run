@@ -3,7 +3,7 @@
 redis-server
 status=$?
 if [ $status -ne 0 ]; then
-  echo "Failed to start redis: $status from directory: ${PWD}"
+  echo "Failed to start redis: $status"
   exit $status
 else
   echo "redis started"
