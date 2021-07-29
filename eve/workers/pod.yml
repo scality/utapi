@@ -15,7 +15,7 @@ spec:
         cpu: 500m
         memory: 3Gi
       limits:
-        cpu: "1"
+        cpu: "2"
         memory: 3Gi
     volumeMounts:
     - mountPath: /var/run/docker.sock
@@ -53,11 +53,11 @@ spec:
       - /init | tee -a /artifacts/redis.log
     resources:
       requests:
-        cpu: 500m
+        cpu: 200m
         memory: 1Gi
       limits:
-        cpu: 1750m
-        memory: 3Gi
+        cpu: 200m
+        memory: 1Gi
     volumeMounts:
     - name: artifacts
       readOnly: false
