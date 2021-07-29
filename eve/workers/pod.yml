@@ -15,7 +15,7 @@ spec:
         cpu: 500m
         memory: 3Gi
       limits:
-        cpu: "2"
+        cpu: 1500m
         memory: 3Gi
     volumeMounts:
     - mountPath: /var/run/docker.sock
@@ -36,10 +36,10 @@ spec:
         value: '10000000'
     resources:
       requests:
-        cpu: 500m
+        cpu: 300m
         memory: 1Gi
       limits:
-        cpu: 1750m
+        cpu: 1000m
         memory: 3Gi
     volumeMounts:
     - name: artifacts
