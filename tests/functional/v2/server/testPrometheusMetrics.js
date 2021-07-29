@@ -3,7 +3,7 @@ const needle = require('needle');
 
 const testMetrics = async pair => {
     const [name, url] = pair;
-    it.only(`should return metrics for ${name} from url ${url}`, async () => {
+    it(`should return metrics for ${name} from url ${url}`, async () => {
         const res = await needle('get', url);
         const lines = res.body.split('\n');
         const first = lines[0];
