@@ -22,6 +22,9 @@ models:
         warp10:
           context: '.'
           dockerfile: 'images/warp10/Dockerfile'
+        redis:
+          context: '.'
+          dockerfile: 'images/redis/Dockerfile'
         vault: eve/workers/mocks/vault
   - Upload: &upload_artifacts
       source: /artifacts

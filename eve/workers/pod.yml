@@ -45,6 +45,23 @@ spec:
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
+  - name: redis
+    image: "{{ images.redis }}"
+    command:
+      - sh
+      - -ce
+      - /init | tee -a /artifacts/redis.log
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1750m
+        memory: 3Gi
+    volumeMounts:
+    - name: artifacts
+      readOnly: false
+      mountPath: /artifacts
 {% if vars.vault is defined and vars.vault == 'enabled' %}
   - name: vault
     image: "{{ images.vault }}"
