@@ -1,3 +1,0 @@
-#!/usr/bin/with-contenv sh
-
-mv /redis_exporter-v${EXPORTER_VERSION}.linux-amd64 /run/s6/services/exporter
