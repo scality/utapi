@@ -101,6 +101,12 @@ components:
                 type: string
               level:
                 type: string
+    utapi-get-prometheus-metrics:
+      description: metrics to be ingested by prometheus 
+      content:
+        text/plain:
+          schema:
+            type: string
   parameters:
     level:
       in: path
@@ -133,6 +139,16 @@ paths:
           $ref: '#/components/responses/json-error'
         200:
           description: Service is healthy
+  /_/metrics:
+    get:
+      x-router-controller: internal
+      x-iplimit: true
+      operationId: prometheusMetrics
+      responses:
+        default:
+          $ref: '#/components/responses/json-error'
+        200:
+          $ref: '#/components/responses/utapi-get-prometheus-metrics'
   /v2/ingest:
     post:
       x-router-controller: metrics
