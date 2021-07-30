@@ -20,11 +20,11 @@ describe('Test prometheusMetrics', () => {
     });
 
     it('should set statusCode to 200', () => {
-        assert.strictEqual(res.statusCode, 200);
+        assert.strictEqual(ctx.results.statusCode, 200);
     });
 
     it('should have a response body', () => {
-        assert.typeOf(ctx.results.body, 'string');
+        assert.strictEqual(typeof ctx.results.body, 'string');
     });
 
     it('should contain metrics', () => {
