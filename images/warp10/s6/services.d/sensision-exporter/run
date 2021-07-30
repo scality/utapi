@@ -1,0 +1,4 @@
+#!/usr/bin/with-contenv sh
+
+echo 'Starting sensision exporter'
+exec warp10_sensision_exporter --warp10.url=http://localhost:${SENSISION_PORT}/metrics
