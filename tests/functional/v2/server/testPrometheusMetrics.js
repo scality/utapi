@@ -9,7 +9,7 @@ const testMetrics = async pair => {
         const first = lines[0];
 
         assert.strictEqual(res.statusCode, 200);
-        assert(first.startsWith('# HELP') === true);
+        assert(first.startsWith('# HELP'));
     });
 };
 
@@ -21,4 +21,3 @@ describe('Test Prometheus Metrics', () => {
     ];
     nameUrlPairs.forEach(pair => testMetrics(pair));
 });
-
