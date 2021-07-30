@@ -4,8 +4,6 @@ ENV S6_VERSION 2.0.0.1
 ENV EXPORTER_VERSION 1.24.0
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS 2
 
-RUN apk update && apk add wget
-
 RUN wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_VERSION}/s6-overlay-amd64.tar.gz -O /tmp/s6-overlay-amd64.tar.gz \
     && tar xzf /tmp/s6-overlay-amd64.tar.gz -C / \
     && rm -rf /tmp/s6-overlay-amd64.tar.gz 
