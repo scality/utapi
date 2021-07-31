@@ -36,6 +36,7 @@
     "needle": "^2.5.0",
     "node-schedule": "^1.3.2",
     "oas-tools": "^2.1.8",
+    "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
     "vaultclient": "scality/vaultclient#ff9e92f",
     "werelogs": "scality/werelogs#0a4c576"
@@ -50,6 +51,12 @@
     "protobufjs": "^6.10.1",
     "sinon": "^9.0.2"
   },
+  "resolutions": {
+    "**/@yarnpkg/fslib": "2.4.0",
+    "**/@yarnpkg/libzip" : "2.2.1",
+    "**/@yarnpkg/json-proxy": "2.1.0",
+    "**/@yarnpkg/parsers": "2.3.0"
+},
   "scripts": {
     "ft_test": "mocha --recursive tests/functional",
     "ft_test:client": "mocha --recursive tests/functional/client",
