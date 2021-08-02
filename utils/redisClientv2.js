@@ -16,6 +16,8 @@ function redisClientv2(conf, log) {
         enableOfflineQueue: false,
         // keep alive 3 seconds
         keepAlive: 3000,
+        // Only emit `ready` if the server is able to accept commands
+        enableReadyCheck: true,
         ...conf,
     });
 
