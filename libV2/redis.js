@@ -65,12 +65,16 @@ class RedisClient extends EventEmitter {
             this._redis.off('connect', this._onConnect);
             this._redis.off('ready', this._onReady);
             this._redis.off('error', this._onError);
+            this._redis.quit();
         }
         this._isConnected = false;
         this._isReady = false;
         this._redis = new IORedis(this._redisOptions);
         this._redis.on('connect', this._onConnect.bind(this));
         this._redis.on('ready', this._onReady.bind(this));
+        this._redis.on('close', this._onClose.bind(this));
+        this._redis.on('reconnect', this._onReconnect.bind(this));
+        this._redis.on('end', this._onEnd.bind(this));
         this._redis.on('error', this._onError.bind(this));
         if (startProbe && this._runningRedisProbe === null) {
             this._runningRedisProbe = setInterval(this._probeRedis.bind(this), CONNECTION_TIMEOUT);
@@ -100,9 +104,26 @@ class RedisClient extends EventEmitter {
 
     _onError(error) {
         moduleLogger.error('error connecting to redis', { error });
+        this._isConnected = false;
+        this._isReady = false;
         this.emit('error', error);
     }
 
+    _onReconnect(delay) {
+        moduleLogger.debug(`reconnecting to redis, waiting ${delay} ms`);
+    }
+
+    _onClose() {
+        moduleLogger.debug('connection to redis closed');
+        this._isConnected = false;
+        this._isReady = false;
+    }
+
+    _onEnd() {
+        moduleLogger.debug('connection to redis ended.');
+        this._isConnected = false;
+        this._isReady = false;
+    }
 
     _createCommandTimeout() {
         let timer;
