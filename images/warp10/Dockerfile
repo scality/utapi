@@ -1,19 +1,19 @@
-FROM golang:1.14-alpine as builder
+# FROM golang:1.14-alpine as builder
 
-ENV WARP10_EXPORTER_VERSION 2.7.5
+# ENV WARP10_EXPORTER_VERSION 2.7.5
 
-RUN apk add zip unzip build-base \
-    && wget -q -O exporter.zip https://github.com/centreon/warp10-sensision-exporter/archive/refs/heads/master.zip \
-    && unzip exporter.zip \
-    && cd warp10-sensision-exporter-master \
-    && go mod download \
-    && cd tools \
-    && go run generate_sensision_metrics.go ${WARP10_EXPORTER_VERSION} \
-    && cp sensision.go ../collector/ \
-    && cd .. \
-    && go build -a -o /usr/local/go/warp10_sensision_exporter
+# RUN apk add zip unzip build-base \
+#     && wget -q -O exporter.zip https://github.com/centreon/warp10-sensision-exporter/archive/refs/heads/master.zip \
+#     && unzip exporter.zip \
+#     && cd warp10-sensision-exporter-master \
+#     && go mod download \
+#     && cd tools \
+#     && go run generate_sensision_metrics.go ${WARP10_EXPORTER_VERSION} \
+#     && cp sensision.go ../collector/ \
+#     && cd .. \
+#     && go build -a -o /usr/local/go/warp10_sensision_exporter
 
-FROM warp10io/warp10:2.7.5
+FROM warp10io/warp10:master
 
 ENV S6_VERSION 2.0.0.1
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS 2
@@ -40,11 +40,15 @@ RUN wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_V
 ADD ./images/warp10/warp10-ext-protobuf-1.2.2-uberjar.jar /opt/warp10/lib/
 
 # Install Sensision exporter
-COPY --from=builder /usr/local/go/warp10_sensision_exporter /usr/local/bin/warp10_sensision_exporter
+# COPY --from=builder /usr/local/go/warp10_sensision_exporter /usr/local/bin/warp10_sensision_exporter
 
+ADD https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.1/jmx_prometheus_javaagent-0.16.1.jar /opt/jmx_prom_agent.jar
+RUN printf '---\nstartDelaySeconds: 0' > /opt/jmx_prom_agent.yaml
 ADD ./images/warp10/s6 /etc
 ADD ./warpscript /usr/local/share/warpscript
 ADD ./images/warp10/static.tokens /
+
+ENV WARP10_VERSION 2.8.1-95-g73e7de80
 
 CMD /init
 

@@ -19,7 +19,7 @@ if [ -z "$WARP10_HEAP_MAX" ]; then
     WARP10_HEAP_MAX=4g
 fi
 
-JAVA_OPTS="-Djava.awt.headless=true -Xms${WARP10_HEAP} -Xmx${WARP10_HEAP_MAX} -XX:+UseG1GC ${JAVA_OPTS}"
+JAVA_OPTS="-javaagent:/opt/jmx_prom_agent.jar=4803:/opt/jmx_prom_agent.yaml -Djava.awt.headless=true -Xms${WARP10_HEAP} -Xmx${WARP10_HEAP_MAX} -XX:+UseG1GC ${JAVA_OPTS}"
 
 SENSISION_OPTS=
 if [ -n "$ENABLE_SENSISION" ]; then
