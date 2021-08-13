@@ -20,7 +20,7 @@ if [ -n "$ENABLE_SENSISION" ]; then
     echo "Starting Sensision with $SENSISION_CMD ..."
     exec $SENSISION_CMD | tee -a ${SENSISION_HOME}/logs/sensision.log
 else
-    echo "Sensision is disabled"
+    echo "Sensision is disabled. Not starting."
     # wait indefinitely
     exec tail -f /dev/null
 fi
