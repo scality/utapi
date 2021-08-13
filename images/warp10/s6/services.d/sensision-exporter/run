@@ -1,0 +1,12 @@
+#!/usr/bin/with-contenv sh
+
+EXPORTER_CMD="warp10_sensision_exporter --warp10.url=http://localhost:${SENSISION_PORT}/metrics"
+
+if [ -f "/usr/local/bin/warp10_sensision_exporter" -a -n "$ENABLE_SENSISION" ]; then
+    echo "Starting Sensision exporter with $EXPORTER_CMD ..."
+    exec $EXPORTER_CMD
+else
+    echo "Sensision is disabled. Not starting exporter."
+    # wait indefinitely
+    exec tail -f /dev/null
+fi

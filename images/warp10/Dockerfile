@@ -1,4 +1,23 @@
-FROM warp10io/warp10:2.7.5
+FROM golang:1.14-alpine as builder
+
+ENV WARP10_EXPORTER_VERSION 2.7.5
+
+RUN apk add zip unzip build-base \
+    && wget -q -O exporter.zip https://github.com/centreon/warp10-sensision-exporter/archive/refs/heads/master.zip \
+    && unzip exporter.zip \
+    && cd warp10-sensision-exporter-master \
+    && go mod download \
+    && cd tools \
+    && go run generate_sensision_metrics.go ${WARP10_EXPORTER_VERSION} \
+    && cp sensision.go ../collector/ \
+    && cd .. \
+    && go build -a -o /usr/local/go/warp10_sensision_exporter
+
+FROM warp10io/warp10:master
+
+# Override baked in version
+# Remove when updating to a numbered release
+ENV WARP10_VERSION 2.8.1-95-g73e7de80
 
 ENV S6_VERSION 2.0.0.1
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS 2
@@ -19,6 +38,10 @@ ENV warpscript.extension.macrovalueencoder 'io.warp10.continuum.ingress.MacroVal
 RUN wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_VERSION}/s6-overlay-amd64.tar.gz -O /tmp/s6-overlay-amd64.tar.gz \
     && tar xzf /tmp/s6-overlay-amd64.tar.gz -C / \
     && rm -rf /tmp/s6-overlay-amd64.tar.gz
+
+# Install jmx exporter
+ADD https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.1/jmx_prometheus_javaagent-0.16.1.jar /opt/jmx_prom_agent.jar
+ADD ./images/warp10/jmx_prom.yaml /opt/jmx_prom.yaml
 
 # Install protobuf extestion
 ADD ./images/warp10/warp10-ext-protobuf-1.2.2-uberjar.jar /opt/warp10/lib/
