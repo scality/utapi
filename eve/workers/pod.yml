@@ -34,6 +34,8 @@ spec:
         value: '4802'
       - name: warpscript.maxops
         value: '10000000'
+      - name: ENABLE_SENSISION
+        value: 't'
     resources:
       requests:
         cpu: 300m
