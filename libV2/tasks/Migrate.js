@@ -17,6 +17,7 @@ const {
     now,
     convertTimestamp,
     comprehend,
+    streamToAsyncIter,
 } = require('../utils');
 
 const REDIS_CHUNKSIZE = 50;
@@ -54,34 +55,9 @@ class MigrateTask extends BaseTask {
         return parseInt(value, 10);
     }
 
-    static async* _iterStream(stream) {
-        let finished = false;
-        let data;
-
-        stream.on('end', () => { finished = true; });
-        stream.pause();
-        while (!finished) {
-            data = await new Promise(resolve => {
-                const _resolve = jsutil.once(resolve);
-                const end = () => _resolve([]);
-                stream.once('end', end);
-                stream.once('data', _data => {
-                    stream.pause();
-                    stream.off('end', end);
-                    _resolve(_data);
-                });
-                stream.resume();
-            });
-
-            for (const item of data) {
-                yield item;
-            }
-        }
-    }
-
     async* _iterResources(level) {
         const redis = this._redis._redis;
-        const keys = MigrateTask._iterStream(redis.scanStream({
+        const keys = streamToAsyncIter(redis.scanStream({
             count: 100,
             match: `s3:${level}:*:storageUtilized`,
         }));
