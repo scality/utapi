@@ -38,18 +38,33 @@ class Warp10Client {
     }
 
     async ingest(metadata, events) {
-        const { className, valueType, labels } = metadata;
-        assert.notStrictEqual(className, undefined, 'you must provide a className');
-        const payload = events.map(
-            ev => this._buildGTSEntry(
-                className,
-                valueType || warp10EventType,
-                labels || {},
-                ev,
-            ),
-        );
+        let payload;
+        // If two arguments are provided
+        if (events !== undefined) {
+            const { className, valueType, labels } = metadata;
+            assert.notStrictEqual(className, undefined, 'you must provide a className');
+            payload = events.map(
+                ev => this._buildGTSEntry(
+                    className,
+                    valueType || warp10EventType,
+                    labels || {},
+                    ev,
+                ),
+            );
+        // If only one is provided
+        } else {
+            payload = metadata.map(
+                ev => this._buildGTSEntry(
+                    ev.className,
+                    ev.valueType || warp10EventType,
+                    ev.labels || {},
+                    ev.data,
+                ),
+            );
+        }
         const res = await this.update(payload);
         return res.count;
+
     }
 
     _buildScriptEntry(params) {
