@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 const RedisClient = require('../../redis');
 const schema = require('../schema');
 
@@ -100,16 +101,22 @@ class RedisCache {
             }, 'error while fetching shard keys', { shard });
     }
 
-    async fetchShard(shard) {
-        return moduleLogger
+    async* fetchShard(shard) {
+        moduleLogger
             .with({ method: 'fetchShard' })
-            .logAsyncError(async () => {
-                const keys = await this.getKeysInShard(shard);
-                if (!keys.length) {
-                    return [];
-                }
-                return this._redis.call(redis => redis.mget(...keys));
-            }, 'error while fetching shard data', { shard });
+            .debug('fetching metrics from shard', { shard });
+        const shardKey = schema.getShardKey(this._prefix, shard);
+        const redis = this._redis._redis;
+
+        // ioredis returns the key and value as separate items
+        // so we need to filter and only yield the values
+        let isValue = false;
+        for await (const metric of streamToAsyncIter(redis.hscanStream(shardKey, { count: 1000 }))) {
+            if (isValue) {
+                yield JSON.parse(metric);
+            }
+            isValue = !isValue;
+        }
     }
 
     async deleteShardAndKeys(shard) {
@@ -118,10 +125,9 @@ class RedisCache {
             .logAsyncError(async () => {
                 const shardKey = schema.getShardKey(this._prefix, shard);
                 const shardMasterKey = schema.getShardMasterKey(this._prefix);
-                const keys = await this.getKeysInShard(shard);
                 return this._redis.call(
                     redis => redis.multi([
-                        ['del', shardKey, ...keys],
+                        ['del', shardKey],
                         ['srem', shardMasterKey, shardKey],
                     ]).exec(),
                 );

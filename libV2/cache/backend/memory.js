@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 const schema = require('../schema');
 const constants = require('../../constants');
 
@@ -48,31 +49,27 @@ class MemoryCache {
     }
 
     async addToShard(shard, event) {
-        const metricKey = schema.getUtapiMetricKey(this._prefix, event);
-        this._data[metricKey] = event;
         if (this._shards[shard]) {
-            this._shards[shard].push(metricKey);
+            this._shards[shard][event.uuid] = event;
         } else {
-            this._shards[shard] = [metricKey];
+            this._shards[shard] = { [event.uuid]: event };
         }
         return true;
     }
 
     async getKeysInShard(shard) {
-        return this._shards[shard] || [];
+        return this._shards[shard] || Object.keys({});
     }
 
-    async fetchShard(shard) {
-        if (this._shards[shard]) {
-            return this._shards[shard].map(key => this._data[key]);
+    async* fetchShard(shard) {
+        const _shard = this._shards[shard] || {};
+        for (const [key, value] of Object.entries(_shard)) {
+            yield key;
+            yield value;
         }
-        return [];
     }
 
     async deleteShardAndKeys(shard) {
-        (this._shards[shard] || []).forEach(key => {
-            delete this._data[key];
-        });
         delete this._shards[shard];
         return true;
     }
@@ -82,7 +79,7 @@ class MemoryCache {
     }
 
     async shardExists(shard) {
-        return this._shards[shard.toString()] !== undefined;
+        return this._shards[shard] !== undefined;
     }
 
     async updateCounters(metric) {
