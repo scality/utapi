@@ -1,7 +1,7 @@
 const RedisClient = require('../../redis');
 const schema = require('../schema');
 
-const { LoggerContext } = require('../../utils');
+const { LoggerContext, streamToAsyncIter } = require('../../utils');
 const constants = require('../../constants');
 
 const moduleLogger = new LoggerContext({
@@ -60,39 +60,34 @@ class RedisCache {
         const logger = moduleLogger.with({ method: 'addToShard' });
         return logger
             .logAsyncError(async () => {
-                const metricKey = schema.getUtapiMetricKey(this._prefix, metric);
                 const shardKey = schema.getShardKey(this._prefix, shard);
                 const shardMasterKey = schema.getShardMasterKey(this._prefix);
-                logger.debug('adding metric to shard', { metricKey, shardKey });
+                logger.debug('adding metric to shard', { uuid: metric.uuid, shardKey });
 
                 const [setResults, saddResults] = await this._redis
                     .call(redis => redis
                         .multi([
-                            ['set', metricKey, JSON.stringify(metric.getValue())],
-                            ['sadd', shardKey, metricKey],
+                            ['hset', shardKey, metric.uuid, JSON.stringify(metric.getValue())],
                             ['sadd', shardMasterKey, shardKey],
                         ])
                         .exec());
 
-                let success = true;
-                if (setResults[1] !== 'OK') {
+                if (setResults[0] !== 1) {
                     moduleLogger.error('failed to set metric key', {
-                        metricKey,
+                        uuid: metric.uuid,
                         shardKey,
-                        res: setResults[1],
+                        res: setResults[0],
                     });
-                    success = false;
+                    return false;
                 }
 
                 if (saddResults[1] !== 1) {
-                    moduleLogger.error('metric key already present in shard', {
-                        metricKey,
+                    moduleLogger.trace('shard key already present in master', {
                         shardKey,
                         res: saddResults[1],
                     });
-                    success = false;
                 }
-                return success;
+                return true;
             }, 'error during redis command');
     }
 
