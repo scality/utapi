@@ -72,7 +72,6 @@
     "test": "mocha --recursive tests/unit",
     "start_v2:task:ingest": "ENABLE_UTAPI_V2=1 node bin/ingestShards.js",
     "start_v2:task:snapshot": "ENABLE_UTAPI_V2=1 node bin/createSnapshot.js",
-    "start_v2:task:repair": "ENABLE_UTAPI_V2=1 node bin/repair.js",
     "start_v2:task:reindex": "ENABLE_UTAPI_V2=1 node bin/reindex.js",
     "start_v2:task:migrate": "ENABLE_UTAPI_V2=1 node bin/migrate.js",
     "start_v2:task:disk": "ENABLE_UTAPI_V2=1 node bin/diskUsage.js",
