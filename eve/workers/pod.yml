@@ -64,6 +64,51 @@ spec:
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
+  - name: redis-replica
+    image: "{{ images.redis }}"
+    command:
+      - sh
+      - -ce
+      - redis-server --port 6380 --slaveof localhost 6379 --slave-announce-ip localhost | tee -a /artifacts/redis.log
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: 200m
+        memory: 1Gi
+    volumeMounts:
+    - name: artifacts
+      readOnly: false
+      mountPath: /artifacts
+  - name: redis-sentinel
+    image: "{{ images.redis }}"
+    command: 
+      - bash
+      - -c
+      - |-
+        cat > /tmp/sentinel.conf <<EOF
+        port 16379
+        logfile ""
+        dir /tmp
+        sentinel announce-ip localhost
+        sentinel announce-port 16379
+        sentinel monitor scality-s3 localhost 6379 1
+        EOF
+        redis-sentinel /tmp/sentinel.conf
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: 200m
+        memory: 1Gi
+    volumeMounts:
+    - name: artifacts
+      readOnly: false
+      mountPath: /artifacts
+    ports:
+      - containerPort: 16379
 {% if vars.vault is defined and vars.vault == 'enabled' %}
   - name: vault
     image: "{{ images.vault }}"
