@@ -38,7 +38,7 @@
     'utapi.snapshot.master' 'master_snapshot_class' STORE
     'utapi.snapshot' 'snapshot_class' STORE
     'utapi.checkpoint' 'checkpoint_class' STORE
-    'utapi.repair.correction' 'correction_class' STORE
+    'utapi.repair.checkpoint' 'correction_class' STORE
 
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
