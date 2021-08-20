@@ -68,6 +68,7 @@ class RedisClient extends EventEmitter {
             this._redis.off('connect', this._onConnect);
             this._redis.off('ready', this._onReady);
             this._redis.off('error', this._onError);
+            this._redis.disconnect();
         }
         this._isConnected = false;
         this._isReady = false;
