@@ -30,7 +30,10 @@ class CacheClient {
         return true;
     }
 
-    async getMetricsForShard(shard) {
+    // backend returns an async iterator
+    // no `async` keyword so it doesn't wrap it in a promise
+    // eslint-disable-next-line require-yield
+    getMetricsForShard(shard) {
         return this._cacheBackend.fetchShard(shard);
     }
 
