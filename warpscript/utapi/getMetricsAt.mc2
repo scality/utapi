@@ -35,11 +35,9 @@
     $operation_info 'node' GET 'nodeID' STORE
     $operation_info 'no_reindex' GET true == 'no_reindex' STORE
 
-    'utapi.event' 'event_class' STORE
     'utapi.checkpoint' 'checkpoint_class' STORE
-    'utapi.checkpoint.master' 'master_checkpoint_class' STORE
     'utapi.snapshot' 'snapshot_class' STORE
-    'utapi.repair.correction' 'correction_class' STORE
+    'utapi.repair.checkpoint' 'correction_class' STORE
     'utapi.repair.reindex' 'reindex_class' STORE
 
     {} 'snapshots' STORE
@@ -128,8 +126,6 @@
         'end' $endTimestamp
         'start' $startTimestamp 1 +
       } FETCH
-
-
     %> FOREACH
 
     ]
@@ -152,93 +148,6 @@
       true
     ] REDUCE
     DROP
-
-    // 'results: ' $results ->JSON + LOGMSG
-
-    // 'loading master checkpoints' LOGMSG
-
-    // Load the most recent master checkpoint before our target timestamp from each node
-    {} 'masterCheckpoints' STORE
-    {
-      'token' $read_token
-      'class' $master_checkpoint_class
-      'labels' {}
-      'end' $endTimestamp
-      'count' 1
-    }
-    FETCH
-    <%
-      $masterCheckpoints SWAP
-      DUP LASTTICK SWAP
-      LABELS 'node' GET
-      PUT DROP
-    %> FOREACH
-
-    // 'loaded master checkpoints: '
-    // $masterCheckpoints ->JSON + LOGMSG
-    // $labels ->JSON LOGMSG
-
-    // Find all nodes containing events
-    'load_events' SECTION
-    [
-      $read_token
-      $event_class
-      {}
-    ] FINDSETS
-    DROP SWAP DROP
-    'node' GET
-    <% DUP ISNULL %>
-    <% DROP [] %> IFT
-    // Load events from each node
-    <%
-      'key' STORE
-
-      // Get the timestamp of the master checkpoint for the node if it exists
-      // If no master checkpoint exists for a node then we can infer that no
-      // snapshots exists for that node as well, and we must start at 0
-      $masterCheckpoints $key GET
-      <% DUP TYPEOF 'LONG' != %>
-      <% DROP -1 %> IFT
-      'startTimestamp' STORE
-      {
-        'token' $read_token
-        'class' $event_class
-        'labels' { 'node' $key }
-        'end' $endTimestamp
-        'start' $startTimestamp 1 +
-      } FETCH
-      <% // Handle multiple GTS
-        VALUES
-        <%
-          @utapi/decodeEvent 'event' STORE
-          true 'passed' STORE
-          $labels KEYLIST
-          <%
-            'labelKey' STORE
-            <% $labels $labelKey GET $event $labelKey GET != %>
-            <%
-              false 'passed' STORE
-              BREAK
-            %> IFT
-          %> FOREACH
-
-          <% $passed %>
-          <%
-            $results
-            'objD' $event 'objD' 0 @util/getDefault @util/sumField
-            'sizeD' $event 'sizeD' 0 @util/getDefault @util/sumField
-            'inB' $event 'inB' 0 @util/getDefault @util/sumField
-            'outB'  $event 'outB' 0 @util/getDefault @util/sumField
-
-            'ops' GET 'resultOps' STORE
-            $resultOps $event 'op' GET 1 @util/sumField
-            DROP
-          %> IFT
-        %> FOREACH
-      %> FOREACH
-    %> FOREACH
-
-    // $results ->JSON LOGMSG
 
     // Find all nodes containing corrections
     'load_corrections' SECTION
