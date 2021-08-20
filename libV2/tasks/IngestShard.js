@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 const assert = require('assert');
 const async = require('async');
 const BaseTask = require('./BaseTask');
@@ -22,8 +23,7 @@ class IngestShardTask extends BaseTask {
         this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
     }
 
-    _hydrateEvent(data, stripTimestamp = false) {
-        const event = JSON.parse(data);
+    _hydrateEvent(event, stripTimestamp = false) {
         if (this._stripEventUUID) {
             delete event.uuid;
         }
@@ -50,7 +50,10 @@ class IngestShardTask extends BaseTask {
         await async.eachLimit(toIngest, 10,
             async shard => {
                 if (await this._cache.shardExists(shard)) {
-                    const metrics = await this._cache.getMetricsForShard(shard);
+                    const metrics = [];
+                    for await (const metric of this._cache.getMetricsForShard(shard)) {
+                        metrics.push(metric);
+                    }
                     if (metrics.length > 0) {
                         logger.info(`Ingesting ${metrics.length} events from shard`, { shard });
                         const shardAge = now() - shard;
