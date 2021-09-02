@@ -30,7 +30,8 @@ ENV SENSISION_PORT 8082
 ENV standalone.host 0.0.0.0
 ENV standalone.port 4802
 ENV standalone.home /opt/warp10
-ENV warpscript.repository.directory /usr/local/share/warpscript
+ENV warpscript.repository.directory /usr/local/share/warpscript/scality
+ENV runner.root /usr/local/share/warpscript/runners
 ENV warp.token.file /static.tokens
 ENV warpscript.extension.protobuf io.warp10.ext.protobuf.ProtobufWarpScriptExtension
 ENV warpscript.extension.macrovalueencoder 'io.warp10.continuum.ingress.MacroValueEncoder$Extension'
