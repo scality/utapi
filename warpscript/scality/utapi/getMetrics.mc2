@@ -87,7 +87,7 @@
       $opsResults SWAP $op PUT DROP
     %> FOREACH
 
-    $results $opsResults 'operations' PUT
+    $results $opsResults 'operations' PUT DROP
     $results ->JSON
     // DUP LOGMSG
 

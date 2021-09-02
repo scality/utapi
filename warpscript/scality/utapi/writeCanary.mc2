@@ -1,0 +1,36 @@
+{
+  'name' 'utapi/writeCanary'
+  'desc'
+  <'
+      Write a canary record containing the current timestamp labeled with the nodeId
+  '>
+  'sig' [ [ [   ] [   ] ] ] // Signature
+  'params' {}
+  'examples' [
+    <'
+        @utapi/writeCanary
+    '>
+  ]
+} 'info' STORE
+
+<%
+  !$info INFO
+  SAVE 'context' STORE
+  <%
+    'nodeId' MACROCONFIG 'nodeId' STORE
+    NEWGTS
+    'utapi.canary' RENAME
+    { 'nodeId' $nodeId } RELABEL
+    NOW NaN NaN NaN true ADDVALUE
+    'writeTokenStatic' UPDATE
+  %>
+  <% // catch any exception
+    RETHROW
+  %>
+  <% // finally, restore the context
+    $context RESTORE
+  %> TRY
+%>
+'macro' STORE
+
+$macro
