@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const uuid = require('uuid');
-const { mpuBucketPrefix } = require('arsenal').constants;
+const { constants: arsenalConstants, models: arsenalModels } = require('arsenal');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { ReindexTask } = require('../../../../libV2/tasks');
@@ -9,7 +9,9 @@ const { now } = require('../../../../libV2/utils');
 const { BucketD, values } = require('../../../utils/mock/');
 const { fetchRecords } = require('../../../utils/v2Data');
 
-const { CANONICAL_ID, BUCKET_NAME } = values;
+const { mpuBucketPrefix } = arsenalConstants;
+const { ObjectMD } = arsenalModels;
+const { CANONICAL_ID, BUCKET_NAME, OBJECT_KEY } = values;
 const bucketCounts = [1, 251];
 
 const bucketRecord = {
@@ -119,6 +121,34 @@ describe('Test ReindexTask', function () {
             assert.rejects(() => reindexTask._fetchCurrentMetrics('bck', BUCKET_NAME));
         });
     });
+
+    describe('test invalid responses from bucketd', () => {
+        let bucketDStub;
+        beforeEach(() => {
+            bucketDStub = sinon.stub(bucketd, '_getBucketResponse');
+        });
+
+        afterEach(() => sinon.restore());
+
+        it('should skip object if content-length is not an integer', async () => {
+            bucketDStub = bucketDStub.callsFake(
+                () => {
+                    const metadata = new ObjectMD().getValue();
+                    // null value taken from error seen in the field
+                    metadata['content-length'] = null;
+                    return [
+                        {
+                            key: OBJECT_KEY,
+                            value: JSON.stringify(metadata),
+                        },
+                    ];
+                },
+            );
+            const resp = await ReindexTask._indexBucket('foo');
+            assert.deepStrictEqual(resp, { size: 0, count: 0 });
+        });
+    });
+
 
     it('should avoid calculating incorrect reindex diffs', async () => {
         const bucketName = `${BUCKET_NAME}-1`;
