@@ -33,6 +33,7 @@ def get_options():
     parser.add_argument("-s", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
     parser.add_argument("-w", "--worker", default=10, help="Number of workers")
     parser.add_argument("-b", "--bucket", default=None, help="Bucket to be processed")
+    parser.add_argument("-r", "--max-retries", default=2, type=int, help="Max retries before failing a bucketd request")
     return parser.parse_args()
 
 def chunks(iterable, size):
@@ -58,12 +59,14 @@ class BucketDClient:
     __url_format = '{addr}/default/bucket/{bucket}'
     __headers = {"x-scal-request-uids": "utapi-reindex-list-buckets"}
 
-    def __init__(self, bucketd_addr=None):
+    def __init__(self, bucketd_addr=None, max_retries=5):
         self._bucketd_addr = bucketd_addr
+        self._max_retries = max_retries
         self._session = requests.Session()
 
     def _do_req(self, url, check_500=True, **kwargs):
-        while True:
+        # Add 1 for the initial request
+        for x in range(self._max_retries + 1):
             try:
                 resp = self._session.get(url, timeout=30, verify=False, headers=self.__headers, **kwargs)
                 if check_500 and resp.status_code == 500:
@@ -75,6 +78,8 @@ class BucketDClient:
                 _log.exception(e)
                 _log.error('Error during listing, sleeping 5 secs %s'%url)
                 time.sleep(5)
+
+        raise Exception('Max retries reached for request to %s'%url)
 
     def _list_bucket(self, bucket, **kwargs):
         '''
@@ -337,7 +342,7 @@ if __name__ == '__main__':
     if options.bucket is not None and not options.bucket.strip():
         print('You must provide a bucket name with the --bucket flag')
         sys.exit(1)
-    bucket_client = BucketDClient(options.bucketd_addr)
+    bucket_client = BucketDClient(options.bucketd_addr, options.max_retries)
     redis_client = get_redis_client(options)
     account_reports = {}
     observed_buckets = set()
