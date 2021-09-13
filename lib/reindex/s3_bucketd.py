@@ -31,7 +31,7 @@ def get_options():
     parser.add_argument("-v", "--redis-password", default=None, help="Redis AUTH Password")
     parser.add_argument("-n", "--sentinel-cluster-name", default='scality-s3', help="Redis cluster name")
     parser.add_argument("-s", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
-    parser.add_argument("-w", "--worker", default=10, help="Number of workers")
+    parser.add_argument("-w", "--worker", default=10, type=int, help="Number of workers")
     parser.add_argument("-b", "--bucket", default=None, help="Bucket to be processed")
     return parser.parse_args()
 
