@@ -9,7 +9,8 @@ const { convertTimestamp, now } = require('../../../../libV2/utils');
 const { operationToResponse } = require('../../../../libV2/constants');
 
 const { generateCustomEvents } = require('../../../utils/v2Data');
-const { UtapiMetric } = require('../../../../libV2/models');
+const { BucketD } = require('../../../utils/mock/');
+const vaultclient = require('../../../utils/vaultclient');
 
 const warp10 = warp10Clients[0];
 const _now = Math.floor(new Date().getTime() / 1000);
@@ -28,7 +29,7 @@ const emptyOperationsResponse = Object.values(operationToResponse)
         return prev;
     }, {});
 
-async function listMetrics(level, resources, start, end, force403 = false) {
+async function listMetrics(level, resources, start, end, credentials) {
     const body = {
         [level]: resources,
     };
@@ -50,12 +51,13 @@ async function listMetrics(level, resources, start, end, force403 = false) {
         },
     };
 
-    const credentials = {
-        accessKeyId: force403 ? 'invalidKey' : 'accessKey1',
-        secretAccessKey: 'verySecretKey1',
+    const { accessKey: accessKeyId, secretKey: secretAccessKey } = credentials;
+    const _credentials = {
+        accessKeyId,
+        secretAccessKey,
     };
 
-    const sig = aws4.sign(headers, credentials);
+    const sig = aws4.sign(headers, _credentials);
 
     return needle(
         'post',
@@ -81,140 +83,104 @@ function opsToResp(operations) {
         }, { ...emptyOperationsResponse });
 }
 
-const testCases = [
-    {
-        desc: 'for a single resource',
-        args: { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } },
-    },
-    {
-        desc: 'for multiple resources',
-        args: {
-            [uuid.v4()]: {
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-            },
-            [uuid.v4()]: {
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-            },
-            [uuid.v4()]: {
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-                [uuid.v4()]: [uuid.v4(), uuid.v4(), uuid.v4()],
-            },
-        },
-    },
-];
+function assertMetricResponse(provided, expected) {
+    assert.deepStrictEqual(provided.operations, opsToResp(expected.ops));
+    assert.strictEqual(provided.incomingBytes, expected.in);
+    assert.strictEqual(provided.outgoingBytes, expected.out);
+    assert.deepStrictEqual(provided.storageUtilized, [0, expected.bytes]);
+    assert.deepStrictEqual(provided.numberOfObjects, [0, expected.count]);
+}
 
 describe('Test listMetric', function () {
     this.timeout(10000);
-    testCases.forEach(testCase => {
-        describe(testCase.desc, () => {
-            let totals;
-            before(async () => {
-                const { events, totals: _totals } = generateCustomEvents(
-                    getTs(-360),
-                    getTs(-60),
-                    1000,
-                    testCase.args,
-                );
-                totals = _totals;
-                assert(await ingestEvents(events));
-            });
+    const bucketd = new BucketD(true);
 
-            after(async () => {
-                await warp10.delete({
-                    className: '~.*',
-                    start: 0,
-                    end: now(),
-                });
-            });
+    let account;
+    let user;
+    let otherAccount;
+    let otherUser;
+    const bucket = uuid.v4();
+    const otherBucket = uuid.v4();
+    let totals;
 
-            const accounts = [];
-            const users = [];
-            const buckets = [];
+    before(async () => {
+        account = await vaultclient.createAccountAndKeys(uuid.v4());
+        user = await vaultclient.createUser(account, uuid.v4());
+        otherAccount = await vaultclient.createAccountAndKeys(uuid.v4());
+        otherUser = await vaultclient.createUser(otherAccount, uuid.v4());
 
-            Object.entries(testCase.args)
-                .forEach(([account, _users]) => {
-                    accounts.push(`account:${account}`);
-                    Object.entries(_users).forEach(([user, _buckets]) => {
-                        users.push(user);
-                        buckets.push(..._buckets);
-                    });
-                });
+        bucketd.createBucketsWithOwner([
+            { name: bucket, owner: account.canonicalId },
+            { name: otherBucket, owner: otherAccount.canonicalId },
+        ]);
+        bucketd.start();
 
-            const metricQueries = {
-                accounts,
-                users,
-                buckets,
-            };
+        const { events, totals: _totals } = generateCustomEvents(
+            getTs(-360),
+            getTs(-60),
+            1000,
+            { [account.canonicalId]: { [user.id]: [bucket] } },
+        );
+        totals = _totals;
+        assert(await ingestEvents(events));
+    });
 
-            Object.entries(metricQueries)
-                .forEach(query => {
-                    const [level, resources] = query;
-                    it(`should get metrics for ${level}`, async () => {
-                        const resp = await listMetrics(...query, getTs(-500), getTs(0));
-                        assert(Array.isArray(resp.body));
-
-                        const { body } = resp;
-                        assert.deepStrictEqual(body.map(r => r[metricResponseKeys[level]]), resources);
-
-                        body.forEach(metric => {
-                            const key = metric[metricResponseKeys[level]];
-                            const _key = level === 'accounts' ? key.split(':')[1] : key;
-                            const expected = totals[level][_key];
-                            assert.deepStrictEqual(metric.operations, opsToResp(expected.ops));
-                            assert.strictEqual(metric.incomingBytes, expected.in);
-                            assert.strictEqual(metric.outgoingBytes, expected.out);
-                            assert.deepStrictEqual(metric.storageUtilized, [0, expected.bytes]);
-                            assert.deepStrictEqual(metric.numberOfObjects, [0, expected.count]);
-                        });
-                    });
-                });
+    after(async () => {
+        bucketd.end();
+        await warp10.delete({
+            className: '~.*',
+            start: 0,
+            end: now(),
         });
     });
 
-    it('should return 0 in metrics are negative', async () => {
-        const bucket = `imabucket-${uuid.v4()}`;
-        const account = `imaaccount-${uuid.v4()}`;
-        const event = new UtapiMetric({
-            timestamp: getTs(0),
-            bucket,
-            account,
-            objectDelta: -1,
-            sizeDelta: -1,
-            incomingBytes: -1,
-            outgoingBytes: -1,
-            operationId: 'putObject',
+    describe('test account credentials', () => {
+        it('should list metrics for the same account', async () => {
+            const resp = await listMetrics('accounts', [account.id], getTs(-500), getTs(0), account);
+            assert(Array.isArray(resp.body));
+            const { body } = resp;
+            assert.deepStrictEqual(body.map(r => r[metricResponseKeys.accounts]), [account.id]);
+            body.forEach(metric => {
+                assertMetricResponse(metric, totals.accounts[account.canonicalId]);
+            });
         });
 
-        await ingestEvents([event]);
+        it('should list metrics for an account\'s user', async () => {
+            const resp = await listMetrics('users', [user.id], getTs(-500), getTs(0), account);
+            assert(Array.isArray(resp.body));
+            const { body } = resp;
+            assert.deepStrictEqual(body.map(r => r[metricResponseKeys.users]), [user.id]);
+            body.forEach(metric => {
+                assertMetricResponse(metric, totals.users[user.id]);
+            });
+        });
 
-        const bucketResp = await listMetrics('buckets', [bucket], getTs(-1), getTs(1));
-        assert(Array.isArray(bucketResp.body));
+        it('should list metrics for an account\'s user\'s bucket', async () => {
+            const resp = await listMetrics('buckets', [bucket], getTs(-500), getTs(0), account);
+            assert(Array.isArray(resp.body));
+            const { body } = resp;
+            assert.deepStrictEqual(body.map(r => r[metricResponseKeys.buckets]), [bucket]);
+            body.forEach(metric => {
+                assertMetricResponse(metric, totals.buckets[bucket]);
+            });
+        });
 
-        const [bucketMetric] = bucketResp.body;
-        assert.deepStrictEqual(bucketMetric.storageUtilized, [0, 0]);
-        assert.deepStrictEqual(bucketMetric.numberOfObjects, [0, 0]);
-        assert.deepStrictEqual(bucketMetric.incomingBytes, 0);
-        assert.deepStrictEqual(bucketMetric.outgoingBytes, 0);
+        it('should not list metrics for an different account', async () => {
+            const resp = await listMetrics('accounts', [otherAccount.id], getTs(-500), getTs(0), account);
+            assert.strictEqual(resp.statusCode, 403);
+            assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
+        });
 
-        const accountResp = await listMetrics('accounts', [account], getTs(-1), getTs(1));
-        assert(Array.isArray(accountResp.body));
+        it('should not list metrics for an different account\'s user', async () => {
+            const resp = await listMetrics('users', [otherUser.id], getTs(-500), getTs(0), account);
+            assert.strictEqual(resp.statusCode, 403);
+            assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
+        });
 
-        const [accountMetric] = accountResp.body;
-        assert.deepStrictEqual(accountMetric.storageUtilized, [0, 0]);
-        assert.deepStrictEqual(accountMetric.numberOfObjects, [0, 0]);
-        assert.deepStrictEqual(accountMetric.incomingBytes, 0);
-        assert.deepStrictEqual(accountMetric.outgoingBytes, 0);
-    });
-
-    it('should return a 403 if unauthorized', async () => {
-        const resp = await listMetrics('buckets', ['test'], getTs(-1), getTs(1), true);
-        assert.strictEqual(resp.statusCode, 403);
-    });
-
-    it('should use the current timestamp for "end" if it is not provided', async () => {
-        const resp = await listMetrics('buckets', ['test'], getTs(-1));
-        assert.strictEqual(resp.body[0].timeRange.length, 2);
+        it('should not list metrics for an different account\'s user\'s bucket', async () => {
+            const resp = await listMetrics('buckets', [otherBucket], getTs(-500), getTs(0), account);
+            assert.strictEqual(resp.statusCode, 403);
+            assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
+        });
     });
 });
