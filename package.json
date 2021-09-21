@@ -39,10 +39,11 @@
     "oas-tools": "^2.1.8",
     "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#ff9e92f",
+    "vaultclient": "scality/vaultclient#8c4d210",
     "werelogs": "scality/werelogs#0a4c576"
   },
   "devDependencies": {
+    "aws-sdk": "^2.997.0",
     "eslint": "^5.12.0",
     "eslint-config-airbnb-base": "13.1.0",
     "eslint-config-scality": "scality/Guidelines#7cc5ff1",
@@ -54,10 +55,10 @@
   },
   "resolutions": {
     "**/@yarnpkg/fslib": "2.4.0",
-    "**/@yarnpkg/libzip" : "2.2.1",
+    "**/@yarnpkg/libzip": "2.2.1",
     "**/@yarnpkg/json-proxy": "2.1.0",
     "**/@yarnpkg/parsers": "2.3.0"
-},
+  },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional",
     "ft_test:client": "mocha --recursive tests/functional/client",

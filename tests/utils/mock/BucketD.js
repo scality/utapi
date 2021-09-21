@@ -7,6 +7,7 @@ const { models, constants } = require('arsenal');
 const { CANONICAL_ID, BUCKET_NAME, OBJECT_KEY } = require('./values');
 
 const { ObjectMD } = models;
+const { mpuBucketPrefix } = constants;
 
 class BucketD {
     constructor(isV2 = false) {
@@ -49,12 +50,33 @@ class BucketD {
             const { splitter } = constants;
             const entry = {
                 key: `${CANONICAL_ID}${splitter}${BUCKET_NAME}-${i + 1}`,
-                value: JSON.stringify({ creationDate: new Date() }),
+                value: JSON.stringify({
+                    creationDate: new Date(),
+                    name: `${BUCKET_NAME}-${i + 1}`,
+                    owner: CANONICAL_ID,
+                    ownerDisplayName: 'steve',
+                }),
             };
             buckets.push(entry);
         }
         this._buckets = buckets;
         return this;
+    }
+
+    createBucketsWithOwner(buckets) {
+        const { splitter } = constants;
+        this._buckets = buckets.map(
+            ({ name, owner }) => ({
+                key: `${owner}${splitter}${name}`,
+                value: JSON.stringify({
+                    creationDate: new Date(),
+                    name,
+                    owner,
+                    ownerDisplayName: 'steve',
+                }),
+            }),
+        );
+        return this._app;
     }
 
     _getUsersBucketResponse(req) {
@@ -129,14 +151,24 @@ class BucketD {
         });
 
         this._app.get('/default/attributes/:bucketName', (req, res) => {
-            const key = req.params.bucketName;
-            const bucket = this._bucketContent[key];
+            const { splitter } = constants;
+            const { bucketName } = req.params;
+            let filterKey = bucketName;
+            if (bucketName.indexOf(mpuBucketPrefix) !== -1) {
+                filterKey = bucketName.replace(mpuBucketPrefix, '');
+            }
+            const bucket = this._buckets
+                .reduce(
+                    (prev, b) => (
+                        b.key.split(splitter)[1] === filterKey
+                            ? JSON.parse(b.value)
+                            : prev),
+                    null,
+                );
             if (bucket) {
                 res.status(200).send({
-                    name: key,
-                    owner: CANONICAL_ID,
-                    ownerDisplayName: 'steve',
-                    creationDate: new Date(),
+                    ...bucket,
+                    name: bucketName,
                 });
                 return;
             }
@@ -157,7 +189,9 @@ class BucketD {
     }
 
     end() {
-        this._server.close();
+        if (this._server !== null) {
+            this._server.close();
+        }
     }
 
     reset() {
