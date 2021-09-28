@@ -17,9 +17,7 @@ spec:
       limits:
         cpu: 1500m
         memory: 3Gi
-    volumeMounts:
-    - mountPath: /var/run/docker.sock
-      name: docker-socket
+    volumeMounts:t
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
@@ -83,7 +81,7 @@ spec:
       mountPath: /artifacts
   - name: redis-sentinel
     image: "{{ images.redis }}"
-    command: 
+    command:
       - bash
       - -c
       - |-
@@ -111,7 +109,9 @@ spec:
       - containerPort: 16379
 {% if vars.vault is defined and vars.vault == 'enabled' %}
   - name: vault
-    image: "{{ images.vault }}"
+    image: registry.scality.com/vault-dev/vault:c2607856
+    imagePullSecrets:
+      - name: regcred
     resources:
       requests:
         cpu: 10m
@@ -120,11 +120,6 @@ spec:
         cpu: 50m
         memory: 128Mi
 {% endif %}
-  volumes:
-  - name: docker-socket
-    hostPath:
-      path: /var/run/docker.sock
-      type: Socket
   - name: artifacts
     emptyDir: {}
-    
+
