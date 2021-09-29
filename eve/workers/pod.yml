@@ -122,6 +122,7 @@ spec:
         cpu: 50m
         memory: 128Mi
 {% endif %}
+  volumes:
   - name: artifacts
     emptyDir: {}
 
