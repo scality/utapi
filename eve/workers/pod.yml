@@ -17,7 +17,7 @@ spec:
       limits:
         cpu: 1500m
         memory: 3Gi
-    volumeMounts:t
+    volumeMounts:
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
@@ -112,6 +112,10 @@ spec:
     image: registry.scality.com/vault-dev/vault:c2607856
     imagePullSecrets:
       - name: regcred
+    command:
+      - bash
+      - -c
+      - 'chmod 400 tests/utils/keyfile && yarn start'
     resources:
       requests:
         cpu: 10m
