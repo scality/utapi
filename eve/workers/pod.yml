@@ -82,7 +82,7 @@ spec:
   - name: redis-sentinel
     image: "{{ images.redis }}"
     command:
-      - bash
+      - sh
       - -c
       - |-
         cat > /tmp/sentinel.conf <<EOF
