@@ -110,8 +110,6 @@ spec:
 {% if vars.vault is defined and vars.vault == 'enabled' %}
   - name: vault
     image: registry.scality.com/vault-dev/vault:c2607856
-    imagePullSecrets:
-      - name: regcred
     command:
       - bash
       - -c
