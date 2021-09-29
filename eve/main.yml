@@ -42,12 +42,17 @@ models:
         set -ex
         bash tests/utils/wait_for_local_port.bash 8500 60"
       haltOnFailure: true
+      logfiles:
+        vault:
+          filename: "/artifacts/vault.log"
+          follow: true
   - ShellCommand: &wait_for_warp10
       name: Wait for Warp 10
       command: |
         bash -c "
         set -ex
         bash tests/utils/wait_for_local_port.bash 4802 60"
+      haltOnFailure: true
       logfiles:
         warp10:
           filename: "/artifacts/warp10.log"

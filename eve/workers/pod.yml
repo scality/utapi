@@ -114,6 +114,9 @@ spec:
       - bash
       - -c
       - 'chmod 400 tests/utils/keyfile && yarn start | tee -a /artifacts/vault.log'
+    env:
+      - name:  VAULT_DB_BACKEND
+        value: LEVELDB
     resources:
       requests:
         cpu: 150m
