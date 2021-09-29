@@ -113,7 +113,7 @@ spec:
     command:
       - bash
       - -c
-      - 'chmod 400 tests/utils/keyfile && yarn start'
+      - 'chmod 400 tests/utils/keyfile && yarn start | tee -a /artifacts/vault.log'
     resources:
       requests:
         cpu: 150m
@@ -121,6 +121,10 @@ spec:
       limits:
         cpu: 150m
         memory: 1Gi
+    volumeMounts:
+    - name: artifacts
+      readOnly: false
+      mountPath: /artifacts
 {% endif %}
   volumes:
   - name: artifacts
