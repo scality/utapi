@@ -129,6 +129,8 @@ stages:
       - ShellCommand:
           name: run cron tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
+          env:
+            REINDEX_PYTHON_INTERPRETER: python3
           logfiles:
             utapi:
               filename: "/artifacts/setup_ft_test:cron.log"
