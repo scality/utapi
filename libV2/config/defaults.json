@@ -45,6 +45,10 @@
         "retentionDays": 45,
         "expirationEnabled": false
     },
+    "serviceUser": {
+        "arnPrefix": "arn:aws:iam::000000000000:",
+        "enabled": false
+    },
     "filter": {
         "allow": {},
         "deny": {}
