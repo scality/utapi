@@ -1,8 +1,7 @@
 /* eslint-disable no-undef-init */
-const { promisify } = require('util');
+const { IAM } = require('aws-sdk');
 const vaultclient = require('vaultclient');
 const fs = require('fs');
-const IAM = require('aws-sdk').IAM;
 
 const adminCredentials = {
     accessKey: 'D4IT2AWSB588GO5J9T00',
