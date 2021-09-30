@@ -9,6 +9,11 @@ const adminCredentials = {
     secretKey: 'UEEu8tYlsOGGrgf4DAiSZD6apVNPUWqRiPG0nTB6',
 };
 
+
+const internalServiceAccountId = '000000000000';
+const internalServiceAccountName = 'scality-internal-services';
+const internalServiceAccountEmail = 'scality@internal';
+
 class VaultClient {
     /**
      * Get endpoint information
@@ -178,6 +183,34 @@ class VaultClient {
         const res = await client.createPolicy({ PolicyName, PolicyDocument }).promise();
         const { Arn: PolicyArn } = res.Policy;
         await client.attachUserPolicy({ PolicyArn, UserName: user.name }).promise();
+    }
+
+    static async createInternalServiceAccount() {
+        const client = VaultClient.getAdminClient();
+        return new Promise((resolve, reject) =>
+            client.createAccount(
+                internalServiceAccountName,
+                {
+                    email: internalServiceAccountEmail,
+                    externalAccountId: internalServiceAccountId,
+                    disableSeed: true,
+                },
+                (err, res) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    return resolve(res.account);
+                },
+            ));
+    }
+
+    static async createInternalServiceAccountAndKeys() {
+        const account = await VaultClient.createInternalServiceAccount();
+        const creds = await VaultClient.createAccountKeys(account);
+        return {
+            ...account,
+            ...creds,
+        };
     }
 }
 
