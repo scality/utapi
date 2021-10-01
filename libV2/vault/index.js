@@ -1,16 +1,7 @@
 const { vault } = require('./client');
 const metadata = require('../metadata');
 const errors = require('../errors');
-
-// Will be used for user keys
-// eslint-disable-next-line no-unused-vars
-async function translateResourceIds(level, resources, log) {
-    if (level === 'accounts') {
-        return vault.getCanonicalIds(resources, log);
-    }
-
-    return resources.map(resource => ({ resource, id: resource }));
-}
+const config = require('../config');
 
 async function authorizeAccountAccessKey(authInfo, level, resources, log) {
     let authed = false;
@@ -141,6 +132,18 @@ async function authorizeUserAccessKey(authInfo, level, resources, log) {
     return [authed, authedRes];
 }
 
+async function authorizeServiceUser(authInfo, level, resources, log) {
+    log.trace('Authorizing service user', { resources, arn: authInfo.getArn() });
+    // The service user is allowed access to any resource so no checking is done
+    if (level === 'accounts') {
+        const canonicalIds = await vault.getCanonicalIds(resources, log.logger);
+        return [canonicalIds.length !== 0, canonicalIds];
+    }
+
+    return [resources.length !== 0, resources.map(resource => ({ resource, id: resource }))];
+}
+
+
 async function translateAndAuthorize(request, action, level, resources) {
     const {
         authed,
@@ -150,6 +153,10 @@ async function translateAndAuthorize(request, action, level, resources) {
 
     if (!authed) {
         return [false, []];
+    }
+
+    if (config.serviceUser.enabled && authInfo.getArn().startsWith(config.serviceUser.arnPrefix)) {
+        return authorizeServiceUser(authInfo, level, authorizedResources, request.logger);
     }
 
     if (authInfo.isRequesterAnIAMUser()) {
