@@ -1,8 +1,12 @@
 /* eslint-disable no-restricted-syntax */
-const { usersBucket, splitter: mdKeySplitter, mpuBucketPrefix } = require('arsenal').constants;
+const arsenal = require('arsenal');
+
 const metadata = require('./client');
 const { LoggerContext, logger } = require('../utils');
 const { keyVersionSplitter } = require('../constants');
+
+const { usersBucket, splitter: mdKeySplitter, mpuBucketPrefix } = arsenal.constants;
+const { BucketInfo } = arsenal.models;
 
 const moduleLogger = new LoggerContext({
     module: 'metadata.client',
@@ -108,9 +112,25 @@ function bucketExists(bucket) {
     ));
 }
 
+function getBucket(bucket) {
+    return new Promise((resolve, reject) => {
+        metadata.getBucketAttributes(
+            bucket,
+            logger.newRequestLogger(), (err, data) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                resolve(BucketInfo.fromObj(data));
+            },
+        );
+    });
+}
+
 module.exports = {
     listBuckets,
     listObjects,
     listMPUs,
     bucketExists,
+    getBucket,
 };

@@ -18,8 +18,6 @@ spec:
         cpu: 1500m
         memory: 3Gi
     volumeMounts:
-    - mountPath: /var/run/docker.sock
-      name: docker-socket
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
@@ -55,11 +53,11 @@ spec:
       - /init | tee -a /artifacts/redis.log
     resources:
       requests:
-        cpu: 200m
-        memory: 1Gi
+        cpu: 150m
+        memory: 500Mi
       limits:
         cpu: 200m
-        memory: 1Gi
+        memory: 500Mi
     volumeMounts:
     - name: artifacts
       readOnly: false
@@ -72,19 +70,19 @@ spec:
       - redis-server --port 6380 --slaveof localhost 6379 --slave-announce-ip localhost | tee -a /artifacts/redis.log
     resources:
       requests:
-        cpu: 200m
-        memory: 1Gi
+        cpu: 150m
+        memory: 500Mi
       limits:
-        cpu: 200m
-        memory: 1Gi
+        cpu: 150m
+        memory: 500Mi
     volumeMounts:
     - name: artifacts
       readOnly: false
       mountPath: /artifacts
   - name: redis-sentinel
     image: "{{ images.redis }}"
-    command: 
-      - bash
+    command:
+      - sh
       - -c
       - |-
         cat > /tmp/sentinel.conf <<EOF
@@ -98,11 +96,11 @@ spec:
         redis-sentinel /tmp/sentinel.conf
     resources:
       requests:
-        cpu: 200m
-        memory: 1Gi
+        cpu: 150m
+        memory: 500Mi
       limits:
-        cpu: 200m
-        memory: 1Gi
+        cpu: 150m
+        memory: 500Mi
     volumeMounts:
     - name: artifacts
       readOnly: false
@@ -111,20 +109,27 @@ spec:
       - containerPort: 16379
 {% if vars.vault is defined and vars.vault == 'enabled' %}
   - name: vault
-    image: "{{ images.vault }}"
+    image: registry.scality.com/vault-dev/vault:c2607856
+    command:
+      - bash
+      - -c
+      - 'chmod 400 tests/utils/keyfile && yarn start | tee -a /artifacts/vault.log'
+    env:
+      - name:  VAULT_DB_BACKEND
+        value: LEVELDB
     resources:
       requests:
-        cpu: 10m
-        memory: 64Mi
+        cpu: 150m
+        memory: 1Gi
       limits:
-        cpu: 50m
-        memory: 128Mi
+        cpu: 150m
+        memory: 1Gi
+    volumeMounts:
+    - name: artifacts
+      readOnly: false
+      mountPath: /artifacts
 {% endif %}
   volumes:
-  - name: docker-socket
-    hostPath:
-      path: /var/run/docker.sock
-      type: Socket
   - name: artifacts
     emptyDir: {}
-    
+
