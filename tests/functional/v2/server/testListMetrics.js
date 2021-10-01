@@ -105,9 +105,15 @@ describe('Test listMetric', function () {
 
     before(async () => {
         account = await vaultclient.createAccountAndKeys(uuid.v4());
-        user = await vaultclient.createUser(account, uuid.v4());
+        user = await vaultclient.createUserAndKeys(account, uuid.v4());
         otherAccount = await vaultclient.createAccountAndKeys(uuid.v4());
         otherUser = await vaultclient.createUser(otherAccount, uuid.v4());
+
+        await Promise.all([
+            vaultclient.createAndAttachUtapiPolicy(account, user, 'buckets', '*'),
+            vaultclient.createAndAttachUtapiPolicy(account, user, 'accounts', '*'),
+            vaultclient.createAndAttachUtapiPolicy(account, user, 'users', '*'),
+        ]);
 
         bucketd.createBucketsWithOwner([
             { name: bucket, owner: account.canonicalId },
@@ -145,7 +151,7 @@ describe('Test listMetric', function () {
             });
         });
 
-        it('should list metrics for an account\'s user', async () => {
+        it("should list metrics for an account's user", async () => {
             const resp = await listMetrics('users', [user.id], getTs(-500), getTs(0), account);
             assert(Array.isArray(resp.body));
             const { body } = resp;
@@ -155,7 +161,7 @@ describe('Test listMetric', function () {
             });
         });
 
-        it('should list metrics for an account\'s user\'s bucket', async () => {
+        it("should list metrics for an account's bucket", async () => {
             const resp = await listMetrics('buckets', [bucket], getTs(-500), getTs(0), account);
             assert(Array.isArray(resp.body));
             const { body } = resp;
@@ -171,14 +177,64 @@ describe('Test listMetric', function () {
             assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
         });
 
-        it('should return Access Denied for a different account\'s user', async () => {
+        it("should return Access Denied for a different account's user", async () => {
             const resp = await listMetrics('users', [otherUser.id], getTs(-500), getTs(0), account);
             assert.strictEqual(resp.statusCode, 403);
             assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
         });
 
-        it('should return Access Denied for a different account\'s user\'s bucket', async () => {
+        it("should return Access Denied for a different account's bucket", async () => {
             const resp = await listMetrics('buckets', [otherBucket], getTs(-500), getTs(0), account);
+            assert.strictEqual(resp.statusCode, 403);
+            assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
+        });
+    });
+
+    describe('test user credentials', () => {
+        it('should list metrics for the same account', async () => {
+            const resp = await listMetrics('accounts', [account.id], getTs(-500), getTs(0), user);
+            assert(Array.isArray(resp.body));
+            const { body } = resp;
+            assert.deepStrictEqual(body.map(r => r[metricResponseKeys.accounts]), [account.id]);
+            body.forEach(metric => {
+                assertMetricResponse(metric, totals.accounts[account.canonicalId]);
+            });
+        });
+
+        it("should list metrics for a user's account", async () => {
+            const resp = await listMetrics('users', [user.id], getTs(-500), getTs(0), user);
+            assert(Array.isArray(resp.body));
+            const { body } = resp;
+            assert.deepStrictEqual(body.map(r => r[metricResponseKeys.users]), [user.id]);
+            body.forEach(metric => {
+                assertMetricResponse(metric, totals.users[user.id]);
+            });
+        });
+
+        it("should list metrics for an user's bucket", async () => {
+            const resp = await listMetrics('buckets', [bucket], getTs(-500), getTs(0), user);
+            assert(Array.isArray(resp.body));
+            const { body } = resp;
+            assert.deepStrictEqual(body.map(r => r[metricResponseKeys.buckets]), [bucket]);
+            body.forEach(metric => {
+                assertMetricResponse(metric, totals.buckets[bucket]);
+            });
+        });
+
+        it("should return Access Denied for a different user's account", async () => {
+            const resp = await listMetrics('accounts', [otherAccount.id], getTs(-500), getTs(0), user);
+            assert.strictEqual(resp.statusCode, 403);
+            assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
+        });
+
+        it("should return Access Denied for a different account's user", async () => {
+            const resp = await listMetrics('users', [otherUser.id], getTs(-500), getTs(0), user);
+            assert.strictEqual(resp.statusCode, 403);
+            assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
+        });
+
+        it("should return Access Denied for a different account's  bucket", async () => {
+            const resp = await listMetrics('buckets', [otherBucket], getTs(-500), getTs(0), user);
             assert.strictEqual(resp.statusCode, 403);
             assert.deepStrictEqual(resp.body, { code: 'AccessDenied', message: 'Access Denied' });
         });

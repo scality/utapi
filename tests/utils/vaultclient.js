@@ -2,6 +2,7 @@
 const { IAM } = require('aws-sdk');
 const vaultclient = require('vaultclient');
 const fs = require('fs');
+const uuid = require('uuid');
 
 const adminCredentials = {
     accessKey: 'D4IT2AWSB588GO5J9T00',
@@ -154,6 +155,29 @@ class VaultClient {
             ...user,
             ...creds,
         };
+    }
+
+    static templateUtapiPolicy(level, resource) {
+        return JSON.stringify({
+            Version: '2012-10-17',
+            Statement: [
+                {
+                    Sid: `utapiMetrics-${uuid.v4()}`.replace(/-/g, ''),
+                    Action: ['utapi:ListMetrics'],
+                    Effect: 'Allow',
+                    Resource: `arn:scality:utapi:::${level}/${resource}`,
+                },
+            ],
+        });
+    }
+
+    static async createAndAttachUtapiPolicy(parentAccount, user, level, resource) {
+        const client = VaultClient.getIAMClient(parentAccount);
+        const PolicyDocument = VaultClient.templateUtapiPolicy(level, resource);
+        const PolicyName = `utapi-test-policy-${uuid.v4()}`;
+        const res = await client.createPolicy({ PolicyName, PolicyDocument }).promise();
+        const { Arn: PolicyArn } = res.Policy;
+        await client.attachUserPolicy({ PolicyArn, UserName: user.name }).promise();
     }
 }
 

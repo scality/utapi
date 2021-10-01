@@ -1,3 +1,4 @@
+const assert = require('assert');
 const { auth, policies } = require('arsenal');
 const vaultclient = require('vaultclient');
 const config = require('../config');
@@ -67,7 +68,7 @@ class VaultWrapper extends auth.Vault {
             auth.server.doAuth(
                 request,
                 request.logger.logger,
-                (err, authInfo, authorizedResources) => {
+                (err, authInfo, authRes) => {
                     if (err && (err.InvalidAccessKeyId || err.AccessDenied)) {
                         resolve({ authed: false });
                         return;
@@ -75,6 +76,20 @@ class VaultWrapper extends auth.Vault {
                     if (err) {
                         reject(err);
                         return;
+                    }
+
+                    // Only IAM users will return authorizedResources
+                    let authorizedResources = resources;
+                    if (authRes) {
+                        authorizedResources = authRes
+                            .filter(resource => resource.isAllowed)
+                            .map(resource => {
+                                // resource.arn should be of format:
+                                // arn:scality:utapi:::resourcetype/resource
+                                assert(typeof resource.arn === 'string');
+                                assert(resource.arn.indexOf('/') > -1);
+                                return resource.arn.split('/')[1];
+                            });
                     }
 
                     resolve({ authed: true, authInfo, authorizedResources });
