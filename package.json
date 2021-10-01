@@ -19,7 +19,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "scality/Arsenal#65966f5",
+    "arsenal": "scality/Arsenal#8.1.1",
     "async": "^3.2.0",
     "aws4": "^1.8.0",
     "body-parser": "^1.19.0",
