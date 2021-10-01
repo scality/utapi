@@ -118,6 +118,10 @@ async function authV4Middleware(request, response, params) {
         [passed, authorizedResources] = await translateAndAuthorize(request, action, params.level, requestedResources);
     } catch (error) {
         request.logger.error('error during authentication', { error });
+        // rethrow any access denied errors
+        if (error.AccessDenied) {
+            throw error;
+        }
         throw errors.InternalError;
     }
 

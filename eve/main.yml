@@ -25,7 +25,6 @@ models:
         redis:
           context: '.'
           dockerfile: 'images/redis/Dockerfile'
-        vault: eve/workers/mocks/vault
   - Upload: &upload_artifacts
       source: /artifacts
       urls:
@@ -65,6 +64,28 @@ models:
       command: |
         git lfs pull
       haltOnFailure: True
+  - ShellCommand: &wait_for_vault
+      name: Wait for Vault
+      command: |
+        bash -c "
+        set -ex
+        bash tests/utils/wait_for_local_port.bash 8500 60"
+      haltOnFailure: true
+      logfiles:
+        vault:
+          filename: "/artifacts/vault.log"
+          follow: true
+  - ShellCommand: &wait_for_warp10
+      name: Wait for Warp 10
+      command: |
+        bash -c "
+        set -ex
+        bash tests/utils/wait_for_local_port.bash 4802 60"
+      haltOnFailure: true
+      logfiles:
+        warp10:
+          filename: "/artifacts/warp10.log"
+          follow: true
 
 stages:
   pre-merge:
@@ -138,6 +159,8 @@ stages:
       - ShellCommand:
           name: run cron tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash false ft_test:cron
+          env:
+            REINDEX_PYTHON_INTERPRETER: python3
           logfiles:
             utapi:
               filename: "/artifacts/setup_ft_test:cron.log"
@@ -162,16 +185,8 @@ stages:
     steps:
       - Git: *clone
       - ShellCommand: *fetch_lfs
-      - ShellCommand:
-          name: Wait for Warp 10
-          command: |
-            bash -c "
-            set -ex
-            bash tests/utils/wait_for_local_port.bash 4802 60"
-          logfiles:
-            warp10:
-              filename: "/artifacts/warp10.log"
-              follow: true
+      - ShellCommand: *wait_for_vault
+      - ShellCommand: *wait_for_warp10
       - ShellCommand:
           name: run v2 functional tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:v2
@@ -186,6 +201,9 @@ stages:
             utapi:
               filename: "/artifacts/setup_ft_test:v2.log"
               follow: true
+            vault:
+              filename: "/artifacts/vault.log"
+              follow: true
   run-v2-limit-tests:
     worker:
       << : *workspace
@@ -194,16 +212,8 @@ stages:
     steps:
       - Git: *clone
       - ShellCommand: *fetch_lfs
-      - ShellCommand:
-          name: Wait for Warp 10
-          command: |
-            bash -c "
-            set -ex
-            bash tests/utils/wait_for_local_port.bash 4802 60"
-          logfiles:
-            warp10:
-              filename: "/artifacts/warp10.log"
-              follow: true
+      - ShellCommand: *wait_for_vault
+      - ShellCommand: *wait_for_warp10
       - ShellCommand:
           name: run v2 soft limit tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:softLimit
@@ -217,6 +227,10 @@ stages:
               follow: true
             utapi:
               filename: "/artifacts/setup_ft_test:softLimit.log"
+              follow: true
+            vault:
+              filename: "/artifacts/vault.log"
+              follow: true
       - ShellCommand:
           name: run v2 hard limit tests
           command: bash ./eve/workers/unit_and_feature_tests/run_ft_tests.bash true ft_test:hardLimit
@@ -230,6 +244,9 @@ stages:
               follow: true
             utapi:
               filename: "/artifacts/setup_ft_test:hardLimit.log"
+              follow: true
+            vault:
+              filename: "/artifacts/vault.log"
               follow: true
       - Upload: *upload_artifacts
 
