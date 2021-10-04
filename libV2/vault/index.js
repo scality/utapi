@@ -4,6 +4,7 @@ const errors = require('../errors');
 const config = require('../config');
 
 async function authorizeAccountAccessKey(authInfo, level, resources, log) {
+    console.log({authInfo, level, resources});
     let authed = false;
     let authedRes = [];
 

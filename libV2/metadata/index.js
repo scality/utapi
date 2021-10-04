@@ -117,6 +117,7 @@ function getBucket(bucket) {
         metadata.getBucketAttributes(
             bucket,
             logger.newRequestLogger(), (err, data) => {
+                console.log({ err, data });
                 if (err) {
                     reject(err);
                     return;
