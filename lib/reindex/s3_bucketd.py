@@ -33,6 +33,7 @@ def get_options():
     parser.add_argument("-s", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
     parser.add_argument("-w", "--worker", default=10, type=int, help="Number of workers")
     parser.add_argument("-b", "--bucket", default=None, help="Bucket to be processed")
+    parser.add_argument("-r", "--max-retries", default=2, type=int, help="Max retries before failing a bucketd request")
     return parser.parse_args()
 
 def chunks(iterable, size):
@@ -52,18 +53,24 @@ Bucket = namedtuple('Bucket', ['userid', 'name'])
 MPU = namedtuple('MPU', ['bucket', 'key', 'upload_id'])
 BucketContents = namedtuple('BucketContents', ['bucket', 'obj_count', 'total_size'])
 
+class MaxRetriesReached(Exception):
+    def __init__(self, url):
+        super().__init__('Max retries reached for request to %s'%url)
+
 class BucketDClient:
 
     '''Performs Listing calls against bucketd'''
     __url_format = '{addr}/default/bucket/{bucket}'
     __headers = {"x-scal-request-uids": "utapi-reindex-list-buckets"}
 
-    def __init__(self, bucketd_addr=None):
+    def __init__(self, bucketd_addr=None, max_retries=2):
         self._bucketd_addr = bucketd_addr
+        self._max_retries = max_retries
         self._session = requests.Session()
 
     def _do_req(self, url, check_500=True, **kwargs):
-        while True:
+        # Add 1 for the initial request
+        for x in range(self._max_retries + 1):
             try:
                 resp = self._session.get(url, timeout=30, verify=False, headers=self.__headers, **kwargs)
                 if check_500 and resp.status_code == 500:
@@ -75,6 +82,8 @@ class BucketDClient:
                 _log.exception(e)
                 _log.error('Error during listing, sleeping 5 secs %s'%url)
                 time.sleep(5)
+
+        raise MaxRetriesReached(url)
 
     def _list_bucket(self, bucket, **kwargs):
         '''
@@ -108,6 +117,9 @@ class BucketDClient:
                 _log.error('Invalid listing response body! bucket:%s params:%s'%(
                     bucket, ', '.join('%s=%s'%p for p in params.items())))
                 continue
+            except MaxRetriesReached:
+                _log.error('Max retries reached listing bucket:%s'%bucket)
+                raise
             except Exception as e:
                 _log.exception(e)
                 _log.error('Unhandled exception during listing! bucket:%s params:%s'%(
@@ -337,16 +349,26 @@ if __name__ == '__main__':
     if options.bucket is not None and not options.bucket.strip():
         print('You must provide a bucket name with the --bucket flag')
         sys.exit(1)
-    bucket_client = BucketDClient(options.bucketd_addr)
+    bucket_client = BucketDClient(options.bucketd_addr, options.max_retries)
     redis_client = get_redis_client(options)
     account_reports = {}
     observed_buckets = set()
+    failed_accounts = set()
     with ThreadPoolExecutor(max_workers=options.worker) as executor:
         for batch in bucket_client.list_buckets(options.bucket):
             bucket_reports = {}
-            jobs = [executor.submit(index_bucket, bucket_client, b) for b in batch]
-            for job in futures.as_completed(jobs):
-                total = job.result() # Summed bucket and shadowbucket totals
+            jobs = { executor.submit(index_bucket, bucket_client, b): b for b in batch }
+            for job in futures.as_completed(jobs.keys()):
+                try:
+                    total = job.result() # Summed bucket and shadowbucket totals
+                except MaxRetriesReached:
+                    _bucket = jobs[job]
+                    _log.error('Failed to list bucket %s. Removing from results.'%_bucket.name)
+                    # Add the bucket to observed_buckets anyway to avoid clearing existing metrics
+                    observed_buckets.add(_bucket.name)
+                    # If we can not list one of an account's buckets we can not update its total
+                    failed_accounts.add(_bucket.userid)
+                    continue
                 observed_buckets.add(total.bucket.name)
                 update_report(bucket_reports, total.bucket.name, total.obj_count, total.total_size)
                 update_report(account_reports, total.bucket.userid, total.obj_count, total.total_size)
@@ -377,15 +399,18 @@ if __name__ == '__main__':
 
     # Account metrics are not updated if a bucket is specified
     if options.bucket is None:
+        # Don't update any accounts with failed listings
+        without_failed = filter(lambda x: x[0] not in failed_accounts, account_reports.items())
         # Update total account reports in chunks
-        for chunk in chunks(account_reports.items(), ACCOUNT_UPDATE_CHUNKSIZE):
+        for chunk in chunks(without_failed, ACCOUNT_UPDATE_CHUNKSIZE):
             pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
             for userid, report in chunk:
                 update_redis(pipeline, 'accounts', userid, report['obj_count'], report['total_size'])
                 log_report('accounts', userid, report['obj_count'], report['total_size'])
             pipeline.execute()
 
-        observed_accounts = set(account_reports.keys())
+        # Include failed_accounts in observed_accounts to avoid clearing metrics
+        observed_accounts = failed_accounts.union(set(account_reports.keys()))
         recorded_accounts = set(get_resources_from_redis(redis_client, 'accounts'))
 
         # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
