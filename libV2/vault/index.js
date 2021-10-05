@@ -4,6 +4,7 @@ const errors = require('../errors');
 const config = require('../config');
 
 async function authorizeAccountAccessKey(authInfo, level, resources, log) {
+    console.log({authInfo, level, resources});
     let authed = false;
     let authedRes = [];
 
@@ -39,7 +40,7 @@ async function authorizeAccountAccessKey(authInfo, level, resources, log) {
         const buckets = await Promise.all(
             resources.map(async bucket => {
                 try {
-                    const bucketMD = await metadata.getBucket(bucket);
+                    const bucketMD = await metadata.getBucket(bucket, log.logger);
                     return bucketMD;
                 } catch (error) {
                     log.error('failed to fetch metadata for bucket', { error, bucket });

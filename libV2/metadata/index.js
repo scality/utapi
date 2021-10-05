@@ -112,11 +112,12 @@ function bucketExists(bucket) {
     ));
 }
 
-function getBucket(bucket) {
+function getBucket(bucket, log) {
     return new Promise((resolve, reject) => {
         metadata.getBucketAttributes(
             bucket,
-            logger.newRequestLogger(), (err, data) => {
+            log, (err, data) => {
+                console.log({ err, data });
                 if (err) {
                     reject(err);
                     return;
