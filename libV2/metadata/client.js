@@ -10,7 +10,7 @@ const moduleLogger = new LoggerContext({
 
 const params = {
     bucketdBootstrap: config.bucketd,
-    https: config.https,
+    https: config.tls,
 };
 
 module.exports = new BucketClientInterface(params, bucketclient, moduleLogger);
