@@ -13,6 +13,7 @@ const adminCredentials = {
 const internalServiceAccountId = '000000000000';
 const internalServiceAccountName = 'scality-internal-services';
 const internalServiceAccountEmail = 'scality@internal';
+const internalServiceUserName = 'service-utapi-user';
 
 class VaultClient {
     /**
@@ -211,6 +212,99 @@ class VaultClient {
             ...account,
             ...creds,
         };
+    }
+
+    static async getUserByName(parentAccount, name) {
+        const client = VaultClient.getIAMClient(parentAccount);
+        const { User: user } = await client.getUser({ UserName: name }).promise();
+        return {
+            name,
+            id: user.UserId,
+            arn: user.Arn,
+            account: user.Arn.split(':')[4],
+        };
+    }
+
+    static async getAttachedPolicies(parentAccount, user) {
+        const client = VaultClient.getIAMClient(parentAccount);
+        const res = await client.listAttachedUserPolicies({ UserName: user.name }).promise();
+        const { AttachedPolicies: attached } = res;
+        const policies = await Promise.all(
+            attached.map(
+                ({ PolicyArn }) => client.getPolicyVersion({ PolicyArn, VersionId: 'v1' })
+                    .promise()
+                    .then(({ PolicyVersion }) => ({
+                        arn: PolicyArn,
+                        document: JSON.parse(decodeURIComponent(PolicyVersion.Document)),
+                    })),
+            ),
+        );
+        return policies;
+    }
+
+    static async getInternalServiceUserAndPolicies(parentAccount) {
+        const user = await VaultClient.getUserByName(parentAccount, internalServiceUserName);
+        const policies = await VaultClient.getAttachedPolicies(parentAccount, user);
+        return {
+            ...user,
+            policies,
+        };
+    }
+
+    static async getAccountUsers(parentAccount) {
+        const client = VaultClient.getIAMClient(parentAccount);
+        const { Users } = await client.listUsers({}).promise();
+
+        return Users.map(user => ({
+            arn: user.Arn,
+            id: user.UserId,
+            name: user.UserName,
+        }));
+    }
+
+    static async detachUserPolicies(parentAccount, user) {
+        const client = VaultClient.getIAMClient(parentAccount);
+        const policies = await VaultClient.getAttachedPolicies(parentAccount, user);
+        return Promise.all(
+            policies.map(policy => client.detachUserPolicy({
+                PolicyArn: policy.arn,
+                UserName: user.name,
+            }).promise().then(() => policy.arn)),
+        );
+    }
+
+    static async deleteAccount(account) {
+        return new Promise(
+            (resolve, reject) => VaultClient
+                .getAdminClient()
+                .deleteAccount(
+                    account.name,
+                    (err, res) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve(res);
+                    },
+                ),
+        );
+    }
+
+    static async cleanupUsers(parentAccount) {
+        const client = VaultClient.getIAMClient(parentAccount);
+        const users = await VaultClient.getAccountUsers(parentAccount);
+        await Promise.all(
+            users.map(async user => {
+                const detached = await VaultClient.detachUserPolicies(parentAccount, user);
+                await Promise.all(detached.map(PolicyArn => client.deletePolicy({ PolicyArn }).promise()));
+                await client.deleteUser({ UserName: user.name }).promise();
+            }),
+        );
+    }
+
+    static async cleanupAccountAndUsers(parentAccount) {
+        await VaultClient.cleanupUsers(parentAccount);
+        await VaultClient.deleteAccount(parentAccount);
     }
 }
 
