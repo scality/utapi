@@ -99,6 +99,7 @@ describe('Test listMetric', function () {
     let user;
     let otherAccount;
     let otherUser;
+    let serviceAccount;
     let serviceUser;
     const bucket = uuid.v4();
     const otherBucket = uuid.v4();
@@ -109,7 +110,7 @@ describe('Test listMetric', function () {
         user = await vaultclient.createUserAndKeys(account, uuid.v4());
         otherAccount = await vaultclient.createAccountAndKeys(uuid.v4());
         otherUser = await vaultclient.createUser(otherAccount, uuid.v4());
-        const serviceAccount = await vaultclient.createInternalServiceAccountAndKeys();
+        serviceAccount = await vaultclient.createInternalServiceAccountAndKeys();
         serviceUser = await vaultclient.createUserAndKeys(serviceAccount, 'service-utapi-user');
 
         await Promise.all([
@@ -144,6 +145,9 @@ describe('Test listMetric', function () {
             start: 0,
             end: now(),
         });
+        await vaultclient.cleanupAccountAndUsers(account);
+        await vaultclient.cleanupAccountAndUsers(otherAccount);
+        await vaultclient.cleanupAccountAndUsers(serviceAccount);
     });
 
     describe('test account credentials', () => {
