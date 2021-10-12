@@ -11,7 +11,7 @@ const adminCredentials = {
 
 
 const internalServiceAccountId = '000000000000';
-const internalServiceAccountName = 'scality-internal-services';
+const internalServiceAccountName = 'scality-internal';
 const internalServiceAccountEmail = 'scality@internal';
 
 class VaultClient {
