@@ -155,7 +155,7 @@ async function translateAndAuthorize(request, action, level, resources) {
         return [false, []];
     }
 
-    if (config.serviceUser.enabled && authInfo.getArn().startsWith(config.serviceUser.arnPrefix)) {
+    if (config.serviceUser.enabled && authInfo.getArn() === config.serviceUser.arn) {
         return authorizeServiceUser(authInfo, level, authorizedResources, request.logger);
     }
 
