@@ -65,6 +65,9 @@ const actions = [
     'putBucketReplication',
     'getBucketReplication',
     'deleteBucketReplication',
+    'replicateObject',
+    'replicateDelete',
+    'replicateTags',
 ];
 
 // Get the proper params object for a pushMetric call for the given action.
@@ -82,6 +85,7 @@ function getParams(action) {
     case 'uploadPart':
     case 'uploadPartCopy':
     case 'putObject':
+    case 'replicateObject':
     case 'copyObject':
         return Object.assign(resources, {
             newByteLength: objSize,
@@ -200,15 +204,15 @@ function checkAllMetrics(cb) {
             }
             let expected = 1; // Actions should have been incremented once.
             if (key.includes('incomingBytes')) {
-                // putObject, uploadPart, and uploadPartCopy.
-                expected = objSize * 3;
+                // putObject, uploadPart, uploadPartCopy, and replicateObject.
+                expected = objSize * 4;
             } else if (key.includes('outgoingBytes')) {
                 expected = objSize; // getObject.
             } else if (key.includes('storageUtilized')) {
-                // After all PUT and DELETE operations, should be 1024.
-                expected = 1024;
+                // After all PUT and DELETE operations, should be 2048.
+                expected = 2048;
             } else if (key.includes('numberOfObjects')) {
-                expected = 1; // After PUT and DELETE operations, should be 1.
+                expected = 3; // After PUT and DELETE operations, should be 3.
             } else if (key.endsWith('DeleteObject')) {
                 expected = 2; // After DELETE operations, should be 2.
             }
