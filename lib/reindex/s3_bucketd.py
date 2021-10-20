@@ -57,6 +57,10 @@ class MaxRetriesReached(Exception):
     def __init__(self, url):
         super().__init__('Max retries reached for request to %s'%url)
 
+class InvalidListing(Exception):
+    def __init__(self, bucket):
+        super().__init__('Invalid contents found while listing bucket %s'%bucket)
+
 class BucketDClient:
 
     '''Performs Listing calls against bucketd'''
@@ -192,13 +196,16 @@ class BucketDClient:
                     upload_id=key['value']['UploadId']))
         return keys
 
-    def _sum_objects(self, listing):
+    def _sum_objects(self, bucket, listing):
         count = 0
         total_size = 0
         last_master = None
         last_size = None
-        for _, payload in listing:
+        for status_code, payload in listing:
             contents = payload['Contents'] if isinstance(payload, dict) else payload
+            if contents is None:
+                _log.error('Invalid contents in listing. bucket:%s status_code:%s'%(bucket, status_code))
+                raise InvalidListing(bucket)
             for obj in contents:
                 count += 1
                 if isinstance(obj['value'], dict):
@@ -241,7 +248,7 @@ class BucketDClient:
             'gt': get_next_marker,
         }
 
-        count, total_size = self._sum_objects(self._list_bucket(bucket.name, **params))
+        count, total_size = self._sum_objects(bucket.name, self._list_bucket(bucket.name, **params))
         return BucketContents(
             bucket=bucket,
             obj_count=count,
@@ -269,7 +276,7 @@ class BucketDClient:
             'listingType': 'Delimiter',
         }
 
-        count, total_size = self._sum_objects(self._list_bucket(_bucket, **params))
+        count, total_size = self._sum_objects(_bucket, self._list_bucket(_bucket, **params))
         return BucketContents(
             bucket=mpu.bucket._replace(name=_bucket),
             obj_count=0, # MPU parts are not counted towards numberOfObjects
@@ -282,17 +289,22 @@ def index_bucket(client, bucket):
         Takes an instance of BucketDClient and a bucket name, and returns a
         tuple of BucketContents for the passed bucket and its mpu shadow bucket.
     '''
-    bucket_total = client.count_bucket_contents(bucket)
-    mpus = client.list_mpus(bucket)
-    if not mpus:
-        return bucket_total
+    try:
+        bucket_total = client.count_bucket_contents(bucket)
+        mpus = client.list_mpus(bucket)
+        if not mpus:
+            return bucket_total
 
-    total_size = bucket_total.total_size
-    mpu_totals = [client.count_mpu_parts(m) for m in mpus]
-    for mpu in mpu_totals:
-        total_size += mpu.total_size
+        total_size = bucket_total.total_size
+        mpu_totals = [client.count_mpu_parts(m) for m in mpus]
+        for mpu in mpu_totals:
+            total_size += mpu.total_size
 
-    return bucket_total._replace(total_size=total_size)
+        return bucket_total._replace(total_size=total_size)
+    except Exception as e:
+        _log.exception(e)
+        _log.error('Error during listing. Removing from results bucket:%s'%bucket.name)
+        raise InvalidListing(bucket.name)
 
 def update_report(report, key, obj_count, total_size):
     '''Convenience function to update the report dicts'''
@@ -361,7 +373,7 @@ if __name__ == '__main__':
             for job in futures.as_completed(jobs.keys()):
                 try:
                     total = job.result() # Summed bucket and shadowbucket totals
-                except MaxRetriesReached:
+                except InvalidListing:
                     _bucket = jobs[job]
                     _log.error('Failed to list bucket %s. Removing from results.'%_bucket.name)
                     # Add the bucket to observed_buckets anyway to avoid clearing existing metrics
