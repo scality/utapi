@@ -119,10 +119,10 @@ spec:
         value: LEVELDB
     resources:
       requests:
-        cpu: 150m
+        cpu: 500m
         memory: 1Gi
       limits:
-        cpu: 150m
+        cpu: 500m
         memory: 1Gi
     volumeMounts:
     - name: artifacts
