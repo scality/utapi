@@ -194,6 +194,9 @@ const tests = [
                 'GetObjectRetention',
                 'PutObjectLegalHold',
                 'GetObjectLegalHold',
+                'ReplicateObject',
+                'ReplicateDelete',
+                'ReplicateTags',
             ],
         },
     },
@@ -606,19 +609,6 @@ tests.forEach(test => {
             });
         });
 
-        it('should push putData metrics', done => {
-            const expected = buildExpectedResult({
-                storageUtilized: '1024',
-                numberOfObjects: '1',
-                incomingBytes: '1024',
-            });
-            Object.assign(params, metricTypes, {
-                newByteLength: 1024,
-                oldByteLength: null,
-            });
-            testMetric('putData', params, expected, done);
-        });
-
         it('should push putObjectAcl metrics', done => {
             const expected = buildExpectedResult({
                 action: 'PutObjectAcl',
@@ -738,6 +728,35 @@ tests.forEach(test => {
                 action: 'GetObjectLegalHold',
             });
             testMetric('getObjectLegalHold', metricTypes, expected, done);
+        });
+
+        it('should push replicateObject metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'ReplicateObject',
+                storageUtilized: '1024',
+                numberOfObjects: '1',
+                incomingBytes: '1024',
+            });
+            Object.assign(params, metricTypes, {
+                newByteLength: 1024,
+                oldByteLength: null,
+            });
+            testMetric('replicateObject', params, expected, done);
+        });
+
+        it('should push replicateDelete metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'ReplicateDelete',
+                numberOfObjects: '1',
+            });
+            testMetric('replicateDelete', metricTypes, expected, done);
+        });
+
+        it('should push replicateTags metrics', done => {
+            const expected = buildExpectedResult({
+                action: 'ReplicateTags',
+            });
+            testMetric('replicateTags', metricTypes, expected, done);
         });
 
         // Allows for decoupling of projects that use Utapi
