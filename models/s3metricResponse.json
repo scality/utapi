@@ -46,6 +46,9 @@
         "s3:PutObjectRetention": 0,
         "s3:GetObjectRetention": 0,
         "s3:PutObjectLegalHold": 0,
-        "s3:GetObjectLegalHold": 0
+        "s3:GetObjectLegalHold": 0,
+        "s3:ReplicateObject": 0,
+        "s3:ReplicateTags": 0,
+        "s3:ReplicateDelete": 0
     }
 }
