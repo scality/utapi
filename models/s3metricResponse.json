@@ -40,6 +40,9 @@
         "s3:GetBucketVersioning": 0,
         "s3:PutBucketReplication": 0,
         "s3:GetBucketReplication": 0,
-        "s3:DeleteBucketReplication": 0
+        "s3:DeleteBucketReplication": 0,
+        "s3:ReplicateObject": 0,
+        "s3:ReplicateTags": 0,
+        "s3:ReplicateDelete": 0
     }
 }
