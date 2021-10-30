@@ -2,6 +2,8 @@ const EventEmitter = require('events');
 const { callbackify, promisify } = require('util');
 const IORedis = require('ioredis');
 const { jsutil } = require('arsenal');
+const BackOff = require('backo');
+const { whilst } = require('async');
 
 const errors = require('./errors');
 const { LoggerContext, asyncOrCallback } = require('./utils');
@@ -102,6 +104,7 @@ class RedisClient extends EventEmitter {
     }
 
     _onError(error) {
+        this._isReady = false;
         moduleLogger.error('error connecting to redis', { error });
         if (this.listenerCount('error') > 0) {
             this.emit('error', error);
@@ -134,20 +137,63 @@ class RedisClient extends EventEmitter {
     }
 
     async _call(asyncFunc) {
-        const funcPromise = asyncFunc(this._redis);
-        if (!this._useTimeouts) {
-            // If timeouts are disabled simply return the Promise
-            return funcPromise;
-        }
+        const start = Date.now();
+        const { connectBackoff } = this._redisOptions.retry || {};
+        const backoff = new BackOff(connectBackoff);
+        const timeoutMs = (connectBackoff || {}).deadline || 2000;
+        let retried = false;
 
-        const { timeout, cancelTimeout } = this._createCommandTimeout();
+        return new Promise((resolve, reject) => {
+            whilst(
+                next => { // WARNING: test is asynchronous in `async` v3
+                    if (!connectBackoff && !this.isReady) {
+                        moduleLogger.warn('redis not ready and backoff is not configured');
+                    }
+                    process.nextTick(next, null, !!connectBackoff && !this.isReady);
+                },
+                next => {
+                    retried = true;
 
-        try {
-            // timeout always rejects so we can just return
-            return await Promise.race([funcPromise, timeout]);
-        } finally {
-            cancelTimeout();
-        }
+                    if ((Date.now() - start) > timeoutMs) {
+                        moduleLogger.error('redis still not ready after max wait, giving up', { timeoutMs });
+                        return next(errors.InternalError.customizeDescription(
+                            'redis client is not ready',
+                        ));
+                    }
+
+                    const backoffDurationMs = backoff.duration();
+                    moduleLogger.error('redis not ready, retrying', { backoffDurationMs });
+
+                    return setTimeout(next, backoffDurationMs);
+                },
+                err => {
+                    if (err) {
+                        return reject(err);
+                    }
+
+                    if (retried) {
+                        moduleLogger.info('redis connection recovered', {
+                            recoveryOverheadMs: Date.now() - start,
+                        });
+                    }
+
+                    const funcPromise = asyncFunc(this._redis);
+                    if (!this._useTimeouts) {
+                        // If timeouts are disabled simply return the Promise
+                        return resolve(funcPromise);
+                    }
+
+                    const { timeout, cancelTimeout } = this._createCommandTimeout();
+
+                    try {
+                        // timeout always rejects so we can just return
+                        return resolve(Promise.race([funcPromise, timeout]));
+                    } finally {
+                        cancelTimeout();
+                    }
+                },
+            );
+        });
     }
 
     call(func, callback) {
