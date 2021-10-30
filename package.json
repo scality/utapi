@@ -23,6 +23,7 @@
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
+    "backo": "^1.1.0",
     "body-parser": "^1.19.0",
     "bucketclient": "scality/bucketclient",
     "byte-size": "^7.0.0",
