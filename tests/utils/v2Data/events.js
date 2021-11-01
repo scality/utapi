@@ -75,8 +75,8 @@ const eventTemplateToOperation = {
 
     put: [
         'copyObject',
-        'putData',
         'putObject',
+        'replicateObject',
         'uploadPart',
         'uploadPartCopy',
     ],
@@ -128,6 +128,7 @@ const eventTemplateToOperation = {
         'putObjectLegalHold',
         'putObjectRetention',
         'putObjectTagging',
+        'replicateTags',
     ],
 
 };
