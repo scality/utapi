@@ -13,7 +13,7 @@ RUN apk add zip unzip build-base \
     && cd .. \
     && go build -a -o /usr/local/go/warp10_sensision_exporter
 
-FROM warp10io/warp10:master
+FROM registry.scality.com/utapi/warp10:2.8.1-95-g73e7de80
 
 # Override baked in version
 # Remove when updating to a numbered release
