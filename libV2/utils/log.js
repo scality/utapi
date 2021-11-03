@@ -1,5 +1,6 @@
 const werelogs = require('werelogs');
 const config = require('../config');
+const { comprehend } = require('./func');
 
 const loggerConfig = {
     level: config.logging.level,
@@ -102,8 +103,26 @@ function buildRequestLogger(req) {
     return new LoggerContext({}, reqLogger);
 }
 
+function logEventFilter(logger, msg, eventFilters) {
+    const filterLog = comprehend(
+        eventFilters,
+        (level, rules) => ({
+            key: level,
+            value: comprehend(
+                rules,
+                (rule, values) => ({
+                    key: rule,
+                    value: Array.from(values),
+                }),
+            ),
+        }),
+    );
+    logger(msg, { filters: filterLog });
+}
+
 module.exports = {
     logger: rootLogger,
     buildRequestLogger,
     LoggerContext,
+    logEventFilter,
 };
