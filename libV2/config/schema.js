@@ -1,4 +1,5 @@
 const Joi = require('@hapi/joi');
+const { allowedFilterFields, allowedFilterStates } = require('../constants');
 
 const backoffSchema = Joi.object({
     min: Joi.number(),
@@ -99,6 +100,17 @@ const schema = Joi.object({
         expirationEnabled: Joi.boolean(),
         hardLimit: Joi.string(),
     }),
+    filter: Joi.object(allowedFilterStates.reduce(
+        (filterObj, state) => {
+            filterObj[state] = allowedFilterFields.reduce(
+                (stateObj, field) => {
+                    stateObj[field] = Joi.string();
+                    return stateObj;
+                }, {},
+            );
+            return filterObj;
+        }, {},
+    )),
 });
 
 module.exports = schema;
