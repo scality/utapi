@@ -5,7 +5,7 @@ const { UtapiMetric } = require('../models');
 const config = require('../config');
 const { checkpointLagSecs } = require('../constants');
 const {
-    LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock, now,
+    LoggerContext, shardFromTimestamp, convertTimestamp, InterpolatedClock, now, filterObject,
 } = require('../utils');
 
 const logger = new LoggerContext({
@@ -20,6 +20,11 @@ class IngestShardTask extends BaseTask {
         this._defaultSchedule = config.ingestionSchedule;
         this._defaultLag = config.ingestionLagSeconds;
         this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
+        this._eventFilter = Object.entries(config.filter)
+            .reduce((chain, [level, filter]) => {
+                const filterFunc = filterObject(level, filter);
+                return obj => filterFunc(obj) && chain(obj);
+            }, () => true);
     }
 
     _hydrateEvent(data, stripTimestamp = false) {
@@ -61,7 +66,9 @@ class IngestShardTask extends BaseTask {
                             logger.info('Detected slow records, ingesting as repair');
                         }
 
-                        const records = metrics.map(m => this._hydrateEvent(m, areSlowEvents));
+                        const records = metrics
+                            .map(m => this._hydrateEvent(m, areSlowEvents))
+                            .filter(m => this._eventFilter(m));
 
                         records.sort((a, b) => a.timestamp - b.timestamp);
 

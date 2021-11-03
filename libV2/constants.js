@@ -111,6 +111,15 @@ const constants = {
         putDeleteMarkerObject: 'deleteObject',
     },
     expirationChunkDuration: 900000000, // 15 minutes in microseconds
+    allowedFilterFields: [
+        'operationId',
+        'location',
+        'account',
+        'user',
+        'bucket',
+        'object',
+    ],
+    allowedFilterStates: ['allow', 'deny'],
 };
 
 constants.operationToResponse = constants.operations
