@@ -7,7 +7,7 @@ const config = require('../config');
 const metadata = require('../metadata');
 const { serviceToWarp10Label, warp10RecordType } = require('../constants');
 
-const { LoggerContext, convertTimestamp } = require('../utils');
+const { LoggerContext, convertTimestamp, buildFilterChain } = require('../utils');
 
 const logger = new LoggerContext({
     module: 'ReindexTask',
@@ -18,6 +18,7 @@ class ReindexTask extends BaseTask {
         super(options);
         this._defaultSchedule = config.reindexSchedule;
         this._defaultLag = 0;
+        this._shouldReindex = buildFilterChain((config && config.filter) || {});
     }
 
     async _setup(includeDefaultOpts = true) {
@@ -145,6 +146,11 @@ class ReindexTask extends BaseTask {
         const accountTotals = {};
         const ignoredAccounts = new Set();
         await async.eachLimit(this.targetBuckets, 5, async bucket => {
+            if (!this._shouldReindex({ bucket: bucket.name, account: bucket.account })) {
+                logger.debug('skipping excluded bucket.', { bucket: bucket.name, account: bucket.account });
+                return;
+            }
+
             logger.info('started bucket reindex', { bucket: bucket.name });
 
             const mpuBucket = `${mpuBucketPrefix}${bucket.name}`;

@@ -11,7 +11,7 @@ const encode = require('encoding-down');
 /* eslint-enable import/no-extraneous-dependencies */
 
 const { UtapiMetric } = require('../models');
-const { LoggerContext, asyncOrCallback } = require('../utils');
+const { LoggerContext, asyncOrCallback, buildFilterChain } = require('../utils');
 
 const moduleLogger = new LoggerContext({
     module: 'client',
@@ -84,6 +84,7 @@ class UtapiClient {
         this._drainCanSchedule = true;
         this._drainDelay = (config && config.drainDelay) || 30000;
         this._suppressedEventFields = (config && config.suppressedEventFields) || null;
+        this._shouldPushMetric = buildFilterChain((config && config.filter) || {});
     }
 
     async join() {
@@ -239,6 +240,11 @@ class UtapiClient {
         let metric = data instanceof UtapiMetric
             ? data
             : new UtapiMetric(data);
+
+        // If this event has been filtered then exit early
+        if (!this._shouldPushMetric(metric)) {
+            return;
+        }
 
         // Assign a uuid if one isn't passed
         if (!metric.uuid) {
