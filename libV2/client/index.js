@@ -92,16 +92,17 @@ class UtapiClient {
     }
 
     async _pushToUtapi(metrics) {
-        const resp = await needle(
-            'post',
-            `${this._transport}://${this._host}:${this._port}/v2/ingest`,
-            metrics.map(metric => metric.getValue()),
-            { json: true, ...this._tls },
-        );
-        if (resp.statusCode !== 200) {
-            throw Error('failed to push metric, server returned non 200 status code',
-                { respCode: resp.statusCode, respMessage: resp.statusMessage });
-        }
+        metrics.forEach(metric => this._emitMetricLogLine(metric, { reason: 'ingest' }));
+        // const resp = await needle(
+        //     'post',
+        //     `${this._transport}://${this._host}:${this._port}/v2/ingest`,
+        //     metrics.map(metric => metric.getValue()),
+        //     { json: true, ...this._tls },
+        // );
+        // if (resp.statusCode !== 200) {
+        //     throw Error('failed to push metric, server returned non 200 status code',
+        //         { respCode: resp.statusCode, respMessage: resp.statusMessage });
+        // }
     }
 
     async _addToRetryCache(metric) {
