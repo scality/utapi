@@ -1,0 +1,62 @@
+---
+name: tests
+
+on:
+  push:
+    branches-ignore:
+    - 'development/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      REINDEX_PYTHON_INTERPRETER: python3
+    strategy:
+      matrix:
+        command:
+        - yarn run lint_md
+        - yarn run lint
+        - yarn test
+        - bash ./.github/scripts/run_ft_tests.bash false ft_test:client
+        - bash ./.github/scripts/run_ft_tests.bash false ft_test:server
+        - bash ./.github/scripts/run_ft_tests.bash false ft_test:cron
+        - bash ./.github/scripts/run_ft_tests.bash true ft_test:interval
+    services:
+      redis:
+        image: bitnami/redis:6.2
+        env:
+          ALLOW_EMPTY_PASSWORD: 'yes'
+        ports:
+        - 6379:6379
+      redis-sentinel:
+        image: bitnami/redis-sentinel:6.2
+        env:
+          REDIS_MASTER_SET: scality-s3
+          REDIS_SENTINEL_PORT_NUMBER: '16379'
+          REDIS_SENTINEL_QUORUM: '1'
+        ports:
+        - 16379:16379
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '10.22.0'
+        cache: 'yarn'
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip
+    - name: Install python deps
+      run: |
+        pip install requests
+        pip install redis
+    - name: install dependencies
+      run: yarn install --frozen-lockfile
+    - run: ${{ matrix.command }}
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
