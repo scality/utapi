@@ -11,7 +11,7 @@ const assert = require('assert');
  * @param {Object} filter
  * @param {Set} [filter.allow] - Set containing keys to include
  * @param {Set} [filter.deny] - Set containing keys to not include
- * @returns {bool}
+ * @returns {function(Object): bool}
  */
 
 function filterObject(key, { allow, deny }) {
