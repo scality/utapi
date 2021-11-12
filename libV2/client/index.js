@@ -11,7 +11,12 @@ const encode = require('encoding-down');
 /* eslint-enable import/no-extraneous-dependencies */
 
 const { UtapiMetric } = require('../models');
-const { LoggerContext, asyncOrCallback, buildFilterChain } = require('../utils');
+const {
+    LoggerContext,
+    logEventFilter,
+    asyncOrCallback,
+    buildFilterChain,
+} = require('../utils');
 
 const moduleLogger = new LoggerContext({
     module: 'client',
@@ -84,7 +89,11 @@ class UtapiClient {
         this._drainCanSchedule = true;
         this._drainDelay = (config && config.drainDelay) || 30000;
         this._suppressedEventFields = (config && config.suppressedEventFields) || null;
-        this._shouldPushMetric = buildFilterChain((config && config.filter) || {});
+        const eventFilters = (config && config.filter) || {};
+        this._shouldPushMetric = buildFilterChain(eventFilters);
+        if (Object.keys(eventFilters).length !== 0) {
+            logEventFilter((...args) => moduleLogger.info(...args), 'utapi event filter enabled', eventFilters);
+        }
     }
 
     async join() {
