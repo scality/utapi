@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { every } = require('async');
 
 /**
  * filterObject
@@ -14,7 +15,7 @@ const assert = require('assert');
  * @returns {function(Object): bool}
  */
 
-function filterObject(key, { allow, deny }) {
+function filterObject(obj, key, { allow, deny }) {
     if (allow && deny) {
         throw new Error('You can not define both an allow and a deny list.');
     }
@@ -23,17 +24,17 @@ function filterObject(key, { allow, deny }) {
     }
     if (allow) {
         assert(allow instanceof Set);
-        return obj => (obj[key] === undefined) || allow.has(obj[key]);
+        return obj[key] === undefined || allow.has(obj[key]);
     }
     assert(deny instanceof Set);
-    return obj => (obj[key] === undefined) || !deny.has(obj[key]);
+    return obj[key] === undefined || !deny.has(obj[key]);
 }
 
 /**
  * buildFilterChain
  *
- * Constructs a function chain from a map of key names and allow/deny filters.
- * Returned function returns a boolean with false meaning the object was present
+ * Constructs a function from a map of key names and allow/deny filters.
+ * The returned function returns a boolean with false meaning the object was present
  * in one of the filters allowing the function to be passed directly to Array.filter etc.
  *
  * @param {Object<string, Object<string, Set>} filters
@@ -41,14 +42,7 @@ function filterObject(key, { allow, deny }) {
  */
 
 function buildFilterChain(filters) {
-    return Object.entries(filters)
-        .reduce(
-            (chain, [key, filter]) => {
-                const filterFunc = filterObject(key, filter);
-                return obj => filterFunc(obj) && chain(obj);
-            },
-            () => true,
-        );
+    return obj => Object.entries(filters).every(([key, filter]) => filterObject(obj, key, filter));
 }
 
 module.exports = { filterObject, buildFilterChain };

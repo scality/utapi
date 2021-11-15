@@ -32,14 +32,12 @@ describe('Test filterObject', () => {
         const ruleType = Object.keys(filter)[0];
         const msg = `${successMsg} object if value is${state} present in ${ruleType} list`;
         it(msg, () => {
-            const func = filterObject('value', filter);
-            assert.strictEqual(func({ value }), expected);
+            assert.strictEqual(filterObject({ value }, 'value', filter), expected);
         });
     });
 
     it('should not filter an object if the filter key is undefined', () => {
-        const func = filterObject('value', { allow: new Set(['foo']) });
-        assert.strictEqual(func({}), true);
+        assert.strictEqual(filterObject({}, 'value', { allow: new Set(['foo']) }), true);
     });
 
     it('should throw if creating a filter with both allow and deny lists', () => {
