@@ -7,7 +7,12 @@ const config = require('../config');
 const metadata = require('../metadata');
 const { serviceToWarp10Label, warp10RecordType } = require('../constants');
 
-const { LoggerContext, convertTimestamp } = require('../utils');
+const {
+    LoggerContext,
+    logEventFilter,
+    convertTimestamp,
+    buildFilterChain,
+} = require('../utils');
 
 const logger = new LoggerContext({
     module: 'ReindexTask',
@@ -18,6 +23,11 @@ class ReindexTask extends BaseTask {
         super(options);
         this._defaultSchedule = config.reindexSchedule;
         this._defaultLag = 0;
+        const eventFilters = (config && config.filter) || {};
+        this._shouldReindex = buildFilterChain((config && config.filter) || {});
+        if (Object.keys(eventFilters).length !== 0) {
+            logEventFilter((...args) => logger.info(...args), 'reindex resource filtering enabled', eventFilters);
+        }
     }
 
     async _setup(includeDefaultOpts = true) {
@@ -145,6 +155,11 @@ class ReindexTask extends BaseTask {
         const accountTotals = {};
         const ignoredAccounts = new Set();
         await async.eachLimit(this.targetBuckets, 5, async bucket => {
+            if (!this._shouldReindex({ bucket: bucket.name, account: bucket.account })) {
+                logger.debug('skipping excluded bucket.', { bucket: bucket.name, account: bucket.account });
+                return;
+            }
+
             logger.info('started bucket reindex', { bucket: bucket.name });
 
             const mpuBucket = `${mpuBucketPrefix}${bucket.name}`;
