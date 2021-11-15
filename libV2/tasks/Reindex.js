@@ -156,7 +156,7 @@ class ReindexTask extends BaseTask {
         const ignoredAccounts = new Set();
         await async.eachLimit(this.targetBuckets, 5, async bucket => {
             if (!this._shouldReindex({ bucket: bucket.name, account: bucket.account })) {
-                logger.debug('skipping excluded bucket.', { bucket: bucket.name, account: bucket.account });
+                logger.debug('skipping excluded bucket', { bucket: bucket.name, account: bucket.account });
                 return;
             }
 
