@@ -59,12 +59,12 @@ const chainTestCases = [
         msg: 'test chain with multiple allow filters',
     },
     {
-        key1: { allow: new Set(['allow']) },
+        key1: { deny: new Set(['deny']) },
         key2: { deny: new Set(['deny']) },
         msg: 'test chain with multiple deny filters',
     },
     {
-        key1: { deny: new Set(['deny']) },
+        key1: { allow: new Set(['allow']) },
         key2: { deny: new Set(['deny']) },
         msg: 'test chain with an allow and a deny filter',
     },
