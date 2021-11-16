@@ -49,7 +49,7 @@ RUN yarn cache clean \
 #
 
 ARG BUILDBOT_VERSION=2.7.0
-RUN pip3 install buildbot-worker==$BUILDBOT_VERSION requests redis
+RUN pip3 install buildbot-worker==$BUILDBOT_VERSION requests redis==3.5.3
 ADD eve/workers/unit_and_feature_tests/supervisor/buildbot_worker.conf /etc/supervisor/conf.d/
 ADD eve/workers/unit_and_feature_tests/redis/sentinel.conf /etc/sentinel.conf
 
