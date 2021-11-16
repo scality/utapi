@@ -3,7 +3,9 @@ const path = require('path');
 const Joi = require('@hapi/joi');
 const assert = require('assert');
 
-const { truthy, envNamespace } = require('../constants');
+const {
+    truthy, envNamespace, allowedFilterFields, allowedFilterStates,
+} = require('../constants');
 const configSchema = require('./schema');
 // We need to require the specific file rather than the parent module to avoid a circular require
 const { parseDiskSizeSpec } = require('../utils/disk');
@@ -225,6 +227,28 @@ class Config {
         return certs;
     }
 
+    static _parseResourceFilters(config) {
+        const resourceFilters = {};
+
+        allowedFilterFields.forEach(
+            field => allowedFilterStates.forEach(
+                state => {
+                    const configResources = (config[state] && config[state][field]) || null;
+                    const envVar = `FILTER_${field.toUpperCase()}_${state.toUpperCase()}`;
+                    const resources = _loadFromEnv(envVar, configResources, _typeCasts.list);
+                    if (resources) {
+                        if (resourceFilters[field]) {
+                            throw new Error('You can not define both an allow and a deny list for an event field.');
+                        }
+                        resourceFilters[field] = { [state]: new Set(resources) };
+                    }
+                },
+            ),
+        );
+
+        return resourceFilters;
+    }
+
     _parseConfig(config) {
         const parsedConfig = {};
 
@@ -344,6 +368,8 @@ class Config {
             arn: _loadFromEnv('SERVICE_USER_ARN', config.serviceUser.arn),
             enabled: _loadFromEnv('SERVICE_USER_ENABLED', config.serviceUser.enabled, _typeCasts.bool),
         };
+
+        parsedConfig.filter = Config._parseResourceFilters(config.filter);
 
         return parsedConfig;
     }
