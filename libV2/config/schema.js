@@ -1,10 +1,23 @@
 const Joi = require('@hapi/joi');
 const { allowedFilterFields, allowedFilterStates } = require('../constants');
 
+const backoffSchema = Joi.object({
+    min: Joi.number(),
+    max: Joi.number(),
+    deadline: Joi.number(),
+    jitter: Joi.number(),
+    factor: Joi.number(),
+});
+
+const redisRetrySchema = Joi.object({
+    connectBackoff: backoffSchema,
+});
+
 const redisServerSchema = Joi.object({
     host: Joi.string(),
     port: Joi.number(),
     password: Joi.string().allow(''),
+    retry: redisRetrySchema,
 });
 
 const redisSentinelSchema = Joi.object({
@@ -15,6 +28,7 @@ const redisSentinelSchema = Joi.object({
     })),
     password: Joi.string().default('').allow(''),
     sentinelPassword: Joi.string().default('').allow(''),
+    retry: redisRetrySchema,
 });
 
 const warp10SingleHost = Joi.object({
