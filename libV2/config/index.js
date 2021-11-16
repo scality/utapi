@@ -176,7 +176,9 @@ class Config {
     }
 
     static _parseRedisConfig(prefix, config) {
-        const redisConf = {};
+        const redisConf = {
+            retry: config.retry,
+        };
         if (config.sentinels || _definedInEnv(`${prefix}_SENTINELS`)) {
             redisConf.name = _loadFromEnv(`${prefix}_NAME`, config.name);
             redisConf.sentinels = _loadFromEnv(
