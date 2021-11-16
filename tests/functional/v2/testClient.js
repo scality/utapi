@@ -31,6 +31,8 @@ describe('Test UtapiClient', function () {
         let sandbox;
 
         let events;
+        let bucket;
+        let account;
 
         beforeEach(() => {
             sandbox = sinon.createSandbox();
@@ -38,8 +40,10 @@ describe('Test UtapiClient', function () {
                 drainDelay: 5000,
             });
 
+            account = uuid.v4();
+            bucket = uuid.v4();
             const { events: _events } = generateCustomEvents(now() - (60 * 1000000), now() - (10 * 1000000), 50, {
-                [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] },
+                [account]: { [uuid.v4()]: [bucket] },
             });
             // Hack because you can't unpack to previously declared variables,
             // and declaring inside the beforeEach wouldn't have the scope needed
@@ -93,6 +97,99 @@ describe('Test UtapiClient', function () {
             assert.strictEqual(pushSpy.callCount, 1);
             assert.strictEqual(pushSpy.firstCall.args[0][0].object, undefined);
             assert.strictEqual(pushSpy.firstCall.threw(), false);
+        });
+
+        it('should prevent events filtered via deny from being pushed', async () => {
+            client = new UtapiClient({
+                drainDelay: 5000,
+                filter: {
+                    bucket: { deny: new Set([bucket]) },
+                },
+            });
+
+            const pushSpy = sandbox.spy(UtapiClient.prototype, '_pushToUtapi');
+            const retrySpy = sandbox.spy(UtapiClient.prototype, '_addToRetryCache');
+
+            await client.pushMetric(events[0]);
+
+            assert.strictEqual(retrySpy.callCount, 0);
+            assert.strictEqual(pushSpy.callCount, 0);
+        });
+
+        it('should prevent events filtered via allow from being pushed', async () => {
+            client = new UtapiClient({
+                drainDelay: 5000,
+                filter: {
+                    bucket: { allow: new Set(['not-my-bucket']) },
+                },
+            });
+
+            const pushSpy = sandbox.spy(UtapiClient.prototype, '_pushToUtapi');
+            const retrySpy = sandbox.spy(UtapiClient.prototype, '_addToRetryCache');
+
+            await client.pushMetric(events[0]);
+
+            assert.strictEqual(retrySpy.callCount, 0);
+            assert.strictEqual(pushSpy.callCount, 0);
+        });
+
+        it('should allow events not matching deny list to be pushed', async () => {
+            client = new UtapiClient({
+                drainDelay: 5000,
+                filter: {
+                    bucket: { deny: new Set(['not-my-bucket']) },
+                },
+            });
+
+            const pushSpy = sandbox.spy(UtapiClient.prototype, '_pushToUtapi');
+            const retrySpy = sandbox.spy(UtapiClient.prototype, '_addToRetryCache');
+
+            await client.pushMetric(events[0]);
+
+            assert.strictEqual(retrySpy.callCount, 0);
+            assert.strictEqual(pushSpy.callCount, 1);
+        });
+
+        it('should allow events matching allow list to be pushed', async () => {
+            client = new UtapiClient({
+                drainDelay: 5000,
+                filter: {
+                    bucket: { allow: new Set([bucket]) },
+                },
+            });
+
+            const pushSpy = sandbox.spy(UtapiClient.prototype, '_pushToUtapi');
+            const retrySpy = sandbox.spy(UtapiClient.prototype, '_addToRetryCache');
+
+            await client.pushMetric(events[0]);
+
+            assert.strictEqual(retrySpy.callCount, 0);
+            assert.strictEqual(pushSpy.callCount, 1);
+        });
+
+        it('should combine multiple allow and deny filters', async () => {
+            client = new UtapiClient({
+                drainDelay: 5000,
+                filter: {
+                    bucket: { allow: new Set([bucket]) },
+                    account: { deny: new Set([`${account}-deny`]) },
+                },
+            });
+
+            const pushSpy = sandbox.spy(UtapiClient.prototype, '_pushToUtapi');
+            const retrySpy = sandbox.spy(UtapiClient.prototype, '_addToRetryCache');
+
+            const [allowedEvent, deniedBucketEvent, deniedAccountEvent] = events;
+            await client.pushMetric(allowedEvent);
+
+            deniedBucketEvent.bucket = `${bucket}-deny`;
+            await client.pushMetric(deniedBucketEvent);
+
+            deniedAccountEvent.account = `${account}-deny`;
+            await client.pushMetric(deniedAccountEvent);
+
+            assert.strictEqual(retrySpy.callCount, 0);
+            assert.strictEqual(pushSpy.callCount, 1);
         });
     });
 
