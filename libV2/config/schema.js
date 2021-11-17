@@ -104,7 +104,7 @@ const schema = Joi.object({
         (filterObj, state) => {
             filterObj[state] = allowedFilterFields.reduce(
                 (stateObj, field) => {
-                    stateObj[field] = Joi.string();
+                    stateObj[field] = Joi.array().items(Joi.string());
                     return stateObj;
                 }, {},
             );
