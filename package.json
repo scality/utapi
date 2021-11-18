@@ -3,7 +3,7 @@
   "engines": {
     "node": ">=10.19.0"
   },
-  "version": "7.10.4",
+  "version": "7.10.5",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
