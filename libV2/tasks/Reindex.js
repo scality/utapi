@@ -51,6 +51,13 @@ class ReindexTask extends BaseTask {
                 // eslint-disable-next-line no-continue
                 continue;
             }
+
+            if (!Number.isInteger(obj.value['content-length'])) {
+                logger.debug('object missing content-length, not including in count');
+                // eslint-disable-next-line no-continue
+                continue;
+            }
+
             count += 1;
             size += obj.value['content-length'];
 
