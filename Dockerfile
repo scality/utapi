@@ -2,7 +2,7 @@ FROM node:10.22.0-buster-slim
 
 WORKDIR /usr/src/app
 
-COPY package.json /usr/src/app
+COPY package.json yarn.lock /usr/src/app/
 
 RUN apt-get update \
     && apt-get install -y \
