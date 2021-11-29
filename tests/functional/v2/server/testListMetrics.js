@@ -111,15 +111,12 @@ describe('Test listMetric', function () {
         otherAccount = await vaultclient.createAccountAndKeys(uuid.v4());
         otherUser = await vaultclient.createUser(otherAccount, uuid.v4());
         serviceAccount = await vaultclient.createInternalServiceAccountAndKeys();
-        serviceUser = await vaultclient.createUserAndKeys(serviceAccount, 'service-utapi-user');
+        serviceUser = await vaultclient.ensureServiceUser(serviceAccount);
 
         await Promise.all([
             vaultclient.createAndAttachUtapiPolicy(account, user, 'buckets', '*'),
             vaultclient.createAndAttachUtapiPolicy(account, user, 'accounts', '*'),
             vaultclient.createAndAttachUtapiPolicy(account, user, 'users', '*'),
-            vaultclient.createAndAttachUtapiPolicy(serviceAccount, serviceUser, 'buckets', '*'),
-            vaultclient.createAndAttachUtapiPolicy(serviceAccount, serviceUser, 'accounts', '*'),
-            vaultclient.createAndAttachUtapiPolicy(serviceAccount, serviceUser, 'users', '*'),
         ]);
 
         bucketd.createBucketsWithOwner([
