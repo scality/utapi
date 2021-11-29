@@ -111,7 +111,7 @@ describe('Test listMetric', function () {
         otherAccount = await vaultclient.createAccountAndKeys(uuid.v4());
         otherUser = await vaultclient.createUser(otherAccount, uuid.v4());
         serviceAccount = await vaultclient.createInternalServiceAccountAndKeys();
-        serviceUser = await vaultclient.createUserAndKeys(serviceAccount, 'service-utapi-user');
+        serviceUser = await vaultclient.createUserAndKeys(serviceAccount, 'service-utapi-user', '/scality-internal/');
 
         await Promise.all([
             vaultclient.createAndAttachUtapiPolicy(account, user, 'buckets', '*'),

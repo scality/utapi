@@ -134,9 +134,9 @@ class VaultClient {
         };
     }
 
-    static async createUser(parentAccount, name) {
+    static async createUser(parentAccount, name, path) {
         const client = VaultClient.getIAMClient(parentAccount);
-        const { User: user } = await client.createUser({ UserName: name }).promise();
+        const { User: user } = await client.createUser({ UserName: name, Path: path }).promise();
         return {
             name,
             id: user.UserId,
@@ -154,8 +154,8 @@ class VaultClient {
         };
     }
 
-    static async createUserAndKeys(parentAccount, name) {
-        const user = await VaultClient.createUser(parentAccount, name);
+    static async createUserAndKeys(parentAccount, name, path) {
+        const user = await VaultClient.createUser(parentAccount, name, path);
         const creds = await VaultClient.createUserKeys(parentAccount, name);
         return {
             ...user,
