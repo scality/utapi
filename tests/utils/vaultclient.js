@@ -1,8 +1,11 @@
 /* eslint-disable no-undef-init */
+/* eslint-disable no-console */
 const { IAM } = require('aws-sdk');
 const vaultclient = require('vaultclient');
 const fs = require('fs');
 const uuid = require('uuid');
+const { exec } = require('child_process');
+const path = require('path');
 
 const adminCredentials = {
     accessKey: 'D4IT2AWSB588GO5J9T00',
@@ -14,6 +17,33 @@ const internalServiceAccountId = '000000000000';
 const internalServiceAccountName = 'scality-internal-services';
 const internalServiceAccountEmail = 'scality@internal';
 const internalServiceUserName = 'service-utapi-user';
+
+async function execPath(path, args, env) {
+    const proc = exec(`${path} ${args.join(' ')}`, {
+        env,
+        stdio: 'pipe',
+    });
+    let resp;
+    proc.stdout.on('data', data => { resp = data.toString(); });
+    proc.stderr.on('data', data => console.error(data.toString()));
+    return new Promise((resolve, reject) => {
+        proc.on('error', err => reject(err));
+        proc.on('exit', exitCode => {
+            if (exitCode !== 0) {
+                reject(new Error(`ensureServiceUser exited with non-zero code ${exitCode}`));
+                return;
+            }
+            resolve(resp);
+        });
+    });
+}
+
+const ensureServiceUser = path.resolve(__dirname, '../../bin/ensureServiceUser');
+
+// Allow overriding the path to the node binary
+// Useful to work around issues when running locally and using a node version manager
+// Used in VaultClient.ensureServiceUser()
+const NODE_INTERPRETER = process.env.NODE_INTERPRETER ? process.env.NODE_INTERPRETER : 'node';
 
 class VaultClient {
     /**
@@ -305,6 +335,32 @@ class VaultClient {
     static async cleanupAccountAndUsers(parentAccount) {
         await VaultClient.cleanupUsers(parentAccount);
         await VaultClient.deleteAccount(parentAccount);
+    }
+
+    // Creates the service user and policies using `bin/EnsureServiceUser`
+    static async ensureServiceUser(parentAccount) {
+        const resp = await execPath(
+            NODE_INTERPRETER,
+            [ensureServiceUser, 'apply', 'service-utapi-user'],
+            {
+                AWS_ACCESS_KEY_ID: parentAccount.accessKey,
+                AWS_SECRET_ACCESS_KEY: parentAccount.secretKey,
+                AWS_REGION: 'us-east-1',
+                NODE_TLS_REJECT_UNAUTHORIZED: '0',
+            },
+        );
+
+        if (!resp) {
+            throw new Error('No response from ensureServiceUser');
+        }
+
+        const { data } = JSON.parse(resp);
+
+        return {
+            accessKey: data.AccessKeyId,
+            secretKey: data.SecretAccessKey,
+            name: data.UserName,
+        };
     }
 }
 
