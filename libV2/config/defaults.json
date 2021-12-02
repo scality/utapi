@@ -45,6 +45,10 @@
         "retentionDays": 45,
         "expirationEnabled": false
     },
+    "serviceUser": {
+        "arn": "arn:aws:iam::000000000000:user/service-utapi-user",
+        "enabled": false
+    },
     "filter": {
         "allow": {},
         "deny": {}

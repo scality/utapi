@@ -366,6 +366,11 @@ class Config {
 
         parsedConfig.bucketd = _loadFromEnv('BUCKETD_BOOTSTRAP', config.bucketd, _typeCasts.serverList);
 
+        parsedConfig.serviceUser = {
+            arn: _loadFromEnv('SERVICE_USER_ARN', config.serviceUser.arn),
+            enabled: _loadFromEnv('SERVICE_USER_ENABLED', config.serviceUser.enabled, _typeCasts.bool),
+        };
+
         parsedConfig.filter = Config._parseResourceFilters(config.filter);
 
         return parsedConfig;

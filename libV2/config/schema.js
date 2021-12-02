@@ -100,6 +100,10 @@ const schema = Joi.object({
         expirationEnabled: Joi.boolean(),
         hardLimit: Joi.string(),
     }),
+    serviceUser: Joi.object({
+        arn: Joi.string(),
+        enabled: Joi.boolean(),
+    }),
     filter: Joi.object(allowedFilterStates.reduce(
         (filterObj, state) => {
             filterObj[state] = allowedFilterFields.reduce(
