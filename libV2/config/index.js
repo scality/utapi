@@ -289,6 +289,8 @@ class Config {
         const warp10Conf = {
             readToken: _loadFromEnv('WARP10_READ_TOKEN', config.warp10.readToken),
             writeToken: _loadFromEnv('WARP10_WRITE_TOKEN', config.warp10.writeToken),
+            requestTimeout: _loadFromEnv('WARP10_REQUEST_TIMEOUT', config.warp10.requestTimeout, _typeCasts.int),
+            connectTimeout: _loadFromEnv('WARP10_CONNECT_TIMEOUT', config.warp10.connectTimeout, _typeCasts.int),
         };
 
         if (Array.isArray(config.warp10.hosts) || _definedInEnv('WARP10_HOSTS')) {
