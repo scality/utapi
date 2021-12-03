@@ -123,6 +123,8 @@ const clients = _config.warp10.hosts.map(
     val => new Warp10Client({
         readToken: _config.warp10.readToken,
         writeToken: _config.warp10.writeToken,
+        connectTimeout: _config.warp10.connectTimeout,
+        requestTimeout: _config.warp10.requestTimeout,
         ...val,
     }),
 );
