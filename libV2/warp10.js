@@ -3,6 +3,11 @@ const needle = require('needle');
 const assert = require('assert');
 const { eventFieldsToWarp10, warp10EventType } = require('./constants');
 const _config = require('./config');
+const { LoggerContext } = require('./utils');
+
+const moduleLogger = new LoggerContext({
+    module: 'warp10',
+});
 
 class Warp10Client {
     constructor(config) {
@@ -74,6 +79,7 @@ class Warp10Client {
     async exec(params) {
         const payload = this._buildExecPayload(params);
         const resp = await this._client.exec(payload);
+        moduleLogger.info('warpscript executed', { stats: resp.meta });
         return resp;
     }
 
