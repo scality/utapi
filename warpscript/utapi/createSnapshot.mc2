@@ -47,7 +47,27 @@
     // If we found a snapshot, increment its timestamp so we start at the tick immediatly after
     <% DUP 0 > %>
     <%  1 + %> IFT
-    'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
+    'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (1 if no snapshots)
+
+    // If snapshot is longer than 6 hours change endTimestamp to be masterSnapshotTimestamp + 6 hours
+    <% $endTimestamp $masterSnapshotTimestamp - 'P6H' DURATION > %>
+    <%
+      // If there are no preceding snapshots
+      <% $masterSnapshotTimestamp 1 == %>
+      <%
+        // Find the oldest checkpoint
+        $read_token $checkpoint_class $filterLabels $endTimestamp @utapi/findOldestRecord
+        $auth_info ->JSON 
+        { 'class' $checkpoint_class 'labels' $filterLabels } ->JSON
+        $utapi/findOldestRecord 'oldestCheckpoint' STORE
+        // If no checkpoints are found 
+        <% $oldestCheckpoint -1 == %>
+        <% STOP %> IFT
+      %> IFT
+      $masterSnapshotTimestamp 'P6D' DURATION +
+      'endTimestamp' STORE 
+      'Oversize snapshot detected using ' $endTimestamp TOSTRING + ' as end' + LOGMSG
+    %> IFT
 
     [
       "node"
@@ -68,6 +88,9 @@
     $ignoredLabels
     DIFFERENCE SET->
     SUBMAP 'availableSnapshots' STORE
+
+    'availableSnapshots: ' $availableSnapshots ->JSON + LOGMSG
+    'filterLabels: ' $filterLabels ->JSON + LOGMSG
 
     {} 'previousSnapshots' STORE
 
@@ -91,6 +114,8 @@
         $endTimestamp
         @utapi/fetchFirstRecordBefore
         VALUES 0 GET @utapi/decodeRecord 'record' STORE
+        <% $record 'ops' GET ISNULL %>
+        <% $record 'ops' {} PUT DROP %> IFT
         $fieldSnapshots $record $value PUT DROP
       %> FOREACH
       $previousSnapshots $fieldSnapshots $field PUT DROP
@@ -134,7 +159,7 @@
       VALUES
       <%
         @utapi/decodeRecord 'correction' STORE
-        // 'Including correction ' $correction ->JSON + LOGMSG
+        'Including correction ' $correction ->JSON + LOGMSG
         $created
         'objD' $correction 'objD' GET @util/sumField
         'sizeD' $correction 'sizeD' GET @util/sumField
@@ -163,9 +188,9 @@
       $labelSnapshots $created $labelValue PUT DROP
     %> FOREACH
 
-    // $createdSnapshots ->JSON LOGMSG
+    $createdSnapshots ->JSON LOGMSG
 
-    // $endTimestamp TOSTRING LOGMSG
+    $endTimestamp TOSTRING LOGMSG
     // Fetch all checkpoints since last master snapshot til passed time
     {
       'token' $read_token
@@ -236,7 +261,7 @@
       $labelSnapshots $created $labelValue PUT DROP
     %> FOREACH
 
-    // $createdSnapshots ->JSON LOGMSG
+    $createdSnapshots ->JSON LOGMSG
     0 'snapshots' STORE
     // For each of our indexed fields
     $createdSnapshots KEYLIST
@@ -249,7 +274,7 @@
         'fieldValue' STORE
         // Encode the results
         $fieldResults $fieldValue GET @utapi/encodeRecord 'value' STORE
-        // 'Created new snapshot ' { 'node' $nodeId $field $fieldValue } ->JSON + ' ' + $value ->JSON + LOGMSG
+        'Created new snapshot ' { 'node' $nodeId $field $fieldValue } ->JSON + ' ' + $value ->JSON + LOGMSG
         NEWGTS $snapshot_class RENAME
         $endTimestamp NaN NaN NaN $value ADDVALUE
         { 'node' $nodeId $field $fieldValue } RELABEL
