@@ -60,7 +60,7 @@
       <% $masterSnapshotTimestamp 0 == %>
       <%
         // Find the oldest checkpoint
-        'No previous snapshots found, detecting start of checkpoints.' LOGMSG
+        // 'No previous snapshots found, detecting start of checkpoints.' LOGMSG
         $auth_info ->JSON 
         { 'class' $checkpoint_class 'labels' $filterLabels } ->JSON
         @utapi/findOldestRecord 'oldestCheckpoint' STORE
