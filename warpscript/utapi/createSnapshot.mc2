@@ -1,3 +1,4 @@
+
 {
   'name' 'utapi/createSnapshot'
   'desc'
@@ -40,6 +41,7 @@
     'utapi.checkpoint' 'checkpoint_class' STORE
     'utapi.repair.correction' 'correction_class' STORE
 
+    // will read the key `max_snapshot_size@utapi/createSnapshot` from warp 10 config
     'max_snapshot_size' 'P6H' MACROCONFIGDEFAULT DURATION 'max_snapshot_size' STORE
 
     // Fetch latest master snapshot
@@ -119,6 +121,8 @@
         $endTimestamp
         @utapi/fetchFirstRecordBefore
         VALUES 0 GET @utapi/decodeRecord 'record' STORE
+        <% $record 'ops' GET ISNULL %>
+        <% $record {} 'ops' PUT DROP %> IFT
         $fieldSnapshots $record $value PUT DROP
       %> FOREACH
       $previousSnapshots $fieldSnapshots $field PUT DROP
