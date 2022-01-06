@@ -72,7 +72,6 @@
           $auth_info ->JSON 
           { 'class' $correction_class 'labels' $filterLabels } ->JSON
           @utapi/findOldestRecord 'oldestTimestamp' STORE
-          'oldestCorrection: ' $oldestTimestamp TOSTRING + LOGMSG
           <% $oldestTimestamp -1 == %>
           <%
             // 'No corrections or checkpoints found. Nothing to snapshot' LOGMSG
