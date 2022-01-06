@@ -47,6 +47,7 @@
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
 
+
     FIRSTTICK
     // If we found a snapshot, increment its timestamp so we start at the tick immediatly after
     <% DUP 0 > %>
@@ -60,23 +61,33 @@
       <% $masterSnapshotTimestamp 0 == %>
       <%
         // Find the oldest checkpoint
-        'No previous snapshots found, detecting start of checkpoints.' LOGMSG
+        // 'No previous snapshots found, detecting start of checkpoints.' LOGMSG
         $auth_info ->JSON 
         { 'class' $checkpoint_class 'labels' $filterLabels } ->JSON
-        @utapi/findOldestRecord 'oldestCheckpoint' STORE
-        'oldestCheckpoint: ' $oldestCheckpoint TOSTRING + LOGMSG
+        @utapi/findOldestRecord 'oldestTimestamp' STORE
         // If no checkpoints are found 
-        <% $oldestCheckpoint -1 == %>
+        <% $oldestTimestamp -1 == %>
         <%
-          'No checkpoints found. Nothing to snapshot' LOGMSG
-          STOP
+          // 'No checkpoints found. Looking for corrections' LOGMSG
+          $auth_info ->JSON 
+          { 'class' $correction_class 'labels' $filterLabels } ->JSON
+          @utapi/findOldestRecord 'oldestTimestamp' STORE
+          'oldestCorrection: ' $oldestTimestamp TOSTRING + LOGMSG
+          <% $oldestTimestamp -1 == %>
+          <%
+            // 'No corrections or checkpoints found. Nothing to snapshot' LOGMSG
+            STOP
+          %> IFT
+        %>  IFT
+        <% $oldestTimestamp $max_snapshot_size + $endTimestamp < %>
+        <%
+          $oldestTimestamp $max_snapshot_size + 'endTimestamp' STORE
         %> IFT
-        $oldestCheckpoint $max_snapshot_size + 'endTimestamp' STORE
       %> 
       <%
         $masterSnapshotTimestamp $max_snapshot_size + 'endTimestamp' STORE 
       %> IFTE
-      'Oversize snapshot detected using ' $endTimestamp TOSTRING + ' as end' + LOGMSG
+      // 'Oversize snapshot detected using ' $endTimestamp TOSTRING + ' as end' + LOGMSG
     %> IFT
 
     [
