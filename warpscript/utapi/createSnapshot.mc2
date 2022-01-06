@@ -60,15 +60,15 @@
       <% $masterSnapshotTimestamp 0 == %>
       <%
         // Find the oldest checkpoint
-        // 'No previous snapshots found, detecting start of checkpoints.' LOGMSG
+        'No previous snapshots found, detecting start of checkpoints.' LOGMSG
         $auth_info ->JSON 
         { 'class' $checkpoint_class 'labels' $filterLabels } ->JSON
         @utapi/findOldestRecord 'oldestCheckpoint' STORE
-        // 'oldestCheckpoint: ' $oldestCheckpoint TOSTRING + LOGMSG
+        'oldestCheckpoint: ' $oldestCheckpoint TOSTRING + LOGMSG
         // If no checkpoints are found 
         <% $oldestCheckpoint -1 == %>
         <%
-          // 'No checkpoints found. Nothing to snapshot' LOGMSG
+          'No checkpoints found. Nothing to snapshot' LOGMSG
           STOP
         %> IFT
         $oldestCheckpoint $max_snapshot_size + 'endTimestamp' STORE
@@ -76,7 +76,7 @@
       <%
         $masterSnapshotTimestamp $max_snapshot_size + 'endTimestamp' STORE 
       %> IFTE
-      // 'Oversize snapshot detected using ' $endTimestamp TOSTRING + ' as end' + LOGMSG
+      'Oversize snapshot detected using ' $endTimestamp TOSTRING + ' as end' + LOGMSG
     %> IFT
 
     [

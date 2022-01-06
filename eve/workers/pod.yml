@@ -34,6 +34,8 @@ spec:
         value: '10000000'
       - name: ENABLE_SENSISION
         value: 't'
+      - name: warpscript.extension.logEvent
+        value: io.warp10.script.ext.logging.LoggingWarpScriptExtension
     resources:
       requests:
         cpu: 300m
