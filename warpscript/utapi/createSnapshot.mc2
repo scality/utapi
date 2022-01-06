@@ -40,6 +40,8 @@
     'utapi.checkpoint' 'checkpoint_class' STORE
     'utapi.repair.correction' 'correction_class' STORE
 
+    'max_snapshot_size' 'P6H' MACROCONFIGDEFAULT DURATION 'max_snapshot_size' STORE
+
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
 
@@ -50,22 +52,28 @@
     'masterSnapshotTimestamp' STORE // Grab our ending timestamp from the last master snapshot (0 if no snapshots)
 
     // If snapshot is longer than 6 hours change endTimestamp to be masterSnapshotTimestamp + 6 hours
-    <% $endTimestamp $masterSnapshotTimestamp - 'P6H' DURATION > %>
+    <% $endTimestamp $masterSnapshotTimestamp - $max_snapshot_size > %>
     <%
       // If there are no preceding snapshots
-      <% $masterSnapshotTimestamp 1 == %>
+      <% $masterSnapshotTimestamp 0 == %>
       <%
         // Find the oldest checkpoint
-        $read_token $checkpoint_class $filterLabels $endTimestamp @utapi/findOldestRecord
+        'No previous snapshots found, detecting start of checkpoints.' LOGMSG
         $auth_info ->JSON 
         { 'class' $checkpoint_class 'labels' $filterLabels } ->JSON
-        $utapi/findOldestRecord 'oldestCheckpoint' STORE
+        @utapi/findOldestRecord 'oldestCheckpoint' STORE
+        // 'oldestCheckpoint: ' $oldestCheckpoint TOSTRING + LOGMSG
         // If no checkpoints are found 
         <% $oldestCheckpoint -1 == %>
-        <% STOP %> IFT
-      %> IFT
-      $masterSnapshotTimestamp 'P6D' DURATION +
-      'endTimestamp' STORE 
+        <%
+          // 'No checkpoints found. Nothing to snapshot' LOGMSG
+          STOP
+        %> IFT
+        $oldestCheckpoint $max_snapshot_size + 'endTimestamp' STORE
+      %> 
+      <%
+        $masterSnapshotTimestamp $max_snapshot_size + 'endTimestamp' STORE 
+      %> IFTE
       // 'Oversize snapshot detected using ' $endTimestamp TOSTRING + ' as end' + LOGMSG
     %> IFT
 
@@ -88,9 +96,6 @@
     $ignoredLabels
     DIFFERENCE SET->
     SUBMAP 'availableSnapshots' STORE
-
-    // 'availableSnapshots: ' $availableSnapshots ->JSON + LOGMSG
-    // 'filterLabels: ' $filterLabels ->JSON + LOGMSG
 
     {} 'previousSnapshots' STORE
 
@@ -186,9 +191,6 @@
       $labelSnapshots $created $labelValue PUT DROP
     %> FOREACH
 
-    // $createdSnapshots ->JSON LOGMSG
-
-    // $endTimestamp TOSTRING LOGMSG
     // Fetch all checkpoints since last master snapshot til passed time
     {
       'token' $read_token
@@ -259,7 +261,6 @@
       $labelSnapshots $created $labelValue PUT DROP
     %> FOREACH
 
-    // $createdSnapshots ->JSON LOGMSG
     0 'snapshots' STORE
     // For each of our indexed fields
     $createdSnapshots KEYLIST
