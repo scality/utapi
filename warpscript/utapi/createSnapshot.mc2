@@ -46,7 +46,6 @@
     // Fetch latest master snapshot
     $read_token $master_snapshot_class $filterLabels $endTimestamp @utapi/fetchFirstRecordBefore
 
-
     FIRSTTICK
     // If we found a snapshot, increment its timestamp so we start at the tick immediatly after
     <% DUP 0 > %>
@@ -61,14 +60,14 @@
       <%
         // Find the oldest checkpoint
         // 'No previous snapshots found, detecting start of checkpoints.' LOGMSG
-        $auth_info ->JSON 
+        $auth_info ->JSON
         { 'class' $checkpoint_class 'labels' $filterLabels } ->JSON
         @utapi/findOldestRecord 'oldestTimestamp' STORE
-        // If no checkpoints are found 
+        // If no checkpoints are found
         <% $oldestTimestamp -1 == %>
         <%
           // 'No checkpoints found. Looking for corrections' LOGMSG
-          $auth_info ->JSON 
+          $auth_info ->JSON
           { 'class' $correction_class 'labels' $filterLabels } ->JSON
           @utapi/findOldestRecord 'oldestTimestamp' STORE
           <% $oldestTimestamp -1 == %>
@@ -81,9 +80,9 @@
         <%
           $oldestTimestamp $max_snapshot_size + 'endTimestamp' STORE
         %> IFT
-      %> 
+      %>
       <%
-        $masterSnapshotTimestamp $max_snapshot_size + 'endTimestamp' STORE 
+        $masterSnapshotTimestamp $max_snapshot_size + 'endTimestamp' STORE
       %> IFTE
       // 'Oversize snapshot detected using ' $endTimestamp TOSTRING + ' as end' + LOGMSG
     %> IFT
