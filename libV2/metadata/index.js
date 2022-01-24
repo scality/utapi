@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-syntax */
 const arsenal = require('arsenal');
-
+const async = require('async');
 const metadata = require('./client');
 const { LoggerContext, logger } = require('../utils');
 const { keyVersionSplitter } = require('../constants');
@@ -12,9 +12,14 @@ const moduleLogger = new LoggerContext({
     module: 'metadata.client',
 });
 
+const ebConfig = {
+    times: 10,
+    interval: retryCount => 50 * (2 ** retryCount),
+};
+
 const PAGE_SIZE = 1000;
 
-function _listingWrapper(bucket, params) {
+async function _listingWrapper(bucket, params) {
     return new Promise(
         (resolve, reject) => metadata.listObject(
             bucket,
@@ -41,7 +46,7 @@ function _listObject(bucket, prefix, hydrateFunc) {
 
                 try {
                     // eslint-disable-next-line no-await-in-loop
-                    res = await _listingWrapper(bucket, { ...listingParams, gt });
+                    res = await async.retryable(ebConfig, _listingWrapper)(bucket, { ...listingParams, gt });
                 } catch (error) {
                     moduleLogger.error('Error during listing', { error });
                     throw error;

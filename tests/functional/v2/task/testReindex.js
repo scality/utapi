@@ -177,4 +177,49 @@ describe('Test ReindexTask', function () {
         assert.strictEqual(series[0].values.length, 2);
         series[0].values.map(value => assert.deepStrictEqual(value, bucketRecord));
     });
+
+    describe('exponential backoff', () => {
+        it('should retry when bucketd is unreachable', done => {
+            // disable bucketd to simulate downtime
+            bucketd.end();
+
+            const bucketDStub = sinon.stub(bucketd, '_getBucketResponse');
+            bucketDStub.onFirstCall().callsFake(
+                // Once the timeout promise resolves, bucketd is able to be called.
+                // If we make a call after 10 seconds, this shows that retries
+                // have been occuring during bucketd downtime.
+                () => {
+                    return {
+                        key: 'foo',
+                        value: 'bar',
+                    };
+                },
+            );
+
+            const reindexPromise = new Promise((resolve, reject) => {
+                reindexTask._execute()
+                    .then(() => {
+                        resolve('reindexed');
+                    })
+                    .catch(err => {
+                        reject(err);
+                    });
+            });
+
+            const timeoutPromise = new Promise(resolve => {
+                const f = () => {
+                    bucketd.start();
+                    resolve();
+                };
+                setTimeout(f, 10000);
+            });
+
+            Promise.all([reindexPromise, timeoutPromise])
+                .then(values => {
+                    assert.strictEqual(values[0], 'reindexed');
+                    sinon.restore();
+                    done();
+                });
+        });
+    });
 });

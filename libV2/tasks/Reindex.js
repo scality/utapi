@@ -25,6 +25,12 @@ class ReindexTask extends BaseTask {
         this._defaultLag = 0;
         const eventFilters = (config && config.filter) || {};
         this._shouldReindex = buildFilterChain((config && config.filter) || {});
+        // exponential backoff: max wait = 50 * 2 ^ 10 milliseconds ~= 51 seconds
+        this.ebConfig = {
+            times: 10,
+            interval: retryCount => 50 * (2 ** retryCount),
+        };
+
         if (Object.keys(eventFilters).length !== 0) {
             logEventFilter((...args) => logger.info(...args), 'reindex resource filtering enabled', eventFilters);
         }
@@ -152,7 +158,6 @@ class ReindexTask extends BaseTask {
         if (this._program.bucket.length) {
             return this._program.bucket.map(name => ({ name }));
         }
-
         return metadata.listBuckets();
     }
 
@@ -174,8 +179,8 @@ class ReindexTask extends BaseTask {
             let mpuTotal;
 
             try {
-                bktTotal = await async.retryable(ReindexTask._indexBucket)(bucket.name);
-                mpuTotal = await async.retryable(ReindexTask._indexMpuBucket)(mpuBucket);
+                bktTotal = await async.retryable(this.ebConfig, ReindexTask._indexBucket)(bucket.name);
+                mpuTotal = await async.retryable(this.ebConfig, ReindexTask._indexMpuBucket)(mpuBucket);
             } catch (error) {
                 logger.error(
                     'failed bucket reindex. any associated account will be skipped',
