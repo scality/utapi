@@ -1,11 +1,10 @@
-FROM buildpack-deps:jessie-curl
+FROM node:16
 
 #
 # Install apt packages needed by utapi and buildbot_worker
 #
 
 ENV LANG C.UTF-8
-ENV NODE_VERSION 10.22.0
 ENV PATH=$PATH:/utapi/node_modules/.bin
 ENV NODE_PATH=/utapi/node_modules
 
@@ -13,9 +12,7 @@ COPY eve/workers/unit_and_feature_tests/utapi_packages.list eve/workers/unit_and
 
 WORKDIR /utapi
 
-RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz \
-    && tar -xf node-v${NODE_VERSION}-linux-x64.tar.gz --directory /usr/local --strip-components 1 \
-    && curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+RUN curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && apt-get update -qq \
     && cat /tmp/*packages.list | xargs apt-get install -y \
