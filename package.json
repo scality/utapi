@@ -1,7 +1,7 @@
 {
   "name": "utapi",
   "engines": {
-    "node": ">=10.19.0"
+    "node": ">=16"
   },
   "version": "7.10.5",
   "description": "API for tracking resource utilization and reporting metrics",
@@ -19,13 +19,13 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "scality/Arsenal#7.10.1",
+    "arsenal": "scality/Arsenal#w/7.10/feature/ARSN-21/UpgradeToNode16",
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
     "backo": "^1.1.0",
     "body-parser": "^1.19.0",
-    "bucketclient": "scality/bucketclient",
+    "bucketclient": "scality/bucketclient#w/7.10/improvement/BKTCLT-3-upgrade-to-node-16",
     "byte-size": "^7.0.0",
     "commander": "^5.1.0",
     "cron-parser": "^2.15.0",
@@ -40,7 +40,7 @@
     "oas-tools": "^2.1.8",
     "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#9013faab804a7ee61bd8bc4c71de89c3498bb6c0",
+    "vaultclient": "scality/vaultclient#w/7.10/feature/VLTCLT-7/UpgradeToNode16",
     "werelogs": "scality/werelogs#8.1.0"
   },
   "devDependencies": {
