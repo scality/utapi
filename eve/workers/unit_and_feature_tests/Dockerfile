@@ -1,11 +1,10 @@
-FROM buildpack-deps:bullseye-curl
+FROM node:16
 
 #
 # Install apt packages needed by utapi and buildbot_worker
 #
 
 ENV LANG C.UTF-8
-ENV NODE_VERSION 10.22.0
 ENV PATH=$PATH:/utapi/node_modules/.bin
 ENV NODE_PATH=/utapi/node_modules
 
@@ -17,11 +16,7 @@ WORKDIR /utapi
 # Install Nodejs, yarn, git-lfs and buildbot deps
 #
 
-RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.gz \
-    && tar -xf node-v${NODE_VERSION}-linux-x64.tar.gz --directory /usr/local --strip-components 1 \
-    && apt-get update -qq \
-    && apt-get install -y apt-transport-https \
-    && curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+RUN curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
     && echo "deb http://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
     && curl -sSL https://packagecloud.io/github/git-lfs/gpgkey | apt-key add - \
     && echo "deb https://packagecloud.io/github/git-lfs/debian/ bullseye main" | tee /etc/apt/sources.list.d/lfs.list \
@@ -31,8 +26,7 @@ RUN wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x6
     && cat /tmp/*packages.list | xargs apt-get install -y --no-install-recommends\
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /tmp/*packages.list \
-    && rm -f /etc/supervisor/conf.d/*.conf \
-    && rm -f node-v${NODE_VERSION}-linux-x64.tar.gz
+    && rm -f /etc/supervisor/conf.d/*.conf
 
 #
 # Install yarn dependencies
