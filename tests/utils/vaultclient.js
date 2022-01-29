@@ -347,6 +347,7 @@ class VaultClient {
                 AWS_SECRET_ACCESS_KEY: parentAccount.secretKey,
                 AWS_REGION: 'us-east-1',
                 NODE_TLS_REJECT_UNAUTHORIZED: '0',
+                PATH: process.env.PATH,
             },
         );
 
