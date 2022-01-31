@@ -140,6 +140,12 @@ jobs:
           standalone.port: '4802'
           warpscript.maxops: '10000000'
           ENABLE_SENSISION: 't'
+        options: >-
+          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 60s
         ports:
         - 4802:4802
         - 8082:8082
@@ -228,6 +234,12 @@ jobs:
         - 4802:4802
         - 8082:8082
         - 9718:9718
+        options: >-
+          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 60s
       vault:
         image: ghcr.io/${{ github.repository }}/vault-ci:${{ github.sha }}
         ports:
@@ -258,6 +270,8 @@ jobs:
         pip install redis
     - name: install dependencies
       run: yarn install --frozen-lockfile
+    - name: Wait for warp10 a little bit
+      run: sleep 60
     - name: ${{ matrix.test.name }}
       run: ${{ matrix.test.command }}
       env: ${{ matrix.test.env }}
