@@ -122,10 +122,20 @@ jobs:
         ports:
         - 6379:6379
         - 9121:9121
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis-replica:
         image: ghcr.io/${{ github.repository }}/redis-replica-ci:${{ github.sha }}
         ports:
         - 6380:6380
+        options: >-
+          --health-cmd "redis-cli -p 6380 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis-sentinel:
         image: bitnami/redis-sentinel:6.2
         env:
@@ -134,6 +144,11 @@ jobs:
           REDIS_SENTINEL_QUORUM: '1'
         ports:
         - 16379:16379
+        options: >-
+          --health-cmd "redis-cli -p 16379 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       warp10:
         image: ghcr.io/${{ github.repository }}/warp10-ci:${{ github.sha }}
         env:
@@ -212,10 +227,20 @@ jobs:
         ports:
         - 6379:6379
         - 9121:9121
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis-replica:
         image: ghcr.io/${{ github.repository }}/redis-replica-ci:${{ github.sha }}
         ports:
         - 6380:6380
+        options: >-
+          --health-cmd "redis-cli -p 6380 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       redis-sentinel:
         image: bitnami/redis-sentinel:6.2
         env:
@@ -224,6 +249,11 @@ jobs:
           REDIS_SENTINEL_QUORUM: '1'
         ports:
         - 16379:16379
+        options: >-
+          --health-cmd "redis-cli -p 16379 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
       warp10:
         image: ghcr.io/${{ github.repository }}/warp10-ci:${{ github.sha }}
         env:
@@ -247,6 +277,11 @@ jobs:
         - 8600:8600
         - 8700:8700
         - 8800:8800
+        options: >-
+          --health-cmd "curl http://localhost:8500/_/healthcheck"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
     - name: Checkout
