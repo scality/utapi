@@ -1,8 +1,0 @@
-build-essential
-redis-server
-python3
-python3-pip
-yarn
-docker-ce-cli
-jq
-moreutils
