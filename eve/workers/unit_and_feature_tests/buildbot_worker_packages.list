@@ -1,9 +1,0 @@
-ca-certificates
-git
-git-lfs
-libffi-dev
-libssl-dev
-sudo
-supervisor
-lsof
-netcat
