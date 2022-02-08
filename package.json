@@ -3,7 +3,7 @@
   "engines": {
     "node": ">=16"
   },
-  "version": "8.1.4",
+  "version": "8.1.5",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
@@ -19,13 +19,13 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "scality/Arsenal#w/8.1/feature/ARSN-21/UpgradeToNode16",
+    "arsenal": "scality/Arsenal#8.1.27",
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
     "backo": "^1.1.0",
     "body-parser": "^1.19.0",
-    "bucketclient": "scality/bucketclient#w/8.1/improvement/BKTCLT-3-upgrade-to-node-16",
+    "bucketclient": "scality/bucketclient#8.1.1",
     "byte-size": "^7.0.0",
     "commander": "^5.1.0",
     "cron-parser": "^2.15.0",
@@ -40,14 +40,14 @@
     "oas-tools": "^2.1.8",
     "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#w/8.3/feature/VLTCLT-7/UpgradeToNode16",
+    "vaultclient": "scality/vaultclient#8.3.0",
     "werelogs": "scality/werelogs#8.1.0"
   },
   "devDependencies": {
-    "eslint": "^5.12.0",
-    "eslint-config-airbnb-base": "13.1.0",
-    "eslint-config-scality": "scality/Guidelines#7cc5ff1",
-    "eslint-plugin-import": "2.14.0",
+    "eslint": "6.0.1",
+    "eslint-config-airbnb": "17.1.0",
+    "eslint-config-scality": "scality/Guidelines#8.2.0",
+    "eslint-plugin-import": "^2.18.0",
     "mocha": "^3.0.2",
     "nodemon": "^2.0.4",
     "protobufjs": "^6.10.1",

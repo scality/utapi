@@ -1,8 +1,18 @@
 {
   "extends": "scality",
+  "env": {
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 9
+  },
   "rules": {
     "no-underscore-dangle": "off",
-	  "implicit-arrow-linebreak" : "off"
+	  "implicit-arrow-linebreak" : "off",
+    "import/extensions": 0,
+    "prefer-spread": 0,
+    "no-param-reassign": 0,
+    "array-callback-return": 0
   },
   "settings": {
       "import/resolver": {
