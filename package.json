@@ -40,7 +40,7 @@
     "oas-tools": "^2.1.8",
     "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#8.3.0",
+    "vaultclient": "scality/vaultclient#8.2.2",
     "werelogs": "scality/werelogs#8.1.0"
   },
   "devDependencies": {
