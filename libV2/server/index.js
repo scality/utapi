@@ -35,7 +35,7 @@ class UtapiServer extends Process {
     static _createHttpsAgent() {
         const conf = {
             ciphers: ciphers.ciphers,
-            dhparam,
+            dhparam: dhparam.dhparam,
             cert: config.tls.cert,
             key: config.tls.key,
             ca: config.tls.ca ? [config.tls.ca] : null,
