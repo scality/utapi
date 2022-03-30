@@ -3,7 +3,7 @@
   "engines": {
     "node": ">=16"
   },
-  "version": "8.1.5",
+  "version": "8.1.6",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
@@ -19,13 +19,13 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "scality/Arsenal#8.1.27",
+    "arsenal": "scality/Arsenal#8.1.39",
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
     "backo": "^1.1.0",
     "body-parser": "^1.19.0",
-    "bucketclient": "scality/bucketclient#8.1.1",
+    "bucketclient": "scality/bucketclient#8.1.3",
     "byte-size": "^7.0.0",
     "commander": "^5.1.0",
     "cron-parser": "^2.15.0",
@@ -37,10 +37,10 @@
     "level-mem": "^5.0.1",
     "needle": "^2.5.0",
     "node-schedule": "^1.3.2",
-    "oas-tools": "^2.1.8",
+    "oas-tools": "^2.2.1",
     "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#8.2.2",
+    "vaultclient": "scality/vaultclient#8.2.5",
     "werelogs": "scality/werelogs#8.1.0"
   },
   "devDependencies": {

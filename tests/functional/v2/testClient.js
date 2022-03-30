@@ -233,7 +233,8 @@ describe('Test UtapiClient', function () {
             });
         });
 
-        it('should get the current storage for an account using the cache', async () => {
+        // please unskip this in https://scality.atlassian.net/browse/UTAPI-65
+        it.skip('should get the current storage for an account using the cache', async () => {
             await async.eachOf(totals.accounts, async (total, acc) => {
                 cacheClient.updateAccountCounterBase(acc, total.bytes);
             });
