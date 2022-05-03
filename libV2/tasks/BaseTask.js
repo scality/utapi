@@ -1,10 +1,12 @@
 const assert = require('assert');
 const cron = require('node-schedule');
 const cronparser = require('cron-parser');
+const promClient = require('prom-client');
+const { DEFAULT_METRICS_ROUTE } = require('arsenal').network.probe.ProbeServer;
 
 const { client: cacheClient } = require('../cache');
 const Process = require('../process');
-const { LoggerContext, iterIfError } = require('../utils');
+const { LoggerContext, iterIfError, startProbeServer } = require('../utils');
 
 const logger = new LoggerContext({
     module: 'BaseTask',
@@ -22,6 +24,11 @@ class BaseTask extends Process {
         this._scheduler = null;
         this._defaultSchedule = Now;
         this._defaultLag = 0;
+        this._enableMetrics = options.enableMetrics || false;
+        this._metricsHost = options.metricsHost || 'localhost';
+        this._metricsPort = options.metricsPort || 9001;
+        this._metricsHandlers = null;
+        this._probeServer = null;
     }
 
     async _setup(includeDefaultOpts = true) {
@@ -39,6 +46,70 @@ class BaseTask extends Process {
                 .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10))
                 .option('-n, --node-id <id>', 'Set a custom node id');
         }
+
+        if (this._enableMetrics) {
+            this._metricsHandlers = {
+                ...this._registerDefaultMetricHandlers(),
+                ...this._registerMetricHandlers(),
+            };
+            await this._createProbeServer();
+        }
+    }
+
+    _registerDefaultMetricHandlers() {
+        const taskName = this.constructor.name;
+
+        // Get the name of our subclass in snake case format eg BaseClass => _base_class
+        const taskNameSnake = taskName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+
+        const executionTime = new promClient.Gauge({
+            name: `utapi${taskNameSnake}_execution_seconds`,
+            help: `Execution time of the ${taskName} task`,
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const executionAttempts = new promClient.Counter({
+            name: `utapi${taskNameSnake}_attempts_total`,
+            help: `Number of attempts to execute the ${taskName} task`,
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const executionFailures = new promClient.Counter({
+            name: `utapi${taskNameSnake}_failures_total`,
+            help: `Number of failures executing the ${taskName} task`,
+            labelNames: ['origin', 'containerName'],
+        });
+
+        return {
+            executionTime,
+            executionAttempts,
+            executionFailures,
+        };
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    _registerMetricHandlers() {
+        return {};
+    }
+
+    async _createProbeServer() {
+        this._probeServer = await startProbeServer({
+            host: this._metricsHost,
+            port: this._metricsPort,
+        });
+
+        this._probeServer.addHandler(
+            DEFAULT_METRICS_ROUTE,
+            (res, log) => {
+                log.debug('metrics requested');
+                res.writeHead(200, {
+                    'Content-Type': promClient.register.contentType,
+                });
+                promClient.register.metrics().then(metrics => {
+                    res.end(metrics);
+                });
+            },
+        );
     }
 
     get schedule() {
@@ -79,12 +150,23 @@ class BaseTask extends Process {
     }
 
     async execute() {
+        let endTimer;
+        if (this._enableMetrics) {
+            endTimer = this._metricsHandlers.executionTime.startTimer();
+            this._metricsHandlers.executionAttempts.inc(1);
+        }
+
         try {
             const timestamp = new Date() * 1000; // Timestamp in microseconds;
             const laggedTimestamp = timestamp - (this.lag * 1000000);
             await this._execute(laggedTimestamp);
         } catch (error) {
             logger.error('Error during task execution', { error });
+            this._metricsHandlers.executionFailures.inc(1);
+        }
+
+        if (this._enableMetrics) {
+            endTimer();
         }
     }
 
@@ -94,6 +176,9 @@ class BaseTask extends Process {
     }
 
     async _join() {
+        if (this._probeServer !== null) {
+            this._probeServer.stop();
+        }
         return this._cache.disconnect();
     }
 

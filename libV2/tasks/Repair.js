@@ -9,7 +9,13 @@ const logger = new LoggerContext({
 
 class RepairTask extends BaseTask {
     constructor(options) {
-        super(options);
+        super({
+            ...options,
+            enableMetrics: config.metrics.enabled,
+            metricsHost: config.metrics.host,
+            metricsPort: config.metrics.repairPort,
+        });
+
         this._defaultSchedule = config.repairSchedule;
         this._defaultLag = repairLagSecs;
     }
