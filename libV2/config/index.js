@@ -375,6 +375,18 @@ class Config {
 
         parsedConfig.filter = Config._parseResourceFilters(config.filter);
 
+        parsedConfig.metrics = {
+            enabled: _loadFromEnv('METRICS_ENABLED', config.metrics.enabled, _typeCasts.bool),
+            host: _loadFromEnv('METRICS_HOST', config.metrics.host),
+            serverPort: _loadFromEnv('METRICS_PORT_SERVER', config.metrics.serverPort, _typeCasts.int),
+            ingestPort: _loadFromEnv('METRICS_PORT_INGEST', config.metrics.ingestPort, _typeCasts.int),
+            checkpointPort: _loadFromEnv('METRICS_PORT_CHECKPOINT', config.metrics.checkpointPort, _typeCasts.int),
+            snapshotPort: _loadFromEnv('METRICS_PORT_SNAPSHOT', config.metrics.snapshotPort, _typeCasts.int),
+            diskUsagePort: _loadFromEnv('METRICS_PORT_DISK_USAGE', config.metrics.diskUsagePort, _typeCasts.int),
+            reindexPort: _loadFromEnv('METRICS_PORT_REINDEX', config.metrics.reindexPort, _typeCasts.int),
+            repairPort: _loadFromEnv('METRICS_PORT_REPAIR', config.metrics.repairPort, _typeCasts.int),
+        };
+
         return parsedConfig;
     }
 

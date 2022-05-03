@@ -96,7 +96,7 @@ async function listMetric(ctx, params) {
 
             const metric = {
                 ...result.metrics,
-                timeRange: [ start, end ],
+                timeRange: [start, end],
                 operations: {
                     ...emptyOperationsResponse,
                     ...operations,
