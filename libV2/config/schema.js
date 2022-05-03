@@ -115,7 +115,16 @@ const schema = Joi.object({
             return filterObj;
         }, {},
     )),
+    metrics: {
+        enabled: Joi.boolean(),
+        host: Joi.string(),
+        ingestPort: Joi.number().port(),
+        checkpointPort: Joi.number().port(),
+        snapshotPort: Joi.number().port(),
+        diskUsagePort: Joi.number().port(),
+        reindexPort: Joi.number().port(),
+        repairPort: Joi.number().port(),
+    },
 });
 
 module.exports = schema;
-

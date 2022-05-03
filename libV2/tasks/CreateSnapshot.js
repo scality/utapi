@@ -9,7 +9,13 @@ const logger = new LoggerContext({
 
 class CreateSnapshot extends BaseTask {
     constructor(options) {
-        super(options);
+        super({
+            enableMetrics: config.metrics.enabled,
+            metricsHost: config.metrics.host,
+            metricsPort: config.metrics.snapshotPort,
+            ...options,
+        });
+
         this._defaultSchedule = config.snapshotSchedule;
         this._defaultLag = snapshotLagSecs;
     }
