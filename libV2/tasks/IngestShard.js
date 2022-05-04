@@ -16,7 +16,13 @@ const checkpointLagMicroseconds = convertTimestamp(checkpointLagSecs);
 
 class IngestShardTask extends BaseTask {
     constructor(options) {
-        super(options);
+        super({
+            ...options,
+            enableMetrics: config.metrics.enabled,
+            metricsHost: config.metrics.host,
+            metricsPort: config.metrics.ingestPort,
+        });
+
         this._defaultSchedule = config.ingestionSchedule;
         this._defaultLag = config.ingestionLagSeconds;
         this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
