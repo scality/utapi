@@ -1,4 +1,5 @@
 const async = require('async');
+const Path = require('path');
 const promClient = require('prom-client');
 const BaseTask = require('./BaseTask');
 const config = require('../config');
@@ -47,7 +48,6 @@ class MonitorDiskUsage extends BaseTask {
             );
     }
 
-    // eslint-disable-next-line class-methods-use-this
     _registerMetricHandlers() {
         const isLocked = new promClient.Gauge({
             name: 'utapi_monitor_disk_usage_is_locked',
@@ -55,8 +55,14 @@ class MonitorDiskUsage extends BaseTask {
             labelNames: ['origin', 'containerName'],
         });
 
-        const diskUsage = new promClient.Gauge({
-            name: 'utapi_monitor_disk_usage_bytes',
+        const leveldbBytes = new promClient.Gauge({
+            name: 'utapi_monitor_disk_usage_leveldb_bytes',
+            help: 'Total bytes used by warp 10',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const datalogBytes = new promClient.Gauge({
+            name: 'utapi_monitor_disk_usage_datalog_bytes',
             help: 'Total bytes used by warp 10',
             labelNames: ['origin', 'containerName'],
         });
@@ -69,7 +75,8 @@ class MonitorDiskUsage extends BaseTask {
 
         return {
             isLocked,
-            diskUsage,
+            leveldbBytes,
+            datalogBytes,
             hardLimitRatio,
         };
     }
@@ -86,9 +93,9 @@ class MonitorDiskUsage extends BaseTask {
         return this._program.lock !== undefined;
     }
 
-    _getUsage() {
-        moduleLogger.debug(`calculating disk usage for ${this._path}`);
-        return getFolderSize(this._path);
+    _getUsage(path) {
+        moduleLogger.debug(`calculating disk usage for ${path}`);
+        return getFolderSize(path);
     }
 
     async _expireMetrics(timestamp) {
@@ -145,7 +152,7 @@ class MonitorDiskUsage extends BaseTask {
             nodeId,
         });
 
-        this._metricsHandlers.hardLimitRatio.set(hardPercentage);
+        this._metricsHandlers.hardLimitRatio.set(hardPercentage)
 
         const msg = `Using ${hardPercentage * 100}% of the ${hardLimitHuman} hard limit on ${nodeId}`;
 
@@ -184,14 +191,14 @@ class MonitorDiskUsage extends BaseTask {
         if (this.isManualUnlock) {
             moduleLogger.info('manually unlocking warp 10', { nodeId: this.nodeId });
             await this._enableWarp10Updates();
-            this._metricsHandlers.isLocked.set(0);
+            this._metricsHandlers.isLocked.set(0)
             return;
         }
 
         if (this.isManualLock) {
             moduleLogger.info('manually locking warp 10', { nodeId: this.nodeId });
             await this._disableWarp10Updates();
-            this._metricsHandlers.isLocked.set(1);
+            this._metricsHandlers.isLocked.set(1)
             return;
         }
 
@@ -206,16 +213,20 @@ class MonitorDiskUsage extends BaseTask {
             return;
         }
 
-        let size = null;
+        let leveldbBytes = null;
+        let datalogBytes = null
         try {
-            size = await this._getUsage();
+            leveldbBytes = await this._getUsage(Path.join(this._path, 'data', 'leveldb'));
+            datalogBytes = await this._getUsage(Path.join(this._path, 'data', 'datalog'));
         } catch (error) {
             moduleLogger.error(`error calculating disk usage for ${this._path}`, { error });
             return;
         }
 
-        this._metricsHandlers.diskUsage.set(size);
+        this._metricsHandlers.leveldbBytes.set(leveldbBytes);
+        this._metricsHandlers.datalogBytes.set(datalogBytes);
 
+        const size = leveldbBytes + datalogBytes;
         if (this._hardLimit !== null) {
             moduleLogger.info(`warp 10 leveldb using ${formatDiskSize(size)} of disk space`, { usage: size });
 
@@ -223,12 +234,12 @@ class MonitorDiskUsage extends BaseTask {
             if (shouldLock) {
                 moduleLogger.warn('hard limit exceeded, disabling writes to warp 10', { nodeId: this.nodeId });
                 await this._disableWarp10Updates();
-                this._metricsHandlers.isLocked.set(1);
+                this._metricsHandlers.isLocked.set(1)
             } else {
                 moduleLogger.info('usage below hard limit, ensuring writes to warp 10 are enabled',
                     { nodeId: this.nodeId });
                 await this._enableWarp10Updates();
-                this._metricsHandlers.isLocked.set(0);
+                this._metricsHandlers.isLocked.set(0)
             }
         }
     }
