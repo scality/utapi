@@ -58,7 +58,7 @@ describe('Test BaseTask metrics', () => {
 
     it('should push metrics for a task execution', async () => {
         await task.execute();
-        const timeValues = await getMetricValues('utapi_custom_task_execution_seconds');
+        const timeValues = await getMetricValues('utapi_custom_task_duration_seconds');
         assert.strictEqual(timeValues.length, 1);
 
         const attemptsValues = await getMetricValues('utapi_custom_task_attempts_total');
