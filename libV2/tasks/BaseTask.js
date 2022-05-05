@@ -62,8 +62,8 @@ class BaseTask extends Process {
         // Get the name of our subclass in snake case format eg BaseClass => _base_class
         const taskNameSnake = taskName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 
-        const executionTime = new promClient.Gauge({
-            name: `utapi${taskNameSnake}_execution_seconds`,
+        const executionDuration = new promClient.Gauge({
+            name: `utapi${taskNameSnake}_duration_seconds`,
             help: `Execution time of the ${taskName} task`,
             labelNames: ['origin', 'containerName'],
         });
@@ -81,7 +81,7 @@ class BaseTask extends Process {
         });
 
         return {
-            executionTime,
+            executionDuration,
             executionAttempts,
             executionFailures,
         };
@@ -152,7 +152,7 @@ class BaseTask extends Process {
     async execute() {
         let endTimer;
         if (this._enableMetrics) {
-            endTimer = this._metricsHandlers.executionTime.startTimer();
+            endTimer = this._metricsHandlers.executionDuration.startTimer();
             this._metricsHandlers.executionAttempts.inc(1);
         }
 
