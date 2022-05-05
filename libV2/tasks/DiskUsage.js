@@ -17,10 +17,10 @@ const ACTION_THRESHOLD = 0.95;
 class MonitorDiskUsage extends BaseTask {
     constructor(options) {
         super({
-            ...options,
             enableMetrics: config.metrics.enabled,
             metricsHost: config.metrics.host,
             metricsPort: config.metrics.diskUsagePort,
+            ...options,
         });
 
         this._defaultSchedule = config.diskUsageSchedule;
