@@ -1,10 +1,12 @@
 const assert = require('assert');
+const promClient = require('prom-client');
 const uuid = require('uuid');
 
 const { MonitorDiskUsage } = require('../../../../libV2/tasks');
 const { getFolderSize } = require('../../../../libV2/utils');
 
 const { fillDir } = require('../../../utils/v2Data');
+const { assertMetricValue } = require('../../../utils/prom');
 
 class MonitorDiskUsageShim extends MonitorDiskUsage {
     async _getUsage() {
@@ -43,10 +45,15 @@ describe('Test MonitorDiskUsage', () => {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
-        task = new MonitorDiskUsageShim({ warp10: [] });
+        task = new MonitorDiskUsageShim({ warp10: [], enableMetrics: true });
         task._path = path;
         task._enabled = true;
         await task.setup();
+    });
+
+    afterEach(async () => {
+        await task.join();
+        promClient.register.clear();
     });
 
     testCases.map(testCase =>
@@ -55,5 +62,6 @@ describe('Test MonitorDiskUsage', () => {
                 fillDir(path, testCase);
                 await task._execute();
                 assert.strictEqual(task.usage, testCase.expected + emptyDirSize + (emptyFileSize * testCase.count));
+                await assertMetricValue('utapi_monitor_disk_usage_bytes', task.usage);
             }));
 });
