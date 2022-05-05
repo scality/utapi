@@ -1,5 +1,6 @@
 const assert = require('assert');
 const async = require('async');
+const promClient = require('prom-client');
 const BaseTask = require('./BaseTask');
 const { UtapiMetric } = require('../models');
 const config = require('../config');
@@ -28,6 +29,74 @@ class IngestShardTask extends BaseTask {
         this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    _registerMetricHandlers() {
+        const ingestedTotal = new promClient.Counter({
+            name: 'utapi_ingest_shard_task_ingest_total',
+            help: 'Number of metrics ingested',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const ingestedSlow = new promClient.Counter({
+            name: 'utapi_ingest_shard_task_slow_total',
+            help: 'Number of slow metrics ingested',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const ingestedShards = new promClient.Counter({
+            name: 'utapi_ingest_shard_task_shard_ingest_total',
+            help: 'Number of slow metrics ingested',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const shardAgeTotal = new promClient.Counter({
+            name: 'utapi_ingest_shard_task_shard_age_total',
+            help: 'Number of slow metrics ingested',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        return {
+            ingestedTotal,
+            ingestedSlow,
+            ingestedShards,
+            shardAgeTotal,
+        };
+    }
+
+    /**
+     * Metrics for IngestShardTask
+     * @typedef {Object} IngestShardMetrics
+     * @property {number} ingestedTotal - Number of events ingested
+     * @property {number} ingestedSlow - Number of slow events ingested
+     */
+
+    /**
+     *
+     * @param {IngestShardMetrics} metrics - Metric values to push
+     * @returns {undefined}
+     */
+    _pushMetrics(metrics) {
+        if (!this._enableMetrics) {
+            return;
+        }
+
+        if (metrics.ingestedTotal !== undefined) {
+            this._metricsHandlers.ingestedTotal.inc(metrics.ingestedTotal);
+        }
+
+        if (metrics.ingestedSlow !== undefined) {
+            this._metricsHandlers.ingestedSlow.inc(metrics.ingestedSlow);
+        }
+
+        if (metrics.ingestedShards !== undefined) {
+            this._metricsHandlers.ingestedShards.inc(metrics.ingestedShards);
+        }
+
+        if (metrics.shardAgeTotal !== undefined) {
+            this._metricsHandlers.shardAgeTotal.inc(metrics.shardAgeTotal);
+        }
+    }
+
     _hydrateEvent(data, stripTimestamp = false) {
         const event = JSON.parse(data);
         if (this._stripEventUUID) {
@@ -53,6 +122,8 @@ class IngestShardTask extends BaseTask {
             return;
         }
 
+        let shardAgeTotal = 0;
+        let ingestedShards = 0;
         await async.eachLimit(toIngest, 10,
             async shard => {
                 if (await this._cache.shardExists(shard)) {
@@ -90,6 +161,13 @@ class IngestShardTask extends BaseTask {
                         assert.strictEqual(status, records.length);
                         await this._cache.deleteShard(shard);
                         logger.info(`ingested ${status} records from ${config.nodeId} into ${ingestedIntoNodeId}`);
+
+                        shardAgeTotal += shardAge;
+                        ingestedShards += 1;
+                        this._pushMetrics({ ingestedTotal: records.length });
+                        if (areSlowEvents) {
+                            this._pushMetrics({ ingestedSlow: records.length });
+                        }
                     } else {
                         logger.debug('No events found in shard, cleaning up');
                     }
@@ -97,6 +175,8 @@ class IngestShardTask extends BaseTask {
                     logger.warn('shard does not exist', { shard });
                 }
             });
+        const shardAgeTotalSecs = shardAgeTotal / 1000000;
+        this._pushMetrics({ shardAgeTotal: shardAgeTotalSecs, ingestedShards });
     }
 }
 
