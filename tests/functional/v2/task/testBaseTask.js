@@ -41,7 +41,7 @@ describe('Test BaseTask metrics', () => {
     });
 
     afterEach(async () => {
-        task.join();
+        await task.join();
         promClient.register.clear();
     });
 
