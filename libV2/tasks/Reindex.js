@@ -21,10 +21,10 @@ const logger = new LoggerContext({
 class ReindexTask extends BaseTask {
     constructor(options) {
         super({
-            ...options,
             enableMetrics: config.metrics.enabled,
             metricsHost: config.metrics.host,
             metricsPort: config.metrics.reindexPort,
+            ...options,
         });
 
         this._defaultSchedule = config.reindexSchedule;

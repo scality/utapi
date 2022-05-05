@@ -10,10 +10,10 @@ const logger = new LoggerContext({
 class RepairTask extends BaseTask {
     constructor(options) {
         super({
-            ...options,
             enableMetrics: config.metrics.enabled,
             metricsHost: config.metrics.host,
             metricsPort: config.metrics.repairPort,
+            ...options,
         });
 
         this._defaultSchedule = config.repairSchedule;

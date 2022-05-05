@@ -10,10 +10,10 @@ const logger = new LoggerContext({
 class CreateCheckpoint extends BaseTask {
     constructor(options) {
         super({
-            ...options,
             enableMetrics: config.metrics.enabled,
             metricsHost: config.metrics.host,
             metricsPort: config.metrics.checkpointPort,
+            ...options,
         });
 
         this._defaultSchedule = config.checkpointSchedule;
