@@ -1,3 +1,4 @@
+const promClient = require('prom-client');
 const BaseTask = require('./BaseTask');
 const config = require('../config');
 const { snapshotLagSecs } = require('../constants');
@@ -20,6 +21,19 @@ class CreateSnapshot extends BaseTask {
         this._defaultLag = snapshotLagSecs;
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    _registerMetricHandlers() {
+        const created = new promClient.Counter({
+            name: 'utapi_create_snapshot_created_total',
+            help: 'Number of snapshots created',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        return {
+            created,
+        };
+    }
+
     async _execute(timestamp) {
         logger.debug('creating snapshots', { snapshotTimestamp: timestamp });
 
@@ -35,6 +49,7 @@ class CreateSnapshot extends BaseTask {
         });
         if (status.result[0]) {
             logger.info(`created ${status.result[0]} snapshots`);
+            this._metricsHandlers.created.inc(status.result[0]);
         }
     }
 }

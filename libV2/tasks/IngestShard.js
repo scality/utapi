@@ -1,5 +1,6 @@
 const assert = require('assert');
 const async = require('async');
+const promClient = require('prom-client');
 const BaseTask = require('./BaseTask');
 const { UtapiMetric } = require('../models');
 const config = require('../config');
@@ -26,6 +27,26 @@ class IngestShardTask extends BaseTask {
         this._defaultSchedule = config.ingestionSchedule;
         this._defaultLag = config.ingestionLagSeconds;
         this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    _registerMetricHandlers() {
+        const ingestedTotal = new promClient.Counter({
+            name: 'utapi_ingest_shard_task_ingest_total',
+            help: 'Number of metrics ingested',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const ingestedSlow = new promClient.Counter({
+            name: 'utapi_ingest_shard_task_slow_total',
+            help: 'Number of slow metrics ingested',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        return {
+            ingestedTotal,
+            ingestedSlow,
+        };
     }
 
     _hydrateEvent(data, stripTimestamp = false) {
@@ -90,6 +111,11 @@ class IngestShardTask extends BaseTask {
                         assert.strictEqual(status, records.length);
                         await this._cache.deleteShard(shard);
                         logger.info(`ingested ${status} records from ${config.nodeId} into ${ingestedIntoNodeId}`);
+
+                        this._metricsHandlers.ingestedTotal.inc(records.length);
+                        if (areSlowEvents) {
+                            this._metricsHandlers.ingestedSlow.inc(records.length);
+                        }
                     } else {
                         logger.debug('No events found in shard, cleaning up');
                     }

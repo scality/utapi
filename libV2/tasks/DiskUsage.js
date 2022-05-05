@@ -1,4 +1,5 @@
 const async = require('async');
+const promClient = require('prom-client');
 const BaseTask = require('./BaseTask');
 const config = require('../config');
 const { expirationChunkDuration } = require('../constants');
@@ -44,6 +45,33 @@ class MonitorDiskUsage extends BaseTask {
                 '--unlock',
                 'Manually trigger an unlock of the warp 10 database. This will cause all other options to be ignored.',
             );
+    }
+
+    // eslint-disable-next-line class-methods-use-this
+    _registerMetricHandlers() {
+        const isLocked = new promClient.Gauge({
+            name: 'utapi_monitor_disk_usage_is_locked',
+            help: 'Indicates whether the monitored warp 10 has had writes disabled',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const diskUsage = new promClient.Gauge({
+            name: 'utapi_monitor_disk_usage_bytes',
+            help: 'Total bytes used by warp 10',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const hardLimitRatio = new promClient.Gauge({
+            name: 'utapi_monitor_disk_usage_hard_limit_ratio',
+            help: 'Percent of the hard limit used by warp 10',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        return {
+            isLocked,
+            diskUsage,
+            hardLimitRatio,
+        };
     }
 
     get isLeader() {
@@ -117,6 +145,8 @@ class MonitorDiskUsage extends BaseTask {
             nodeId,
         });
 
+        this._metricsHandlers.hardLimitRatio.set(hardPercentage);
+
         const msg = `Using ${hardPercentage * 100}% of the ${hardLimitHuman} hard limit on ${nodeId}`;
 
         if (hardPercentage < WARN_THRESHOLD) {
@@ -154,12 +184,14 @@ class MonitorDiskUsage extends BaseTask {
         if (this.isManualUnlock) {
             moduleLogger.info('manually unlocking warp 10', { nodeId: this.nodeId });
             await this._enableWarp10Updates();
+            this._metricsHandlers.isLocked.set(0);
             return;
         }
 
         if (this.isManualLock) {
             moduleLogger.info('manually locking warp 10', { nodeId: this.nodeId });
             await this._disableWarp10Updates();
+            this._metricsHandlers.isLocked.set(1);
             return;
         }
 
@@ -182,6 +214,8 @@ class MonitorDiskUsage extends BaseTask {
             return;
         }
 
+        this._metricsHandlers.diskUsage.set(size);
+
         if (this._hardLimit !== null) {
             moduleLogger.info(`warp 10 leveldb using ${formatDiskSize(size)} of disk space`, { usage: size });
 
@@ -189,10 +223,12 @@ class MonitorDiskUsage extends BaseTask {
             if (shouldLock) {
                 moduleLogger.warn('hard limit exceeded, disabling writes to warp 10', { nodeId: this.nodeId });
                 await this._disableWarp10Updates();
+                this._metricsHandlers.isLocked.set(1);
             } else {
                 moduleLogger.info('usage below hard limit, ensuring writes to warp 10 are enabled',
                     { nodeId: this.nodeId });
                 await this._enableWarp10Updates();
+                this._metricsHandlers.isLocked.set(0);
             }
         }
     }
