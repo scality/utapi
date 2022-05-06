@@ -23,7 +23,7 @@ class CacheClient {
 
     async pushMetric(metric) {
         const shard = shardFromTimestamp(metric.timestamp);
-        if (!this._cacheBackend.addToShard(shard, metric)) {
+        if (!(await this._cacheBackend.addToShard(shard, metric))) {
             return false;
         }
         await this._counterBackend.updateCounters(metric);
