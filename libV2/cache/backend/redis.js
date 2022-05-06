@@ -19,7 +19,9 @@ class RedisCache {
         moduleLogger.debug('Connecting to redis...');
         this._redis = new RedisClient(this._options);
         this._redis.connect();
-        return true;
+        return new Promise(resolve => {
+            this._redis.once('ready', () => resolve(true));
+        });
     }
 
     async disconnect() {
