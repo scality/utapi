@@ -28,6 +28,7 @@ class UtapiServer extends Process {
         app.use(middleware.loggerMiddleware);
         await initializeOasTools(spec, app);
         app.use(middleware.errorMiddleware);
+        app.use(middleware.httpMetricsMiddleware);
         app.use(middleware.responseLoggerMiddleware);
         return app;
     }

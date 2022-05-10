@@ -10,6 +10,7 @@ const templateExpected = opts => ({
     operationId: 'healthcheck',
     tag: 'internal',
     encrypted: false,
+    requestTimer: null,
     ...(opts || {}),
 });
 
