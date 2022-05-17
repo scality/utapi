@@ -53,13 +53,12 @@ function assertMetrics(schemaKey, metricName, props, isNegativeValue, done) {
         logger,
         (err, res) => {
             if (isNegativeValue) {
-                assert.deepStrictEqual(
-                    err,
-                    errors.InternalError.customizeDescription(
-                        'Utapi is in a transient state for this time period as '
-                            + 'metrics are being collected. Please try again in a few '
-                            + 'minutes.',
-                    ),
+                assert(err.is[errors.InternalError.type]);
+                assert.strictEqual(
+                    err.description,
+                    'Utapi is in a transient state for this time period as '
+                        + 'metrics are being collected. Please try again in a few '
+                        + 'minutes.',
                 );
                 return done();
             }
