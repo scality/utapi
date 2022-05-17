@@ -103,7 +103,7 @@ function bucketExists(bucket) {
         bucket,
         logger.newRequestLogger(),
         err => {
-            if (err && !err.NoSuchBucket) {
+            if (err && (!err.is || !err.is.NoSuchBucket)) {
                 reject(err);
                 return;
             }

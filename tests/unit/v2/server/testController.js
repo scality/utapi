@@ -34,7 +34,7 @@ describe('Test APIController', () => {
         assert(typeof handler === 'function');
         assert.rejects(handler, error => {
             assert.strictEqual(error.code, 501);
-            assert(error.is.NotImplemented);
+            assert(error.NotImplemented);
         });
     });
 
