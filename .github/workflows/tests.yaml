@@ -85,7 +85,7 @@ jobs:
         node-version: '16.13.2'
         cache: yarn
     - name: install dependencies
-      run: yarn install --frozen-lockfile
+      run: yarn install --frozen-lockfile --network-concurrency 1
     - name: run static analysis tools on markdown
       run: yarn run lint_md
     - name: run static analysis tools on code
@@ -187,7 +187,7 @@ jobs:
         pip install requests
         pip install redis
     - name: install dependencies
-      run: yarn install --frozen-lockfile
+      run: yarn install --frozen-lockfile --network-concurrency 1
     - name: ${{ matrix.test.name }}
       run: ${{ matrix.test.command }}
       env: ${{ matrix.test.env }}
@@ -304,7 +304,7 @@ jobs:
         pip install requests
         pip install redis
     - name: install dependencies
-      run: yarn install --frozen-lockfile
+      run: yarn install --frozen-lockfile --network-concurrency 1
     - name: Wait for warp10 a little bit
       run: sleep 60
     - name: ${{ matrix.test.name }}
