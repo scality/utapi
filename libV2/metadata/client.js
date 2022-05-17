@@ -1,5 +1,5 @@
-const BucketClientInterface = require('arsenal/lib/storage/metadata/bucketclient/BucketClientInterface');
 const bucketclient = require('bucketclient');
+const { BucketClientInterface } = require('arsenal').storage.metadata.bucketclient;
 
 const config = require('../config');
 const { LoggerContext } = require('../utils');

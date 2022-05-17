@@ -19,7 +19,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "scality/Arsenal#8.1.39",
+    "arsenal": "git+https://github.com/scality/Arsenal#8.1.48",
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
