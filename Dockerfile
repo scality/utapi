@@ -15,7 +15,7 @@ RUN curl -sS http://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
 RUN apt-get update \
     && apt-get install -y jq git python3 build-essential yarn --no-install-recommends \
     && yarn cache clean \
-    && yarn install --frozen-lockfile --production --ignore-optional \
+    && yarn install --frozen-lockfile --production --ignore-optional --network-concurrency=1 \
     && apt-get autoremove --purge -y python3 git build-essential \
     && rm -rf /var/lib/apt/lists/* \
     && yarn cache clean \
