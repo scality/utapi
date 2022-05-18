@@ -1,6 +1,5 @@
 /* eslint-disable implicit-arrow-linebreak */
 const assert = require('assert');
-const { errors } = require('arsenal');
 const { Logger } = require('werelogs');
 const MemoryBackend = require('../../lib/backend/Memory');
 const Datastore = require('../../lib/Datastore');
