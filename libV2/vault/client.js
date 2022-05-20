@@ -69,7 +69,7 @@ class VaultWrapper extends auth.Vault {
                 request,
                 request.logger.logger,
                 (err, authInfo, authRes) => {
-                    if (err && (err.InvalidAccessKeyId || err.AccessDenied)) {
+                    if (err && err.is && (err.is.InvalidAccessKeyId || err.is.AccessDenied)) {
                         resolve({ authed: false });
                         return;
                     }

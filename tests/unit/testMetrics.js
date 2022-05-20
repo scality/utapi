@@ -1,6 +1,5 @@
 /* eslint-disable implicit-arrow-linebreak */
 const assert = require('assert');
-const { errors } = require('arsenal');
 const { Logger } = require('werelogs');
 const MemoryBackend = require('../../lib/backend/Memory');
 const Datastore = require('../../lib/Datastore');
@@ -53,13 +52,12 @@ function assertMetrics(schemaKey, metricName, props, isNegativeValue, done) {
         logger,
         (err, res) => {
             if (isNegativeValue) {
-                assert.deepStrictEqual(
-                    err,
-                    errors.InternalError.customizeDescription(
-                        'Utapi is in a transient state for this time period as '
-                            + 'metrics are being collected. Please try again in a few '
-                            + 'minutes.',
-                    ),
+                assert(err.is.InternalError);
+                assert.strictEqual(
+                    err.description,
+                    'Utapi is in a transient state for this time period as '
+                        + 'metrics are being collected. Please try again in a few '
+                        + 'minutes.',
                 );
                 return done();
             }
