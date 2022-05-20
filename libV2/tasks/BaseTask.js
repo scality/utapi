@@ -94,7 +94,7 @@ class BaseTask extends Process {
 
     async _createProbeServer() {
         this._probeServer = await startProbeServer({
-            host: this._metricsHost,
+            bindAddress: this._metricsHost,
             port: this._metricsPort,
         });
 
