@@ -54,5 +54,15 @@
     "filter": {
         "allow": {},
         "deny": {}
+    },
+    "metrics" : {
+        "enabled": false,
+        "host": "localhost",
+        "ingestPort": 10902,
+        "checkpointPort": 10903,
+        "snapshotPort": 10904,
+        "diskUsagePort": 10905,
+        "reindexPort": 10906,
+        "repairPort": 10907
     }
 }
