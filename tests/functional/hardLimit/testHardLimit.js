@@ -1,11 +1,13 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const uuid = require('uuid');
+const promClient = require('prom-client');
 
 const { clients: warp10Clients } = require('../../../libV2/warp10');
 const { MonitorDiskUsage } = require('../../../libV2/tasks');
 
 const { fillDir } = require('../../utils/v2Data');
+const { assertMetricValue } = require('../../utils/prom');
 
 // eslint-disable-next-line func-names
 describe('Test MonitorDiskUsage hard limit', function () {
@@ -15,11 +17,14 @@ describe('Test MonitorDiskUsage hard limit', function () {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
-        task = new MonitorDiskUsage({ warp10: warp10Clients });
+        promClient.register.clear();
+        task = new MonitorDiskUsage({ warp10: warp10Clients, enableMetrics: true });
         await task.setup();
         task._path = path;
         task._enabled = true;
     });
+
+    afterEach(async () => task.join());
 
     it('should trigger a database lock if above the limit', async () => {
         fillDir(path, { count: 1, size: 100 });
@@ -34,6 +39,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
         assert(lockSpy.calledOnce);
         assert(unlockSpy.notCalled);
         assert(execStub.calledOnce);
+        await assertMetricValue('utapi_monitor_disk_usage_hard_limit_bytes', 1);
     });
 
     it('should trigger a database unlock if below the limit', async () => {
