@@ -48,6 +48,11 @@ class BaseTask extends Process {
         }
 
         if (this._enableMetrics) {
+            promClient.collectDefaultMetrics({
+                timeout: 10000,
+                gcDurationBuckets: [0.001, 0.01, 0.1, 1, 2, 5],
+            });
+
             this._metricsHandlers = {
                 ...this._registerDefaultMetricHandlers(),
                 ...this._registerMetricHandlers(),
