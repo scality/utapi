@@ -112,7 +112,8 @@ jobs:
         test:
         - name: run unit tests
           command: yarn test
-          env: {}
+          env:
+            UTAPI_METRICS_ENABLED: 'true'
         - name: run client tests
           command: bash ./.github/scripts/run_ft_tests.bash false ft_test:client
           env: {}

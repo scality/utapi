@@ -3,6 +3,7 @@ const Joi = require('@hapi/joi');
 const { buildModel } = require('./Base');
 const { apiOperations } = require('../server/spec');
 const ResponseContainer = require('./ResponseContainer');
+const { httpRequestDurationSeconds } = require('../server/metrics');
 
 const apiTags = Object.keys(apiOperations);
 const apiOperationIds = Object.values(apiOperations)
@@ -21,6 +22,7 @@ const contextSchema = {
     logger: Joi.any(),
     request: Joi.any(),
     results: Joi.any(),
+    requestTimer: Joi.any(),
 };
 
 const RequestContextModel = buildModel('RequestContext', contextSchema);
@@ -33,6 +35,10 @@ class RequestContext extends RequestContextModel {
         const url = `${protocol}://${host}${request.url}`;
         const tag = request.swagger.operation['x-router-controller'];
         const { operationId } = request.swagger.operation;
+
+        const requestTimer = tag !== 'internal'
+            ? httpRequestDurationSeconds.startTimer({ action: operationId })
+            : null;
 
         request.logger.logger.addDefaultFields({
             tag,
@@ -50,6 +56,7 @@ class RequestContext extends RequestContextModel {
             encrypted,
             results: new ResponseContainer(),
             logger: request.logger,
+            requestTimer,
         });
     }
 

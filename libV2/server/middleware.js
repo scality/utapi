@@ -6,6 +6,7 @@ const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');
 const { translateAndAuthorize } = require('../vault');
+const metricHandlers = require('./metrics');
 
 const oasOptions = {
     controllers: path.join(__dirname, './API/'),
@@ -55,6 +56,23 @@ function responseLoggerMiddleware(req, res, next) {
     }
 }
 
+function httpMetricsMiddleware(request, response, next) {
+    // If the request.ctx is undefined then this is an internal oasTools request (/_/docs)
+    // No metrics should be pushed
+    if (config.metrics.enabled && request.ctx && request.ctx.tag !== 'internal') {
+        metricHandlers.httpRequestsTotal
+            .labels({
+                action: request.ctx.operationId,
+                code: response.statusCode,
+            }).inc(1);
+        request.ctx.requestTimer({ code: response.statusCode });
+    }
+
+    if (next) {
+        next();
+    }
+}
+
 // next is purposely not called as all error responses are handled here
 // eslint-disable-next-line no-unused-vars
 function errorMiddleware(err, req, res, next) {
@@ -82,7 +100,7 @@ function errorMiddleware(err, req, res, next) {
         code,
         message,
     });
-    responseLoggerMiddleware(req, res);
+    responseLoggerMiddleware(req, res, () => httpMetricsMiddleware(req, res));
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -158,5 +176,6 @@ module.exports = {
         responseLoggerMiddleware,
         authV4Middleware,
         clientIpLimitMiddleware,
+        httpMetricsMiddleware,
     },
 };
