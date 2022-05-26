@@ -51,7 +51,7 @@ class IngestShardTask extends BaseTask {
 
         const shardAgeTotal = new promClient.Counter({
             name: 'utapi_ingest_shard_task_shard_age_total',
-            help: 'Number of slow metrics ingested',
+            help: 'Aggregated age of shards',
             labelNames: ['origin', 'containerName'],
         });
 
