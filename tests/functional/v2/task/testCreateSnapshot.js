@@ -1,4 +1,5 @@
 const assert = require('assert');
+const promClient = require('prom-client');
 const uuid = require('uuid');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
@@ -6,6 +7,7 @@ const { convertTimestamp } = require('../../../../libV2/utils');
 const { CreateCheckpoint, CreateSnapshot, RepairTask } = require('../../../../libV2/tasks');
 
 const { generateCustomEvents, fetchRecords } = require('../../../utils/v2Data');
+const { assertMetricValue } = require('../../../utils/prom');
 
 const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
@@ -54,11 +56,17 @@ describe('Test CreateSnapshot', function () {
         checkpointTask = new CreateCheckpoint({ warp10: [warp10] });
         checkpointTask._program = { lag: 0, nodeId: prefix };
 
-        snapshotTask = new CreateSnapshot({ warp10: [warp10] });
+        snapshotTask = new CreateSnapshot({ warp10: [warp10], enableMetrics: true });
+        await snapshotTask.setup();
         snapshotTask._program = { lag: 0, nodeId: prefix };
 
         repairTask = new RepairTask({ warp10: [warp10] });
         repairTask._program = { lag: 0, nodeId: prefix };
+    });
+
+    afterEach(async () => {
+        await snapshotTask.join();
+        promClient.register.clear();
     });
 
     it('should create a snapshot from a checkpoint', async () => {
@@ -80,6 +88,7 @@ describe('Test CreateSnapshot', function () {
 
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
+        await assertMetricValue('utapi_create_snapshot_created_total', series.length);
     });
 
     it('should create a snapshot from more than one checkpoint', async () => {

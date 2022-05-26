@@ -1,4 +1,5 @@
 const assert = require('assert');
+const promClient = require('prom-client');
 const uuid = require('uuid');
 
 const { CacheClient, backends: cacheBackends } = require('../../../../libV2/cache');
@@ -9,6 +10,7 @@ const config = require('../../../../libV2/config');
 const { eventFieldsToWarp10 } = require('../../../../libV2/constants');
 
 const { generateFakeEvents, fetchRecords } = require('../../../utils/v2Data');
+const { assertMetricValue, getMetricValues } = require('../../../utils/prom');
 
 const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
@@ -58,16 +60,20 @@ describe('Test IngestShards', function () {
         await cacheClient.connect();
 
         warp10 = new Warp10Client({ nodeId: prefix });
-        ingestTask = new IngestShard({ warp10: [warp10] });
+        ingestTask = new IngestShard({ warp10: [warp10], enableMetrics: true });
+        await ingestTask.setup();
         ingestTask._cache._cacheBackend._prefix = prefix;
         ingestTask._program = { lag: 0 };
         await ingestTask._cache.connect();
     });
 
-    this.afterEach(async () => {
+    afterEach(async () => {
         await cacheClient.disconnect();
         await ingestTask._cache.disconnect();
+        await ingestTask.join();
+        promClient.register.clear();
     });
+
 
     it('should ingest metrics from a single shard', async () => {
         const start = shardFromTimestamp(getTs(-120));
@@ -86,6 +92,12 @@ describe('Test IngestShards', function () {
             '@utapi/decodeEvent',
         );
         assertResults(events, series);
+        await assertMetricValue('utapi_ingest_shard_task_ingest_total', events.length);
+        await assertMetricValue('utapi_ingest_shard_task_shard_ingest_total', 1);
+        const metricValues = await getMetricValues('utapi_ingest_shard_task_shard_age_total');
+        assert.strictEqual(metricValues.length, 1);
+        const [metric] = metricValues;
+        assert(metric.value > 0);
     });
 
     it('should ingest metrics for multiple shards', async () => {
@@ -106,6 +118,7 @@ describe('Test IngestShards', function () {
         );
 
         assertResults(events, series);
+        await assertMetricValue('utapi_ingest_shard_task_ingest_total', events.length);
     });
 
     it('should ingest old metrics as repair', async () => {
@@ -125,6 +138,7 @@ describe('Test IngestShards', function () {
             '@utapi/decodeEvent',
         );
         assertResults(events, series);
+        await assertMetricValue('utapi_ingest_shard_task_slow_total', events.length);
     });
 
     it('should strip the event uuid during ingestion', async () => {
@@ -209,4 +223,3 @@ describe('Test IngestShards', function () {
         ], timestamps);
     });
 });
-

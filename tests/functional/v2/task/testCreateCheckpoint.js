@@ -1,4 +1,5 @@
 const assert = require('assert');
+const promClient = require('prom-client');
 const uuid = require('uuid');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
@@ -6,6 +7,7 @@ const { convertTimestamp } = require('../../../../libV2/utils');
 const { CreateCheckpoint } = require('../../../../libV2/tasks');
 
 const { generateCustomEvents, fetchRecords } = require('../../../utils/v2Data');
+const { assertMetricValue } = require('../../../utils/prom');
 
 const _now = Math.floor(new Date().getTime() / 1000);
 const getTs = delta => convertTimestamp(_now + delta);
@@ -49,8 +51,14 @@ describe('Test CreateCheckpoint', function () {
         prefix = uuid.v4();
 
         warp10 = new Warp10Client({ nodeId: prefix });
-        checkpointTask = new CreateCheckpoint({ warp10: [warp10] });
+        checkpointTask = new CreateCheckpoint({ warp10: [warp10], enableMetrics: true });
+        await checkpointTask.setup();
         checkpointTask._program = { lag: 0, nodeId: prefix };
+    });
+
+    afterEach(async () => {
+        await checkpointTask.join();
+        promClient.register.clear();
     });
 
     it('should create checkpoints from events', async () => {
@@ -72,6 +80,7 @@ describe('Test CreateCheckpoint', function () {
 
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
+        await assertMetricValue('utapi_create_checkpoint_created_total', series.length);
     });
 
     it('should only include events not in an existing checkpoint', async () => {

@@ -1,3 +1,4 @@
+const promClient = require('prom-client');
 const BaseTask = require('./BaseTask');
 const config = require('../config');
 const { LoggerContext } = require('../utils');
@@ -20,6 +21,40 @@ class RepairTask extends BaseTask {
         this._defaultLag = repairLagSecs;
     }
 
+    // eslint-disable-next-line class-methods-use-this
+    _registerMetricHandlers() {
+        const created = new promClient.Counter({
+            name: 'utapi_repair_task_created_total',
+            help: 'Number of repair records created',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        return {
+            created,
+        };
+    }
+
+    /**
+     * Metrics for RepairTask
+     * @typedef {Object} RepairMetrics
+     * @property {number} created - Number of repair records created
+     */
+
+    /**
+     *
+     * @param {RepairMetrics} metrics - Metric values to push
+     * @returns {undefined}
+     */
+    _pushMetrics(metrics) {
+        if (!this._enableMetrics) {
+            return;
+        }
+
+        if (metrics.created !== undefined) {
+            this._metricsHandlers.created.inc(metrics.created);
+        }
+    }
+
     async _execute(timestamp) {
         logger.debug('Checking for repairs', { timestamp, nodeId: this.nodeId });
 
@@ -36,6 +71,7 @@ class RepairTask extends BaseTask {
         });
         if (status.result[0]) {
             logger.info(`created ${status.result[0]} corrections`);
+            this._pushMetrics({ created: status.result[0] });
         }
     }
 }
