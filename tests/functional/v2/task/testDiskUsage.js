@@ -74,7 +74,7 @@ describe('Test MonitorDiskUsage', () => {
             });
     });
 
-    it('should fail if a subpath does not exists', () => {
+    it('should fail if a subpath does not exist', () => {
         assert.doesNotThrow(() => task._execute());
         assert.strictEqual(task.usage, undefined);
     });
