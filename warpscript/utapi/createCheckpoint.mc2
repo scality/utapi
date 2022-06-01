@@ -115,7 +115,16 @@
       %> FOREACH
      %>
     <%
-       DROP 0 STOP
+      // If no new events were found
+      // - drop the empty list
+      // - write a new master checkpoint
+      // - return 0
+      DROP
+      NEWGTS $master_checkpoint_class RENAME
+      $endTimestamp NaN NaN NaN 0 ADDVALUE
+      { 'node' $nodeId } RELABEL
+      $write_token UPDATE
+      0 STOP
     %> IFTE
 
     0 'checkpoints' STORE
