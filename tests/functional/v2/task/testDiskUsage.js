@@ -1,4 +1,5 @@
 const assert = require('assert');
+const fs = require('fs');
 const promClient = require('prom-client');
 const uuid = require('uuid');
 
@@ -9,9 +10,10 @@ const { fillDir } = require('../../../utils/v2Data');
 const { assertMetricValue } = require('../../../utils/prom');
 
 class MonitorDiskUsageShim extends MonitorDiskUsage {
-    async _getUsage() {
-        this.usage = await super._getUsage();
-        return this.usage;
+    async _getUsage(path) {
+        const usage = await super._getUsage(path);
+        this.usage = (this.usage || 0) + usage;
+        return usage;
     }
 }
 
@@ -45,6 +47,7 @@ describe('Test MonitorDiskUsage', () => {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
+        fs.mkdirSync(path);
         task = new MonitorDiskUsageShim({ warp10: [], enableMetrics: true });
         task._path = path;
         task._enabled = true;
@@ -56,12 +59,23 @@ describe('Test MonitorDiskUsage', () => {
         promClient.register.clear();
     });
 
-    testCases.map(testCase =>
+    testCases.map(testCase => {
         it(`should calculate disk usage for ${testCase.count} files of ${testCase.size} bytes each`,
             async () => {
-                fillDir(path, testCase);
+                fillDir(`${path}/leveldb`, testCase);
+                fillDir(`${path}/datalog`, testCase);
                 await task._execute();
-                assert.strictEqual(task.usage, testCase.expected + emptyDirSize + (emptyFileSize * testCase.count));
-                await assertMetricValue('utapi_monitor_disk_usage_bytes', task.usage);
-            }));
+                const expectedSingleSize = emptyDirSize + testCase.expected + (emptyFileSize * testCase.count);
+                const expectedTotalSize = expectedSingleSize * 2;
+                assert.strictEqual(task.usage, expectedTotalSize);
+                // Should equal the usage minus the empty datalog
+                await assertMetricValue('utapi_monitor_disk_usage_leveldb_bytes', expectedSingleSize);
+                await assertMetricValue('utapi_monitor_disk_usage_datalog_bytes', expectedSingleSize);
+            });
+    });
+
+    it('should fail if a subpath does not exist', () => {
+        assert.doesNotThrow(() => task._execute());
+        assert.strictEqual(task.usage, undefined);
+    });
 });

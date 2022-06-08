@@ -1,4 +1,6 @@
 const async = require('async');
+const Path = require('path');
+const fs = require('fs');
 const promClient = require('prom-client');
 const BaseTask = require('./BaseTask');
 const config = require('../config');
@@ -55,9 +57,15 @@ class MonitorDiskUsage extends BaseTask {
             labelNames: ['origin', 'containerName'],
         });
 
-        const diskUsage = new promClient.Gauge({
-            name: 'utapi_monitor_disk_usage_bytes',
-            help: 'Total bytes used by warp 10',
+        const leveldbBytes = new promClient.Gauge({
+            name: 'utapi_monitor_disk_usage_leveldb_bytes',
+            help: 'Total bytes used by warp 10 leveldb',
+            labelNames: ['origin', 'containerName'],
+        });
+
+        const datalogBytes = new promClient.Gauge({
+            name: 'utapi_monitor_disk_usage_datalog_bytes',
+            help: 'Total bytes used by warp 10 datalog',
             labelNames: ['origin', 'containerName'],
         });
 
@@ -75,7 +83,8 @@ class MonitorDiskUsage extends BaseTask {
 
         return {
             isLocked,
-            diskUsage,
+            leveldbBytes,
+            datalogBytes,
             hardLimitRatio,
             hardLimitSetting,
         };
@@ -85,7 +94,8 @@ class MonitorDiskUsage extends BaseTask {
      * Metrics for MonitorDiskUsage
      * @typedef {Object} MonitorDiskUsageMetrics
      * @property {boolean} isLocked - Indicates if writes have been disabled for the monitored warp10
-     * @property {number} diskUsage - Total bytes used by warp 10
+     * @property {number} leveldbBytes - Total bytes used by warp 10 leveldb
+     * @property {number} datalogBytes - Total bytes used by warp 10 datalog
      * @property {number} hardLimitRatio - Percent of the hard limit used by warp 10
      * @property {number} hardLimitSetting - The hard limit setting in bytes
      */
@@ -104,8 +114,12 @@ class MonitorDiskUsage extends BaseTask {
             this._metricsHandlers.isLocked.set(metrics.isLocked ? 1 : 0);
         }
 
-        if (metrics.diskUsage !== undefined) {
-            this._metricsHandlers.diskUsage.set(metrics.diskUsage);
+        if (metrics.leveldbBytes !== undefined) {
+            this._metricsHandlers.leveldbBytes.set(metrics.leveldbBytes);
+        }
+
+        if (metrics.datalogBytes !== undefined) {
+            this._metricsHandlers.datalogBytes.set(metrics.datalogBytes);
         }
 
         if (metrics.hardLimitRatio !== undefined) {
@@ -129,9 +143,13 @@ class MonitorDiskUsage extends BaseTask {
         return this._program.lock !== undefined;
     }
 
-    _getUsage() {
-        moduleLogger.debug(`calculating disk usage for ${this._path}`);
-        return getFolderSize(this._path);
+    // eslint-disable-next-line class-methods-use-this
+    async _getUsage(path) {
+        moduleLogger.debug(`calculating disk usage for ${path}`);
+        if (!fs.existsSync(path)) {
+            throw Error(`failed to calculate usage for non-existent path ${path}`);
+        }
+        return getFolderSize(path);
     }
 
     async _expireMetrics(timestamp) {
@@ -249,18 +267,21 @@ class MonitorDiskUsage extends BaseTask {
             return;
         }
 
-        let size = null;
+        let leveldbBytes = null;
+        let datalogBytes = null;
         try {
-            size = await this._getUsage();
+            leveldbBytes = await this._getUsage(Path.join(this._path, 'leveldb'));
+            datalogBytes = await this._getUsage(Path.join(this._path, 'datalog'));
         } catch (error) {
             moduleLogger.error(`error calculating disk usage for ${this._path}`, { error });
             return;
         }
 
-        this._pushMetrics({ diskUsage: size });
+        this._pushMetrics({ leveldbBytes, datalogBytes });
 
+        const size = leveldbBytes + datalogBytes;
         if (this._hardLimit !== null) {
-            moduleLogger.info(`warp 10 leveldb using ${formatDiskSize(size)} of disk space`, { usage: size });
+            moduleLogger.info(`warp 10 using ${formatDiskSize(size)} of disk space`, { leveldbBytes, datalogBytes });
 
             const shouldLock = this._checkHardLimit(size, this.nodeId);
             if (shouldLock) {

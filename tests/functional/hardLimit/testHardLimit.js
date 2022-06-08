@@ -1,4 +1,5 @@
 const assert = require('assert');
+const fs = require('fs');
 const sinon = require('sinon');
 const uuid = require('uuid');
 const promClient = require('prom-client');
@@ -17,6 +18,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
 
     beforeEach(async () => {
         path = `/tmp/diskusage-${uuid.v4()}`;
+        fs.mkdirSync(`${path}/datalog`, { recursive: true });
         promClient.register.clear();
         task = new MonitorDiskUsage({ warp10: warp10Clients, enableMetrics: true });
         await task.setup();
@@ -27,7 +29,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
     afterEach(async () => task.join());
 
     it('should trigger a database lock if above the limit', async () => {
-        fillDir(path, { count: 1, size: 100 });
+        fillDir(`${path}/leveldb`, { count: 1, size: 100 });
         task._hardLimit = 1;
         const checkSpy = sinon.spy(task, '_checkHardLimit');
         const lockSpy = sinon.spy(task, '_disableWarp10Updates');
@@ -43,7 +45,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
     });
 
     it('should trigger a database unlock if below the limit', async () => {
-        fillDir(path, { count: 1, size: 100 });
+        fillDir(`${path}/leveldb`, { count: 1, size: 100 });
         task._hardLimit = 10240;
         const checkSpy = sinon.spy(task, '_checkHardLimit');
         const lockSpy = sinon.spy(task, '_disableWarp10Updates');
@@ -56,7 +58,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
     });
 
     it('should not throw when failing to calculate disk usage', async () => {
-        fillDir(path, { count: 1, size: 100 });
+        fillDir(`${path}/leveldb`, { count: 1, size: 100 });
         task._hardLimit = 1;
         sinon.stub(task, '_getUsage').throws();
         const _task = task.execute();
