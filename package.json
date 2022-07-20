@@ -19,13 +19,13 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "git+https://github.com/scality/Arsenal#7.10.24",
+    "arsenal": "git+https://github.com/scality/Arsenal#7.10.29",
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
     "backo": "^1.1.0",
     "body-parser": "^1.19.0",
-    "bucketclient": "scality/bucketclient#7.10.2",
+    "bucketclient": "scality/bucketclient#7.10.4",
     "byte-size": "^7.0.0",
     "commander": "^5.1.0",
     "cron-parser": "^2.15.0",
@@ -40,7 +40,7 @@
     "oas-tools": "^2.2.2",
     "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#7.10.2",
+    "vaultclient": "scality/vaultclient#7.10.8",
     "werelogs": "scality/werelogs#8.1.0"
   },
   "devDependencies": {
