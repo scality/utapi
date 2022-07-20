@@ -73,6 +73,11 @@ async function authorizeUserAccessKey(authInfo, level, resources, log) {
 
     log.trace('Authorizing IAM user', { resources });
 
+    // If no resources were authorized by Vault then no further checking is required
+    if (resources.length === 0) {
+        return [false, []];
+    }
+
     // Get the parent account id from the user's arn
     const parentAccountId = authInfo.getArn().split(':')[4];
 

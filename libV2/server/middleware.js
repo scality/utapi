@@ -137,7 +137,7 @@ async function authV4Middleware(request, response, params) {
     } catch (error) {
         request.logger.error('error during authentication', { error });
         // rethrow any access denied errors
-        if (error.is && error.is.AccessDenied) {
+        if ((error.is && error.is.AccessDenied) || (error.utapiError && error.AccessDenied)) {
             throw error;
         }
         throw errors.InternalError;
