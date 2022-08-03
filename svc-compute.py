@@ -396,8 +396,8 @@ if __name__ == '__main__':
         if args.json:
             json.dump({
                 'service': get_service_report()._asdict(),
-                'account': list(get_account_reports()),
-                'bucket': list(get_bucket_reports())
+                'account': [r._asdict() for r in get_account_reports(account_info)],
+                'bucket': {account_info[cid]['arn']: [r._asdict() for r in get_bucket_reports(cid)] for cid in account_info.keys() }
             }, f)
         else:
             f.write(html_header)
