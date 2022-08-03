@@ -11,6 +11,7 @@ import re
 import sys
 import urllib
 import datetime
+import itertools
 
 from collections import namedtuple
 
@@ -91,8 +92,6 @@ def get_config(args):
     return ScriptConfig(warp10=warp10_conf, bucketd=bucketd_conf, vault=vault_addr)
 
 Bucket = namedtuple('Bucket', ['account', 'name'])
-BucketContents = namedtuple('BucketContents', ['bucket', 'obj_count', 'total_size'])
-
 class MaxRetriesReached(Exception):
     def __init__(self, url):
         super().__init__('Max retries reached for request to %s'%url)
@@ -214,14 +213,32 @@ def get_metrics(warp10s, bucket, timestamp):
         bytes_stored += data[0].get('sizeD')
     return num_objects, bytes_stored
 
-def get_account_data(vault, canon_id):
+def get_account_data(vault, canon_ids):
     payload = {
         'Action': 'GetAccounts',
         'Version': '2010-05-08',
-        'canonicalIds': [canon_id]
+        'canonicalIds': canon_ids
     }
     resp = requests.get(vault, params=payload)
-    return resp.json()[0]
+    return resp.json()
+
+
+def chunker(iterable, chunksize):
+    it = iter(iterable)
+    while True:
+        chunk = itertools.islice(it, chunksize)
+        try:
+            first_el = next(chunk)
+        except StopIteration:
+            return
+        yield itertools.chain((first_el,), chunk)
+
+def get_account_names(vault, accounts):
+    names = {}
+    for chunk in chunker(accounts, 50):
+        resp = get_account_data(vault, accounts)
+        for acc in resp:
+            names[acc['canonicalId']] = acc['name']
 
 def print_config(config):
     print('Warp 10 Hosts - NodeId | Address')
@@ -230,46 +247,51 @@ def print_config(config):
     print('\nBucketD Host')
     print(config.bucketd)
 
-
 bucket_reports = {}
 account_reports = {}
-service_report = { 'num_objects': 0, 'bytes_stored': 0 }
-def update_report(bucket, num_objects, bytes_stored):
+service_report = { 'obj_count': 0, 'bytes_stored': 0 }
+def update_report(bucket, obj_count, bytes_stored):
     if bucket.account not in bucket_reports:
         bucket_reports[bucket.account] = dict()
-    bucket_reports[bucket.account][bucket.name] = { 'num_objects': num_objects, 'bytes_stored': bytes_stored }
+    bucket_reports[bucket.account][bucket.name] = { 'obj_count': obj_count, 'bytes_stored': bytes_stored }
     if bucket.account not in account_reports:
-        account_reports[bucket.account] = { 'num_objects': num_objects, 'bytes_stored': bytes_stored }
+        account_reports[bucket.account] = { 'obj_count': obj_count, 'bytes_stored': bytes_stored }
     else:
         existing = account_reports[bucket.account]
         account_reports[bucket.account] = {
-            'num_objects': existing['num_objects'] + num_objects,
+            'obj_count': existing['obj_count'] + obj_count,
             'bytes_stored': existing['bytes_stored'] + bytes_stored
         }
-    service_report['num_objects'] = service_report['num_objects'] + num_objects
+    service_report['obj_count'] = service_report['obj_count'] + obj_count
     service_report['bytes_stored'] = service_report['bytes_stored'] + bytes_stored
 
-def generate_reports():
-    acc_info =
+BucketReport = namedtuple('BucketContents', ['name', 'obj_count', 'bytes_stored', 'human'])
+AccountReport = namedtuple('AccountReport', ['name', 'arn', 'obj_count', 'bytes_stored', 'human'])
+ServiceReport = namedtuple('ServiceReport', ['obj_count', 'bytes_stored', 'human'])
 
-html_header = '<!DOCTYPE html><html><body>'
-html_footer = '<span>Generated on {}</span>\n</body></html>'
-html_style = '''
+def get_service_report():
+    return ServiceReport(human=to_human(service_report['bytes_stored']), **service_report)
+
+def get_account_reports(account_info):
+    print(account_info, flush=True)
+    for canonical_id, counters in account_reports.items():
+        name = account_info[canonical_id]['name']
+        arn = account_info[canonical_id]['arn']
+        human_size = to_human(counters['bytes_stored'])
+        yield AccountReport(name=name, arn=arn, human=human_size, **counters)
+
+def get_bucket_reports(canonical_id):
+    for name, counters in bucket_reports[canonical_id].items():
+        human_size = to_human(counters['bytes_stored'])
+        yield BucketReport(name=name, human=human_size, **counters)
+
+html_header = '''<!DOCTYPE html>
+<html>
+<body>
 <style>
     body {
         background: #E7DED9;
         color: #3C3431;
-    }
-
-    table {
-        width: 75%;
-        margin: auto;
-        margin-bottom: 0.5em;
-        background: #FDF4E3;
-    }
-
-    th {
-        background: #E1C391;
     }
 
     table, th, td {
@@ -277,100 +299,64 @@ html_style = '''
         border-collapse: collapse;
     }
 
-    tr:hover {background-color: #D6EEEE;}
+    table {
+        width: 75%;
+        margin: 0.25em auto;
+    }
+
+    thead {
+        background: #E1C391;
+    }
+
+    tbody {
+        background: #FDF4E3;
+    }
+
+    tbody > tr:hover {background-color: #D6EEEE;}
 
     td {
         padding: 0.1em 0.5em;
     }
 
-    .bucket {
-        width: 50%;
-    }
-
-    h3 {
+    h2, h3 {
         margin: auto;
         width: 75%;
         font-weight: normal;
-        background: #D6EEEE;
-    }
-
-    tr.total {
-        background: #E1C391;
-    }
-
-    tr.total > td {
-        font-weight: bold;
+        display: block;
     }
 
 </style>
 '''
-th = '''
-<thead>
-    <tr>
-        <th class="bucket">Bucket</th>
-        <th>Number of Objects</th>
-        <th>Total Bytes Stored</th>
-    </tr>
-</thead>
-'''
-tr = '''
-<tr>
-    <td class="bucket">{bucket}</td>
-    <td>{num_objects}</td>
-    <td>{bytes_stored} {human}</td>
-</tr>
-'''
-
-account_heading = '''
-<thead>
-    <tr>
-        <th>Account Name</th>
-        <th colspan="2">Arn</th>
-    </tr>
-    <tr>
-        <td>{}</td>
-        <td colspan="2">{}</td>
-    </tr>
-</thead>
-'''
-
-total_row = '''
-<tr class="total">
-    <td><b>Total<b></td>
-    <td>{}</td>
-    <td>{} {}</td>
-</tr>
-'''
+html_footer = '<span>Generated on {}</span>\n</body></html>'
 
 def to_human(bytes_stored):
-    if abs(bytes_stored) < 1024.0:
-        return ''
-    bytes_stored /= 1024.0
-    for unit in ["KiB", "MiB", "GiB", "TiB", "PiB"]:
+    for unit in ['B', 'KiB', 'MiB', 'GiB', 'TiB']:
         if abs(bytes_stored) < 1024.0:
-            return '({0:3.1f}{1})'.format(bytes_stored, unit)
+            return '{0:3.2f}{1}'.format(bytes_stored, unit)
         bytes_stored /= 1024.0
-    return "({0:.1f}EiB)".format(bytes_stored)
+    return "{0:.2f}PiB".format(bytes_stored)
 
-def render_html(config, args, timestamp):
-    with open(args.output[0], 'w') as f:
-        f.write(html_header)
-        f.write(html_style)
-        for account, buckets in sorted(reports.items(), key=lambda r: r[0]):
-            num_objects = 0
-            bytes_stored = 0
-            acc_info = get_account_data(config.vault, account)
-            f.write('<table>\n')
-            f.write(account_heading.format(acc_info['name'], acc_info['arn']))
-            f.write(th)
-            for bucket, metrics in sorted(buckets.items(), key=lambda r: r[0]):
-                f.write(tr.format(bucket=bucket, human=to_human(metrics['bytes_stored']), **metrics))
-                num_objects += metrics['num_objects']
-                bytes_stored += metrics['bytes_stored']
-            f.write(total_row.format(num_objects, bytes_stored, to_human(bytes_stored)))
-            f.write('</table>')
-        f.write(html_footer.format(datetime.datetime.fromtimestamp(float(timestamp)).isoformat()))
+_heading_tmpl = '<thead><tr>\n{}\n</tr></thead>\n'
+def get_heading_row(*args):
+    filler = '\n'.join('<td>{}</td>'.format(a) for a in args)
+    return _heading_tmpl.format(filler)
 
+_data_tmpl = '<tr>\n{}\n</tr>\n'
+def get_data_row(*args):
+    filler = '\n'.join('<td>{}</td>'.format(a) for a in args)
+    return _data_tmpl.format(filler)
+
+def get_table_lines(heading, data):
+    yield '<table>\n'
+    yield get_heading_row(*heading)
+    yield '<tdata>\n'
+    for row in data:
+        yield get_data_row(*row)
+    yield '</tdata>\n'
+    yield '</table>\n'
+
+def get_heading(text, size=2):
+    return '<h{}>{}</h{}>\n'.format(size, text, size)
 
 if __name__ == '__main__':
     args = get_args()
@@ -389,18 +375,46 @@ if __name__ == '__main__':
 
     timestamp = int(time.time())
     microtimestamp = timestamp * 1000000
+    account_info = {}
 
     with futures.ProcessPoolExecutor(args.parallel_queries) as executor:
         for batch in bucket_client.list_buckets():
             jobs = { executor.submit(get_metrics, config.warp10, bucket, microtimestamp): bucket for bucket in batch }
         for job in futures.as_completed(jobs.keys()):
             num_objects, bytes_stored = job.result()
-            update_report(jobs[job], num_objects, bytes_stored)
+            bucket = jobs[job]
+            update_report(bucket, num_objects, bytes_stored)
+            if bucket.account not in account_info:
+                try:
+                    account_info[bucket.account] = get_account_data(config.vault, [bucket.account])[0]
+                except Exception as e:
+                    _log.error('Failed to fetch account information for canonicalId {}'.format(bucket.name))
+                    _log.error('Report will not include name and arn for account.')
+                    _log.exception(e)
 
-    reports = generate_reports()
+    with open(args.output[0], 'w') as f:
+        if args.json:
+            json.dump({
+                'service': get_service_report()._asdict(),
+                'account': list(get_account_reports()),
+                'bucket': list(get_bucket_reports())
+            }, f)
+        else:
+            f.write(html_header)
+            f.write(get_heading('Service Totals'))
+            for line in get_table_lines(['Total Object Count', 'Total Bytes Stored', 'Approximate Size'], [get_service_report()]):
+                f.write(line)
+            f.write('<br>')
 
-    if args.json:
-        with open(args.output[0], 'w') as f:
-            json.dump(reports, f)
-    else:
-        render_html(config, args, timestamp)
+            f.write(get_heading('Breakdown by Account'))
+            for line in get_table_lines(['Account', 'Arn', 'Objects Count', 'Bytes Stored', 'Approximate Size'], get_account_reports(account_info)):
+                f.write(line)
+            f.write('<br>')
+
+            f.write(get_heading('Breakdown by Bucket'))
+            for canonical_id, acc_info in account_info.items():
+                f.write(get_heading('Account: {}'.format(acc_info['name']), 3))
+                for line in get_table_lines(['Bucket', 'Object Count', 'Bytes Stored', 'Approximate Size'], get_bucket_reports(canonical_id)):
+                    f.write(line)
+                f.write('<br>')
+            f.write(html_footer.format(datetime.datetime.fromtimestamp(float(timestamp)).isoformat()))
