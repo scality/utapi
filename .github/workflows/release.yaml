@@ -3,39 +3,41 @@ name: release
 on:
   workflow_dispatch:
     inputs:
+      dockerfile:
+        description: Dockerfile to build image from
+        type: choice
+        options:
+          - images/nodesvc-base/Dockerfile
+          - Dockerfile
+        required: true
       tag:
+        type: string
         description: 'Tag to be released'
         required: true
+      create-github-release:
+        type: boolean
+        description: Create a tag and matching Github release.
+        required: false
+        default: false
 
 jobs:
+  build:
+    uses: scality/workflows/.github/workflows/docker-build.yaml@v1
+    secrets: inherit
+    with:
+      registry: registry.scality.com
+      namespace: utapi
+      name: utapi
+      context: .
+      file: ${{ github.event.inputs.dockerfile}}
+      tag: ${{ github.event.inputs.tag }}
+
   release:
+    if: ${{ inputs.create-github-release }}
     runs-on: ubuntu-latest
+    needs: build
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-
-      - name: Set up Docker Buildk
-        uses: docker/setup-buildx-action@v1
-
-      - name: Login to Registry
-        uses: docker/login-action@v1
-        with:
-          registry: registry.scality.com
-          username: ${{ secrets.REGISTRY_LOGIN }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Build and push utapi image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: "registry.scality.com/utapi/utapi:${{ github.event.inputs.tag }}"
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -43,4 +45,3 @@ jobs:
           tag_name: ${{ github.event.inputs.tag }}
           generate_release_notes: true
           target_commitish: ${{ github.sha }}
-
