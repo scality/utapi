@@ -1,0 +1,15 @@
+name: build-dev-image
+
+on:
+  push:
+    branches-ignore:
+    - 'development/**'
+
+jobs:
+  build-dev:
+    uses: scality/workflows/.github/workflows/docker-build.yaml@v1
+    secrets: inherit
+    with:
+      registry: registry.scality.com
+      namespace: utapi-dev
+      name: utapi

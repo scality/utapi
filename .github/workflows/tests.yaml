@@ -7,80 +7,11 @@ on:
     - 'development/**'
 
 jobs:
-  build:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2.3.4
-        with:
-          lfs: true
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1.6.0
-
-      - name: Login to GitHub Registry
-        uses: docker/login-action@v1.10.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to Scality Registry
-        uses: docker/login-action@v1.10.0
-        with:
-          registry: registry.scality.com
-          username: ${{ secrets.REGISTRY_LOGIN }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
-
-      - name: Build and push redis CI image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          push: true
-          file: images/redis/Dockerfile
-          context: '.'
-          tags: ghcr.io/${{ github.repository }}/redis-ci:${{ github.sha }}
-          cache-from: type=gha,scope=redis
-          cache-to: type=gha,mode=max,scope=redis
-
-      - name: Build and push redis replica CI image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          push: true
-          context: .github/docker/redis-replica
-          build-args: |
-            REDIS_IMAGE=ghcr.io/${{ github.repository }}/redis-ci:${{ github.sha }}
-          tags: ghcr.io/${{ github.repository }}/redis-replica-ci:${{ github.sha }}
-          cache-from: type=gha,scope=redis-replica
-          cache-to: type=gha,mode=max,scope=redis-replica
-
-      - name: Build and push warp10 Image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          push: true
-          file: images/warp10/Dockerfile
-          context: '.'
-          tags: ghcr.io/${{ github.repository }}/warp10-ci:${{ github.sha }}
-          cache-from: type=gha,scope=warp10
-          cache-to: type=gha,mode=max,scope=warp10
-
-      - name: Build and push vault Image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          push: true
-          context: '.github/docker/vault'
-          tags: ghcr.io/${{ github.repository }}/vault-ci:${{ github.sha }}
-          cache-from: type=gha,scope=vault
-          cache-to: type=gha,mode=max,scope=vault
-
-      - name: Build and push utapi Image
-        uses: docker/build-push-action@v2.7.0
-        with:
-          push: true
-          context: '.'
-          tags: registry.scality.com/utapi-dev/utapi:${{ github.sha }}
-          cache-from: type=gha,scope=utapi
-          cache-to: type=gha,mode=max,scope=utapi
-
+  build-ci:
+    uses: ./.github/workflows/build-ci.yaml
+    secrets:
+      REGISTRY_LOGIN: ${{ secrets.REGISTRY_LOGIN }}
+      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
   lint:
     runs-on: ubuntu-latest
@@ -100,8 +31,9 @@ jobs:
     - name: run static analysis tools on code
       run: yarn run lint
 
-  tests:
-    needs: build
+  tests-v1:
+    needs:
+      - build-ci
     runs-on: ubuntu-latest
     env:
       REINDEX_PYTHON_INTERPRETER: python3
@@ -114,16 +46,16 @@ jobs:
           command: yarn test
           env:
             UTAPI_METRICS_ENABLED: 'true'
-        - name: run client tests
+        - name: run v1 client tests
           command: bash ./.github/scripts/run_ft_tests.bash false ft_test:client
           env: {}
-        - name: run server tests
+        - name: run v1 server tests
           command: bash ./.github/scripts/run_ft_tests.bash false ft_test:server
           env: {}
-        - name: run cron tests
+        - name: run v1 cron tests
           command: bash ./.github/scripts/run_ft_tests.bash false ft_test:cron
           env: {}
-        - name: run interval tests
+        - name: run v1 interval tests
           command: bash ./.github/scripts/run_ft_tests.bash true ft_test:interval
           env: {}
     services:
@@ -202,8 +134,112 @@ jobs:
       run: ${{ matrix.test.command }}
       env: ${{ matrix.test.env }}
 
-  tests-with-vault:
-    needs: build
+  tests-v2-with-vault:
+    needs:
+      - build-ci
+    runs-on: ubuntu-latest
+    env:
+      REINDEX_PYTHON_INTERPRETER: python3
+    services:
+      redis:
+        image: ghcr.io/${{ github.repository }}/redis-ci:${{ github.sha }}
+        ports:
+        - 6379:6379
+        - 9121:9121
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis-replica:
+        image: ghcr.io/${{ github.repository }}/redis-replica-ci:${{ github.sha }}
+        ports:
+        - 6380:6380
+        options: >-
+          --health-cmd "redis-cli -p 6380 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis-sentinel:
+        image: bitnami/redis-sentinel:6.2
+        env:
+          REDIS_MASTER_SET: scality-s3
+          REDIS_SENTINEL_PORT_NUMBER: '16379'
+          REDIS_SENTINEL_QUORUM: '1'
+        ports:
+        - 16379:16379
+        options: >-
+          --health-cmd "redis-cli -p 16379 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      warp10:
+        image: ghcr.io/${{ github.repository }}/warp10-ci:${{ github.sha }}
+        env:
+          standalone.port: '4802'
+          warpscript.maxops: '10000000'
+          ENABLE_SENSISION: 't'
+        ports:
+        - 4802:4802
+        - 8082:8082
+        - 9718:9718
+        options: >-
+          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 60s
+      vault:
+        image: ghcr.io/${{ github.repository }}/vault-ci:${{ github.sha }}
+        ports:
+        - 8500:8500
+        - 8600:8600
+        - 8700:8700
+        - 8800:8800
+        options: >-
+          --health-cmd "curl http://localhost:8500/_/healthcheck"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        lfs: true
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16.13.2'
+        cache: yarn
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip
+    - name: Install python deps
+      run: |
+        pip install requests
+        pip install redis
+    - name: install dependencies
+      run: yarn install --frozen-lockfile --network-concurrency 1
+    - name: Wait for warp10 for 60 seconds
+      run: sleep 60
+    - name: run v2 functional tests
+      run: bash ./.github/scripts/run_ft_tests.bash true ft_test:v2
+      env:
+        UTAPI_CACHE_BACKEND: redis
+        UTAPI_SERVICE_USER_ENABLED: 'true'
+        UTAPI_LOG_LEVEL: trace
+        SETUP_CMD: "run start_v2:server"
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      if: failure()
+
+  tests-v2-without-sensision:
+    needs:
+      - build-ci
     runs-on: ubuntu-latest
     env:
       REINDEX_PYTHON_INTERPRETER: python3
@@ -212,13 +248,6 @@ jobs:
       fail-fast: false
       matrix:
         test:
-        - name: run v2 functional tests
-          command: bash ./.github/scripts/run_ft_tests.bash true ft_test:v2
-          env:
-            UTAPI_CACHE_BACKEND: redis
-            UTAPI_SERVICE_USER_ENABLED: 'true'
-            UTAPI_LOG_LEVEL: trace
-            SETUP_CMD: "run start_v2:server"
         - name: run v2 soft limit test
           command: bash ./.github/scripts/run_ft_tests.bash true ft_test:softLimit
           env:
@@ -269,7 +298,6 @@ jobs:
         env:
           standalone.port: '4802'
           warpscript.maxops: '10000000'
-          ENABLE_SENSISION: 't'
         ports:
         - 4802:4802
         - 8082:8082
