@@ -1,5 +1,7 @@
 FROM registry.scality.com/federation/nodesvc-base:7.10.5.0
 
+ENV UTAPI_CONFIG_FILE=${CONF_DIR}/config.json
+
 WORKDIR ${HOME_DIR}/utapi
 
 COPY ./package.json ./yarn.lock ${HOME_DIR}/utapi
