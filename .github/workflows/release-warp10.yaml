@@ -1,0 +1,41 @@
+name: release-warp10
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        type: string
+        description: 'Tag to be released'
+        required: true
+      create-github-release:
+        type: boolean
+        description: Create a tag and matching Github release.
+        required: false
+        default: true
+
+jobs:
+  build:
+    uses: scality/workflows/.github/workflows/docker-build.yaml@v1
+    secrets: inherit
+    with:
+      registry: registry.scality.com
+      namespace: utapi
+      name: warp10
+      context: .
+      file: images/warp10/Dockerfile
+      tag: ${{ github.event.inputs.tag }}
+      lfs: true
+
+  release:
+    if: ${{ inputs.create-github-release }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: Release registry.scality.com/utapi/warp10:${{ github.event.inputs.tag }}-warp10
+          tag_name: ${{ github.event.inputs.tag }}-warp10
+          generate_release_notes: false
+          target_commitish: ${{ github.sha }}
