@@ -247,7 +247,11 @@ tests.forEach(test => {
         c.setDataStore(ds);
         c.pushMetric(metric, REQUID, params, () => {
             deserializeMemoryBackend(memoryBackend.data);
-            assert.deepStrictEqual(memoryBackend.data, expected);
+            Object.keys(expected).forEach(key => {
+                if (memoryBackend.data[key]) {
+                    assert.deepStrictEqual(memoryBackend.data[key], expected[key]);
+                }
+            });
             return cb();
         });
     }
@@ -490,6 +494,7 @@ tests.forEach(test => {
                 storageUtilized: '1024',
                 numberOfObjects: '1',
             };
+
             setMockData(data, timestamp, () => {
                 testMetric('deleteObject', params, expected, done);
             });
@@ -667,6 +672,40 @@ tests.forEach(test => {
             testMetric('putDeleteMarkerObject', metricTypes, expected, done);
         });
 
+        it('should push putDeleteMarkerObject metrics and have correct bytes and number of objects', done => {
+            const expected = buildExpectedResult({
+                action: 'PutObject',
+                numberOfObjects: '1',
+            });
+            const metrics = {
+                bucket: '5741-repro',
+                keys: ['foo2'],
+                byteLength: undefined,
+                newByteLength: 258,
+                oldByteLength: null,
+                numberOfObjects: 1,
+                accountId: '79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be',
+                userId: undefined,
+            };
+            testMetric('putObject', Object.assign(metrics, metricTypes), expected, () => {
+                const expected = buildExpectedResult({
+                    action: 'DeleteObject',
+                    numberOfObjects: '1',
+                });
+                const metrics2 = {
+                    bucket: '5741-repro',
+                    keys: ['foo2'],
+                    byteLength: 258,
+                    newByteLength: undefined,
+                    oldByteLength: undefined,
+                    numberOfObjects: undefined,
+                    accountId: '79a59df900b949e55d96a1e698fbacedfd6e09d98eacf8f8d5218e7cd47ef2be',
+                    userId: undefined,
+                };
+                testMetric('putDeleteMarkerObject', Object.assign(metrics2, metricTypes), expected, done);
+            });
+        });
+
         it('should push putBucketReplication metrics', done => {
             const expected = buildExpectedResult({
                 action: 'PutBucketReplication',
@@ -766,3 +805,4 @@ tests.forEach(test => {
         });
     });
 });
+
