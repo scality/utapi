@@ -27,8 +27,6 @@ ENV SENSISION_DATA_DIR /data/sensision
 ENV SENSISION_PORT 8082
 
 # Modify Warp 10 default config
-ENV standalone.host 0.0.0.0
-ENV standalone.port 4802
 ENV standalone.home /opt/warp10
 ENV warpscript.repository.directory /usr/local/share/warpscript
 ENV warp.token.file /static.tokens
@@ -53,6 +51,6 @@ COPY --from=builder /usr/local/go/warp10_sensision_exporter /usr/local/bin/warp1
 ADD ./images/warp10/s6 /etc
 ADD ./warpscript /usr/local/share/warpscript
 ADD ./images/warp10/static.tokens /
+ADD ./images/warp10/90-default-host-port.conf $WARP10_CONF_TEMPLATES/90-default-host-port.conf
 
 CMD /init
-
