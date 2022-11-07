@@ -39,7 +39,7 @@ function getMetricResponse(schemaKey) {
     return response;
 }
 
-function assertMetrics(schemaKey, metricName, props, isNegativeValue, done) {
+function assertMetrics(schemaKey, metricName, props, done) {
     const timestamp = new Date().setMinutes(0, 0, 0);
     const timeRange = [timestamp, timestamp];
     const expectedRes = getMetricResponse(schemaKey);
@@ -51,16 +51,6 @@ function assertMetrics(schemaKey, metricName, props, isNegativeValue, done) {
         datastore,
         logger,
         (err, res) => {
-            if (isNegativeValue) {
-                assert(err.is.InternalError);
-                assert.strictEqual(
-                    err.description,
-                    'Utapi is in a transient state for this time period as '
-                        + 'metrics are being collected. Please try again in a few '
-                        + 'minutes.',
-                );
-                return done();
-            }
             assert.strictEqual(err, null);
             // overwrite operations metrics
             if (expectedResProps.operations) {
@@ -98,13 +88,12 @@ function testOps(schemaKey, keyIndex, metricindex, isNegativeValue, done) {
     if (keyIndex === 'storageUtilized' || keyIndex === 'numberOfObjects') {
         key = generateStateKey(schemaObject, keyIndex);
         val = isNegativeValue ? -1024 : 1024;
-        props[metricindex] = [val, val];
+        props[metricindex] = isNegativeValue ? [0, 0] : [val, val];
         memBackend.zadd(key, timestamp, val, () =>
             assertMetrics(
                 schemaKey,
                 schemaObject[schemaKey],
                 props,
-                isNegativeValue,
                 done,
             ));
     } else if (keyIndex === 'incomingBytes' || keyIndex === 'outgoingBytes') {
@@ -116,7 +105,6 @@ function testOps(schemaKey, keyIndex, metricindex, isNegativeValue, done) {
                 schemaKey,
                 schemaObject[schemaKey],
                 props,
-                isNegativeValue,
                 done,
             ));
     } else {
@@ -129,7 +117,6 @@ function testOps(schemaKey, keyIndex, metricindex, isNegativeValue, done) {
                 schemaKey,
                 schemaObject[schemaKey],
                 props,
-                isNegativeValue,
                 done,
             ));
     }
@@ -145,7 +132,6 @@ Object.keys(metricLevels).forEach(schemaKey => {
                 schemaKey,
                 resourceNames[schemaKey],
                 null,
-                false,
                 done,
             ));
 
