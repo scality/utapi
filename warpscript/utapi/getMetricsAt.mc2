@@ -24,6 +24,7 @@
   SAVE 'context' STORE
   <%
     'getMetricsAt' SECTION
+    'total' CHRONOSTART
 
     JSON-> 'operation_info' STORE
     JSON-> 'auth_info' STORE
@@ -54,6 +55,7 @@
 
     // Find all nodes containing snapshots
     'load_snapshots' SECTION
+    'load_snapshots' CHRONOSTART
 
     // Define our macro to sum the snapshots and save their timestamp
     <%
@@ -73,6 +75,7 @@
       [ $tick NaN NaN NaN NULL ]
     %> 'sumSnapshot' STORE
 
+    'fetch_snapshots' CHRONOSTART
     // Fetch the last snapshot for every node
     {
       'token' $read_token
@@ -81,6 +84,7 @@
       'end' $endTimestamp
       'count' 1
     } FETCH
+    'fetch_snapshots' CHRONOEND
 
     // Apply our macro over the snapshots
     // Drop the result as we don't need it
@@ -92,7 +96,10 @@
     ] REDUCE
     DROP
 
+    'load_snapshots' CHRONOEND
+
     'load_checkpoints' SECTION
+    'load_checkpoints' CHRONOSTART
 
     {} 'checkpoints' STORE
 
@@ -121,6 +128,7 @@
       <% DUP TYPEOF 'LONG' != %>
       <% DROP -1 %> IFT
       'startTimestamp' STORE
+      'fetch_checkpoint' $key '_' 2 JOIN CHRONOSTART
       {
         'token' $read_token
         'class' $checkpoint_class
@@ -128,6 +136,7 @@
         'end' $endTimestamp
         'start' $startTimestamp 1 +
       } FETCH
+      'fetch_checkpoint' $key '_' 2 JOIN CHRONOEND
 
 
     %> FOREACH
@@ -159,6 +168,7 @@
 
     // Load the most recent master checkpoint before our target timestamp from each node
     {} 'masterCheckpoints' STORE
+    'fetch_master_checkpoint' CHRONOSTART
     {
       'token' $read_token
       'class' $master_checkpoint_class
@@ -167,6 +177,7 @@
       'count' 1
     }
     FETCH
+    'fetch_master_checkpoint' CHRONOEND
     <%
       $masterCheckpoints SWAP
       DUP LASTTICK SWAP
@@ -178,8 +189,11 @@
     // $masterCheckpoints ->JSON + LOGMSG
     // $labels ->JSON LOGMSG
 
+    'load_checkpoints' CHRONOEND
+
     // Find all nodes containing events
     'load_events' SECTION
+    'load_events' CHRONOSTART
     [
       $read_token
       $event_class
@@ -200,6 +214,7 @@
       <% DUP TYPEOF 'LONG' != %>
       <% DROP -1 %> IFT
       'startTimestamp' STORE
+      'fetch_events' $key '_' 2 JOIN CHRONOSTART
       {
         'token' $read_token
         'class' $event_class
@@ -207,6 +222,7 @@
         'end' $endTimestamp
         'start' $startTimestamp 1 +
       } FETCH
+      'fetch_events' $key '_' 2 JOIN CHRONOEND
       <% // Handle multiple GTS
         VALUES
         <%
@@ -238,10 +254,12 @@
       %> FOREACH
     %> FOREACH
 
+    'load_events' CHRONOEND
     // $results ->JSON LOGMSG
 
     // Find all nodes containing corrections
     'load_corrections' SECTION
+    'load_corrections' CHRONOSTART
     [
       $read_token
       $correction_class
@@ -264,6 +282,7 @@
       <% DUP TYPEOF 'LONG' != %>
       <% DROP -1 %> IFT
       'startTimestamp' STORE
+      'fetch_corrections' $key '_' 2 JOIN CHRONOSTART
       {
         'token' $read_token
         'class' $correction_class
@@ -271,6 +290,7 @@
         'end' $endTimestamp
         'start' $startTimestamp 1 +
       } FETCH
+      'fetch_corrections' $key '_' 2 JOIN CHRONOEND
 
       <% // Handle multiple GTS
         DUP LASTTICK
@@ -286,12 +306,15 @@
         %> FOREACH
       %> FOREACH
     %> FOREACH
+    'load_corrections' CHRONOEND
 
     'load_reindex' SECTION
+    'load_reindex' CHRONOSTART
     <% $no_reindex NOT %>
     <%
       // Only load the latest reindex for the current node
       $labels UNMAP 'node' $nodeID } 'filterLabels' STORE
+      'fetch_reindex' CHRONOSTART
       {
         'token' $read_token
         'class' $reindex_class
@@ -299,6 +322,7 @@
         'end' $endTimestamp
         'count' 1
       } FETCH
+      'fetch_reindex' CHRONOEND
       // DUP 'Loaded reindex records ' SWAP ->JSON + LOGMSG
       <% // Handle multiple GTS
         VALUES
@@ -309,6 +333,10 @@
         %> FOREACH
       %> FOREACH
     %> IFT
+    'load_reindex' CHRONOEND
+    'total' CHRONOEND
+
+    CHRONOSTATS ->JSON LOGMSG
 
     $results // Leave results on the stack
 
