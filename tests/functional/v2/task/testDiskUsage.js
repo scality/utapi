@@ -69,8 +69,8 @@ describe('Test MonitorDiskUsage', () => {
                 const expectedTotalSize = expectedSingleSize * 2;
                 assert.strictEqual(task.usage, expectedTotalSize);
                 // Should equal the usage minus the empty datalog
-                await assertMetricValue('utapi_monitor_disk_usage_leveldb_bytes', expectedSingleSize);
-                await assertMetricValue('utapi_monitor_disk_usage_datalog_bytes', expectedSingleSize);
+                await assertMetricValue('s3_utapi_monitor_disk_usage_leveldb_bytes', expectedSingleSize);
+                await assertMetricValue('s3_utapi_monitor_disk_usage_datalog_bytes', expectedSingleSize);
             });
     });
 

@@ -1,13 +1,13 @@
 const promClient = require('prom-client');
 
 const httpRequestsTotal = new promClient.Counter({
-    name: 'utapi_http_requests_total',
+    name: 's3_utapi_http_requests_total',
     help: 'Total number of HTTP requests',
     labelNames: ['action', 'code'],
 });
 
 const httpRequestDurationSeconds = new promClient.Histogram({
-    name: 'utapi_http_request_duration_seconds',
+    name: 's3_utapi_http_request_duration_seconds',
     help: 'Duration of HTTP requests in seconds',
     labelNames: ['action', 'code'],
     // buckets for response time from 0.1ms to 60s

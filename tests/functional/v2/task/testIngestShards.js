@@ -92,9 +92,9 @@ describe('Test IngestShards', function () {
             '@utapi/decodeEvent',
         );
         assertResults(events, series);
-        await assertMetricValue('utapi_ingest_shard_task_ingest_total', events.length);
-        await assertMetricValue('utapi_ingest_shard_task_shard_ingest_total', 1);
-        const metricValues = await getMetricValues('utapi_ingest_shard_task_shard_age_total');
+        await assertMetricValue('s3_utapi_ingest_shard_task_ingest_total', events.length);
+        await assertMetricValue('s3_utapi_ingest_shard_task_shard_ingest_total', 1);
+        const metricValues = await getMetricValues('s3_utapi_ingest_shard_task_shard_age_total');
         assert.strictEqual(metricValues.length, 1);
         const [metric] = metricValues;
         assert(metric.value > 0);
@@ -118,7 +118,7 @@ describe('Test IngestShards', function () {
         );
 
         assertResults(events, series);
-        await assertMetricValue('utapi_ingest_shard_task_ingest_total', events.length);
+        await assertMetricValue('s3_utapi_ingest_shard_task_ingest_total', events.length);
     });
 
     it('should ingest old metrics as repair', async () => {
@@ -138,7 +138,7 @@ describe('Test IngestShards', function () {
             '@utapi/decodeEvent',
         );
         assertResults(events, series);
-        await assertMetricValue('utapi_ingest_shard_task_slow_total', events.length);
+        await assertMetricValue('s3_utapi_ingest_shard_task_slow_total', events.length);
     });
 
     it('should strip the event uuid during ingestion', async () => {

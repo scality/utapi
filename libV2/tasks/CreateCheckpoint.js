@@ -24,14 +24,14 @@ class CreateCheckpoint extends BaseTask {
     // eslint-disable-next-line class-methods-use-this
     _registerMetricHandlers() {
         const created = new promClient.Counter({
-            name: 'utapi_create_checkpoint_created_total',
-            help: 'Number of checkpoints created',
+            name: 's3_utapi_create_checkpoint_created_total',
+            help: 'Total number of checkpoints created',
             labelNames: ['origin', 'containerName'],
         });
 
         const getLastCheckpoint = this._getLastCheckpoint.bind(this);
         const lastCheckpoint = new promClient.Gauge({
-            name: 'utapi_create_checkpoint_last_checkpoint_seconds',
+            name: 's3_utapi_create_checkpoint_last_checkpoint_seconds',
             help: 'Timestamp of the last successfully created checkpoint',
             labelNames: ['origin', 'containerName'],
             async collect() {

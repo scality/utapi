@@ -24,14 +24,14 @@ class CreateSnapshot extends BaseTask {
     // eslint-disable-next-line class-methods-use-this
     _registerMetricHandlers() {
         const created = new promClient.Counter({
-            name: 'utapi_create_snapshot_created_total',
-            help: 'Number of snapshots created',
+            name: 's3_utapi_create_snapshot_created_total',
+            help: 'Total number of snapshots created',
             labelNames: ['origin', 'containerName'],
         });
 
         const getLastSnapshot = this._getLastSnapshot.bind(this);
         const lastSnapshot = new promClient.Gauge({
-            name: 'utapi_create_snapshot_last_snapshot_seconds',
+            name: 's3_utapi_create_snapshot_last_snapshot_seconds',
             help: 'Timestamp of the last successfully created snapshot',
             labelNames: ['origin', 'containerName'],
             async collect() {

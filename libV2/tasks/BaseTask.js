@@ -68,20 +68,20 @@ class BaseTask extends Process {
         const taskNameSnake = taskName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 
         const executionDuration = new promClient.Gauge({
-            name: `utapi${taskNameSnake}_duration_seconds`,
+            name: `s3_utapi${taskNameSnake}_duration_seconds`,
             help: `Execution time of the ${taskName} task`,
             labelNames: ['origin', 'containerName'],
         });
 
         const executionAttempts = new promClient.Counter({
-            name: `utapi${taskNameSnake}_attempts_total`,
-            help: `Number of attempts to execute the ${taskName} task`,
+            name: `s3_utapi${taskNameSnake}_attempts_total`,
+            help: `Total number of attempts to execute the ${taskName} task`,
             labelNames: ['origin', 'containerName'],
         });
 
         const executionFailures = new promClient.Counter({
-            name: `utapi${taskNameSnake}_failures_total`,
-            help: `Number of failures executing the ${taskName} task`,
+            name: `s3_utapi${taskNameSnake}_failures_total`,
+            help: `Total number of failures executing the ${taskName} task`,
             labelNames: ['origin', 'containerName'],
         });
 

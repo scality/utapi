@@ -41,7 +41,7 @@ describe('Test MonitorDiskUsage hard limit', function () {
         assert(lockSpy.calledOnce);
         assert(unlockSpy.notCalled);
         assert(execStub.calledOnce);
-        await assertMetricValue('utapi_monitor_disk_usage_hard_limit_bytes', 1);
+        await assertMetricValue('s3_utapi_monitor_disk_usage_hard_limit_bytes', 1);
     });
 
     it('should trigger a database unlock if below the limit', async () => {

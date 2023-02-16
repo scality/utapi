@@ -80,7 +80,7 @@ describe('Test CreateCheckpoint', function () {
 
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
-        await assertMetricValue('utapi_create_checkpoint_created_total', series.length);
+        await assertMetricValue('s3_utapi_create_checkpoint_created_total', series.length);
     });
 
     it('should only include events not in an existing checkpoint', async () => {

@@ -88,7 +88,7 @@ describe('Test CreateSnapshot', function () {
 
         assert.strictEqual(series.length, 3);
         assertResults(totals, series);
-        await assertMetricValue('utapi_create_snapshot_created_total', series.length);
+        await assertMetricValue('s3_utapi_create_snapshot_created_total', series.length);
     });
 
     it('should create a snapshot from more than one checkpoint', async () => {
