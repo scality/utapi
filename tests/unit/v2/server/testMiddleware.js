@@ -114,20 +114,21 @@ describe('Test middleware', () => {
 
             req.ctx = new RequestContext(req);
             middleware.httpMetricsMiddleware(req, resp);
-            await assertMetricValue('utapi_http_requests_total', 1);
-            const duration = await getMetricValues('utapi_http_request_duration_seconds');
+            await assertMetricValue('s3_utapi_http_requests_total', 1);
+            const durationMetric = 's3_utapi_http_request_duration_seconds';
+            const duration = await getMetricValues(durationMetric);
             // 14 defined buckets + 1 for Infinity
             assert.strictEqual(
-                duration.filter(metric => metric.metricName === 'utapi_http_request_duration_seconds_bucket').length,
+                duration.filter(metric => metric.metricName === `${durationMetric}_bucket`).length,
                 15,
             );
-            const count = duration.filter(metric => metric.metricName === 'utapi_http_request_duration_seconds_count');
+            const count = duration.filter(metric => metric.metricName === `${durationMetric}_count`);
             assert.deepStrictEqual(count, [{
                 labels: {
                     action: 'listMetrics',
                     code: 200,
                 },
-                metricName: 'utapi_http_request_duration_seconds_count',
+                metricName: `${durationMetric}_count`,
                 value: 1,
             }]);
             assert.strictEqual(count[0].value, 1);
@@ -137,7 +138,7 @@ describe('Test middleware', () => {
             const req = templateRequest();
             req.ctx = new RequestContext(req);
             middleware.httpMetricsMiddleware(req, resp);
-            assert.rejects(() => getMetricValues('utapi_http_requests_total'));
+            assert.rejects(() => getMetricValues('s3_utapi_http_requests_total'));
         });
     });
 });

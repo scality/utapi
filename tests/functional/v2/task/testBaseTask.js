@@ -15,7 +15,7 @@ class CustomTask extends BaseTask {
     // eslint-disable-next-line class-methods-use-this
     _registerMetricHandlers() {
         const foo = new promClient.Gauge({
-            name: 'utapi_custom_task_foo_total',
+            name: 's3_utapi_custom_task_foo_total',
             help: 'Count of foos',
             labelNames: ['origin', 'containerName'],
         });
@@ -58,26 +58,26 @@ describe('Test BaseTask metrics', () => {
 
     it('should push metrics for a task execution', async () => {
         await task.execute();
-        const timeValues = await getMetricValues('utapi_custom_task_duration_seconds');
+        const timeValues = await getMetricValues('s3_utapi_custom_task_duration_seconds');
         assert.strictEqual(timeValues.length, 1);
 
-        const attemptsValues = await getMetricValues('utapi_custom_task_attempts_total');
+        const attemptsValues = await getMetricValues('s3_utapi_custom_task_attempts_total');
         assert.deepStrictEqual(attemptsValues, [{ value: 1, labels: {} }]);
 
-        const failuresValues = await getMetricValues('utapi_custom_task_failures_total');
+        const failuresValues = await getMetricValues('s3_utapi_custom_task_failures_total');
         assert.deepStrictEqual(failuresValues, []);
     });
 
     it('should push metrics for a failed task execution', async () => {
         sinon.replace(task, '_execute', sinon.fake.rejects('forced failure'));
         await task.execute();
-        const failuresValues = await getMetricValues('utapi_custom_task_failures_total');
+        const failuresValues = await getMetricValues('s3_utapi_custom_task_failures_total');
         assert.deepStrictEqual(failuresValues, [{ value: 1, labels: {} }]);
     });
 
     it('should allow custom handlers to be registered', async () => {
         await task.execute();
-        const fooValues = await getMetricValues('utapi_custom_task_foo_total');
+        const fooValues = await getMetricValues('s3_utapi_custom_task_foo_total');
         assert.deepStrictEqual(fooValues, [{ value: 1, labels: {} }]);
     });
 });

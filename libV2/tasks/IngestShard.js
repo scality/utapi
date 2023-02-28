@@ -32,26 +32,26 @@ class IngestShardTask extends BaseTask {
     // eslint-disable-next-line class-methods-use-this
     _registerMetricHandlers() {
         const ingestedTotal = new promClient.Counter({
-            name: 'utapi_ingest_shard_task_ingest_total',
-            help: 'Number of metrics ingested',
+            name: 's3_utapi_ingest_shard_task_ingest_total',
+            help: 'Total number of metrics ingested',
             labelNames: ['origin', 'containerName'],
         });
 
         const ingestedSlow = new promClient.Counter({
-            name: 'utapi_ingest_shard_task_slow_total',
-            help: 'Number of slow metrics ingested',
+            name: 's3_utapi_ingest_shard_task_slow_total',
+            help: 'Total number of slow metrics ingested',
             labelNames: ['origin', 'containerName'],
         });
 
         const ingestedShards = new promClient.Counter({
-            name: 'utapi_ingest_shard_task_shard_ingest_total',
-            help: 'Number of metric shards ingested',
+            name: 's3_utapi_ingest_shard_task_shard_ingest_total',
+            help: 'Total number of metric shards ingested',
             labelNames: ['origin', 'containerName'],
         });
 
         const shardAgeTotal = new promClient.Counter({
-            name: 'utapi_ingest_shard_task_shard_age_total',
-            help: 'Aggregated age of shards',
+            name: 's3_utapi_ingest_shard_task_shard_age_total',
+            help: 'Total aggregated age of shards',
             labelNames: ['origin', 'containerName'],
         });
 

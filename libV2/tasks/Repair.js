@@ -24,8 +24,8 @@ class RepairTask extends BaseTask {
     // eslint-disable-next-line class-methods-use-this
     _registerMetricHandlers() {
         const created = new promClient.Counter({
-            name: 'utapi_repair_task_created_total',
-            help: 'Number of repair records created',
+            name: 's3_utapi_repair_task_created_total',
+            help: 'Total number of repair records created',
             labelNames: ['origin', 'containerName'],
         });
 

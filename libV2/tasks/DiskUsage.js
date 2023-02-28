@@ -52,31 +52,31 @@ class MonitorDiskUsage extends BaseTask {
     // eslint-disable-next-line class-methods-use-this
     _registerMetricHandlers() {
         const isLocked = new promClient.Gauge({
-            name: 'utapi_monitor_disk_usage_is_locked',
+            name: 's3_utapi_monitor_disk_usage_is_locked',
             help: 'Indicates whether the monitored warp 10 has had writes disabled',
             labelNames: ['origin', 'containerName'],
         });
 
         const leveldbBytes = new promClient.Gauge({
-            name: 'utapi_monitor_disk_usage_leveldb_bytes',
+            name: 's3_utapi_monitor_disk_usage_leveldb_bytes',
             help: 'Total bytes used by warp 10 leveldb',
             labelNames: ['origin', 'containerName'],
         });
 
         const datalogBytes = new promClient.Gauge({
-            name: 'utapi_monitor_disk_usage_datalog_bytes',
+            name: 's3_utapi_monitor_disk_usage_datalog_bytes',
             help: 'Total bytes used by warp 10 datalog',
             labelNames: ['origin', 'containerName'],
         });
 
         const hardLimitRatio = new promClient.Gauge({
-            name: 'utapi_monitor_disk_usage_hard_limit_ratio',
+            name: 's3_utapi_monitor_disk_usage_hard_limit_ratio',
             help: 'Percent of the hard limit used by warp 10',
             labelNames: ['origin', 'containerName'],
         });
 
         const hardLimitSetting = new promClient.Gauge({
-            name: 'utapi_monitor_disk_usage_hard_limit_bytes',
+            name: 's3_utapi_monitor_disk_usage_hard_limit_bytes',
             help: 'The hard limit setting in bytes',
             labelNames: ['origin', 'containerName'],
         });
