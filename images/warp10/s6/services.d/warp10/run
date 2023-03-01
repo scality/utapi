@@ -5,7 +5,7 @@ export MALLOC_ARENA_MAX=1
 
 JAVA="/usr/bin/java"
 WARP10_JAR=${WARP10_HOME}/bin/warp10-${WARP10_VERSION}.jar
-WARP10_CLASS=io.warp10.standalone.Warp
+WARP10_CLASS=io.warp10.standalone.WarpCompact
 WARP10_CP="${WARP10_HOME}/etc:${WARP10_JAR}:${WARP10_HOME}/lib/*"
 WARP10_CONFIG_DIR="$WARP10_DATA_DIR/conf"
 CONFIG_FILES="$(find ${WARP10_CONFIG_DIR} -not -path '*/.*' -name '*.conf' | sort | tr '\n' ' ' 2> /dev/null)"
@@ -37,7 +37,7 @@ if [ -n "$ENABLE_JMX_EXPORTER" ]; then
     echo "Starting jmx exporter with Warp 10."
 fi
 
-WARP10_CMD="${JAVA} ${JMX_EXPORTER_OPTS} ${JAVA_OPTS} ${SENSISION_OPTS} -cp ${WARP10_CP} ${WARP10_CLASS} ${CONFIG_FILES}"
+WARP10_CMD="${JAVA} -cp ${WARP10_CP} ${WARP10_CLASS} /data/warp10/leveldb 00 FF"
 
 echo "Starting Warp 10 with $WARP10_CMD ..."
 exec $WARP10_CMD | tee -a ${WARP10_HOME}/logs/warp10.log
