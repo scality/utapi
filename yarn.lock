@@ -557,9 +557,9 @@ arraybuffer.slice@~0.0.7:
   optionalDependencies:
     ioctl "^2.0.2"
 
-"arsenal@git+https://github.com/scality/Arsenal#7.10.29":
-  version "7.10.29"
-  resolved "git+https://github.com/scality/Arsenal#3882ecf1a08608b77ae004189f0fb938b50caf59"
+"arsenal@git+https://github.com/scality/Arsenal#7.10.46":
+  version "7.10.46"
+  resolved "git+https://github.com/scality/Arsenal#bd76402586f1b5117ada9857a9e437727562d55a"
   dependencies:
     "@types/async" "^3.2.12"
     "@types/utf8" "^3.0.1"
@@ -585,7 +585,7 @@ arraybuffer.slice@~0.0.7:
     level-sublevel "~6.6.5"
     mongodb "^3.0.1"
     node-forge "^0.7.1"
-    prom-client "10.2.3"
+    prom-client "14.2.0"
     simple-glob "^0.2"
     socket.io "~2.3.0"
     socket.io-client "~2.3.0"
@@ -3966,10 +3966,10 @@ prom-client@10.2.3:
   dependencies:
     tdigest "^0.1.1"
 
-prom-client@^13.1.0:
-  version "13.2.0"
-  resolved "https://registry.yarnpkg.com/prom-client/-/prom-client-13.2.0.tgz#99d13357912dd400f8911b77df19f7b328a93e92"
-  integrity sha512-wGr5mlNNdRNzEhRYXgboUU2LxHWIojxscJKmtG3R8f4/KiWqyYgXTLHs0+Ted7tG3zFT7pgHJbtomzZ1L0ARaQ==
+prom-client@14.2.0:
+  version "14.2.0"
+  resolved "https://registry.yarnpkg.com/prom-client/-/prom-client-14.2.0.tgz#ca94504e64156f6506574c25fb1c34df7812cf11"
+  integrity sha512-sF308EhTenb/pDRPakm+WgiN+VdM/T1RaHj1x+MvAuT8UiQP8JmOEbxVqtkbfR4LrvOg5n7ic01kRBDGXjYikA==
   dependencies:
     tdigest "^0.1.1"
 
