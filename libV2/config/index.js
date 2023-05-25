@@ -192,6 +192,10 @@ class Config {
                 `${prefix}_SENTINEL_PASSWORD`,
                 config.sentinelPassword,
             );
+            redisConf.password = _loadFromEnv(
+                `${prefix}_PASSWORD`,
+                config.password,
+            );
         } else {
             redisConf.host = _loadFromEnv(
                 `${prefix}_HOST`,
