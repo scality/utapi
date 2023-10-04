@@ -5,9 +5,7 @@ on:
   push:
     branches-ignore:
       - 'development/**'
-      - hotfix/**
-      - q/**
-      - w/**
+
   workflow_dispatch:
     inputs:
       debug:
