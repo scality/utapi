@@ -4,8 +4,20 @@ name: tests
 on:
   push:
     branches-ignore:
-    - 'development/**'
+      - 'development/**'
 
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: Debug (enable the ability to SSH to runners)
+        type: boolean
+        required: false
+        default: 'false'
+      connection-timeout-m:
+        type: number
+        required: false
+        description: Timeout for ssh connection to worker (minutes)
+        default: 30
 jobs:
   build-ci:
     uses: ./.github/workflows/build-ci.yaml
@@ -233,9 +245,16 @@ jobs:
         UTAPI_SERVICE_USER_ENABLED: 'true'
         UTAPI_LOG_LEVEL: trace
         SETUP_CMD: "run start_v2:server"
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      if: failure()
+    - name: 'Debug: SSH to runner'
+      uses: scality/actions/action-ssh-to-runner@1.6.0
+      timeout-minutes: ${{ fromJSON(github.event.inputs.connection-timeout-m) }}
+      continue-on-error: true
+      with:
+        tmate-server-host: ${{ secrets.TMATE_SERVER_HOST }}
+        tmate-server-port: ${{ secrets.TMATE_SERVER_PORT }}
+        tmate-server-rsa-fingerprint: ${{ secrets.TMATE_SERVER_RSA_FINGERPRINT }}
+        tmate-server-ed25519-fingerprint: ${{ secrets.TMATE_SERVER_ED25519_FINGERPRINT }}
+      if: ${{ ( github.event.inputs.debug == true || github.event.inputs.debug == 'true' ) }}
 
   tests-v2-without-sensision:
     needs:
@@ -348,6 +367,13 @@ jobs:
     - name: ${{ matrix.test.name }}
       run: ${{ matrix.test.command }}
       env: ${{ matrix.test.env }}
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      if: failure()
+    - name: 'Debug: SSH to runner'
+      uses: scality/actions/action-ssh-to-runner@1.6.0
+      timeout-minutes: ${{ fromJSON(github.event.inputs.connection-timeout-m) }}
+      continue-on-error: true
+      with:
+        tmate-server-host: ${{ secrets.TMATE_SERVER_HOST }}
+        tmate-server-port: ${{ secrets.TMATE_SERVER_PORT }}
+        tmate-server-rsa-fingerprint: ${{ secrets.TMATE_SERVER_RSA_FINGERPRINT }}
+        tmate-server-ed25519-fingerprint: ${{ secrets.TMATE_SERVER_ED25519_FINGERPRINT }}
+      if: ${{ ( github.event.inputs.debug == true || github.event.inputs.debug == 'true' ) }}
