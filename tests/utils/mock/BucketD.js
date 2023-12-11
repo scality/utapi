@@ -112,6 +112,17 @@ class BucketD {
         return body;
     }
 
+    _getBucketVersionResponse(bucketName) {
+        const body = {
+            CommonPrefixes: [],
+            IsTruncated: false,
+            Versions: (this._bucketContent[bucketName] || [])
+                // patch in a versionId to more closely match the real response
+                .map(entry => ({ ...entry, versionId: 'null' })),
+        };
+        return body;
+    }
+
     _getShadowBucketOverviewResponse(bucketName) {
         const mpus = (this._bucketContent[bucketName] || []).map(o => ({
             key: o.key,
@@ -137,6 +148,8 @@ class BucketD {
                 || req.query.listingType === 'Delimiter'
             ) {
                 req.body = this._getBucketResponse(bucketName);
+            } else if (req.query.listingType === 'DelimiterVersions') {
+                req.body = this._getBucketVersionResponse(bucketName);
             }
 
             // v2 reindex uses `Basic` listing type for everything
