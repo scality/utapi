@@ -2,18 +2,13 @@ name: build-ci-images
 
 on:
   workflow_call:
-    secrets:
-      REGISTRY_LOGIN:
-        required: true
-      REGISTRY_PASSWORD:
-        required: true
 
 jobs:
   warp10-ci:
     uses: scality/workflows/.github/workflows/docker-build.yaml@v1
     secrets:
       REGISTRY_LOGIN: ${{ github.repository_owner }}
-      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_PASSWORD: ${{ github.token }}
     with:
       name: warp10-ci
       context: .
@@ -24,7 +19,7 @@ jobs:
     uses: scality/workflows/.github/workflows/docker-build.yaml@v1
     secrets:
       REGISTRY_LOGIN: ${{ github.repository_owner }}
-      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_PASSWORD: ${{ github.token }}
     with:
       name: redis-ci
       context: .
@@ -36,7 +31,7 @@ jobs:
       - redis-ci
     secrets:
       REGISTRY_LOGIN: ${{ github.repository_owner }}
-      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      REGISTRY_PASSWORD: ${{ github.token }}
     with:
       name: redis-replica-ci
       context: .github/docker/redis-replica
@@ -58,14 +53,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to Scality Registry
-        uses: docker/login-action@v1.10.0
-        with:
-          registry: registry.scality.com
-          username: ${{ secrets.REGISTRY_LOGIN }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          password: ${{ github.token }}
 
       - name: Build and push vault Image
         uses: docker/build-push-action@v2.7.0

@@ -9,9 +9,6 @@ on:
 jobs:
   build-ci:
     uses: ./.github/workflows/build-ci.yaml
-    secrets:
-      REGISTRY_LOGIN: ${{ secrets.REGISTRY_LOGIN }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
   lint:
     runs-on: ubuntu-latest
