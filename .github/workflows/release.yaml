@@ -23,21 +23,21 @@ jobs:
       - name: Login to Registry
         uses: docker/login-action@v1
         with:
-          registry: registry.scality.com
-          username: ${{ secrets.REGISTRY_LOGIN }}
-          password: ${{ secrets.REGISTRY_PASSWORD }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
 
       - name: Build and push utapi image
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
-          tags: "registry.scality.com/utapi/utapi:${{ github.event.inputs.tag }}"
+          tags: ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           name: Release ${{ github.event.inputs.tag }}
           tag_name: ${{ github.event.inputs.tag }}
