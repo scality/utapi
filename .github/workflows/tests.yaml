@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         lfs: true
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v4
       with:
         node-version: '16.13.2'
         cache: yarn
@@ -197,10 +197,135 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        lfs: true
     - uses: actions/setup-node@v4
       with:
         node-version: '16.13.2'
-        cache: 'yarn'
+        cache: yarn
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+        cache: pip
+    - name: Install python deps
+      run: |
+        pip install requests
+        pip install redis
+    - name: install dependencies
+      run: yarn install --frozen-lockfile --network-concurrency 1
+    - name: Wait for warp10 for 60 seconds
+      run: sleep 60
+    - name: run v2 functional tests
+      run: bash ./.github/scripts/run_ft_tests.bash true ft_test:v2
+      env:
+        UTAPI_CACHE_BACKEND: redis
+        UTAPI_SERVICE_USER_ENABLED: 'true'
+        UTAPI_LOG_LEVEL: trace
+        SETUP_CMD: "run start_v2:server"
+    - name: 'Debug: SSH to runner'
+      uses: scality/actions/action-ssh-to-runner@1.7.0
+      timeout-minutes: ${{ fromJSON(github.event.inputs.connection-timeout-m) }}
+      continue-on-error: true
+      with:
+        tmate-server-host: ${{ secrets.TMATE_SERVER_HOST }}
+        tmate-server-port: ${{ secrets.TMATE_SERVER_PORT }}
+        tmate-server-rsa-fingerprint: ${{ secrets.TMATE_SERVER_RSA_FINGERPRINT }}
+        tmate-server-ed25519-fingerprint: ${{ secrets.TMATE_SERVER_ED25519_FINGERPRINT }}
+      if: ${{ ( github.event.inputs.debug == true || github.event.inputs.debug == 'true' ) }}
+
+  tests-v2-without-sensision:
+    needs:
+      - build-ci
+    runs-on: ubuntu-latest
+    env:
+      REINDEX_PYTHON_INTERPRETER: python3
+    name: ${{ matrix.test.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+        - name: run v2 soft limit test
+          command: bash ./.github/scripts/run_ft_tests.bash true ft_test:softLimit
+          env:
+            UTAPI_CACHE_BACKEND: redis
+            UTAPI_LOG_LEVEL: trace
+            SETUP_CMD: "run start_v2:server"
+        - name: run v2 hard limit test
+          command: bash ./.github/scripts/run_ft_tests.bash true ft_test:hardLimit
+          env:
+            UTAPI_CACHE_BACKEND: redis
+            UTAPI_LOG_LEVEL: trace
+            SETUP_CMD: "run start_v2:server"
+    services:
+      redis:
+        image: ghcr.io/${{ github.repository }}/redis-ci:${{ github.sha }}
+        ports:
+        - 6379:6379
+        - 9121:9121
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis-replica:
+        image: ghcr.io/${{ github.repository }}/redis-replica-ci:${{ github.sha }}
+        ports:
+        - 6380:6380
+        options: >-
+          --health-cmd "redis-cli -p 6380 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis-sentinel:
+        image: bitnami/redis-sentinel:7.2.4
+        env:
+          REDIS_MASTER_SET: scality-s3
+          REDIS_SENTINEL_PORT_NUMBER: '16379'
+          REDIS_SENTINEL_QUORUM: '1'
+        ports:
+        - 16379:16379
+        options: >-
+          --health-cmd "redis-cli -p 16379 ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      warp10:
+        image: ghcr.io/${{ github.repository }}/warp10-ci:${{ github.sha }}
+        env:
+          standalone.port: '4802'
+          warpscript.maxops: '10000000'
+        ports:
+        - 4802:4802
+        - 8082:8082
+        - 9718:9718
+        options: >-
+          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 60s
+      vault:
+        image: ghcr.io/${{ github.repository }}/vault-ci:${{ github.sha }}
+        ports:
+        - 8500:8500
+        - 8600:8600
+        - 8700:8700
+        - 8800:8800
+        options: >-
+          --health-cmd "curl http://localhost:8500/_/healthcheck"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '16.13.2'
+        cache: yarn
     - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
@@ -214,6 +339,13 @@ jobs:
     - name: ${{ matrix.test.name }}
       run: ${{ matrix.test.command }}
       env: ${{ matrix.test.env }}
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-      if: failure()
+    - name: 'Debug: SSH to runner'
+      uses: scality/actions/action-ssh-to-runner@1.7.0
+      timeout-minutes: ${{ fromJSON(github.event.inputs.connection-timeout-m) }}
+      continue-on-error: true
+      with:
+        tmate-server-host: ${{ secrets.TMATE_SERVER_HOST }}
+        tmate-server-port: ${{ secrets.TMATE_SERVER_PORT }}
+        tmate-server-rsa-fingerprint: ${{ secrets.TMATE_SERVER_RSA_FINGERPRINT }}
+        tmate-server-ed25519-fingerprint: ${{ secrets.TMATE_SERVER_ED25519_FINGERPRINT }}
+      if: ${{ ( github.event.inputs.debug == true || github.event.inputs.debug == 'true' ) }}
