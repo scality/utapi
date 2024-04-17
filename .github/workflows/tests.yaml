@@ -38,18 +38,15 @@ jobs:
         - 16379:16379
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
+      uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version: '16.13.2'
         cache: 'yarn'
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip
+        cache: pip
     - name: Install python deps
       run: |
         pip install requests
