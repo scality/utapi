@@ -208,9 +208,7 @@ jobs:
         python-version: '3.9'
         cache: pip
     - name: Install python deps
-      run: |
-        pip install requests
-        pip install redis
+      run: pip install -r requirements.txt
     - name: install dependencies
       run: yarn install --frozen-lockfile --network-concurrency 1
     - name: Wait for warp10 for 60 seconds
