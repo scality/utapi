@@ -2,11 +2,10 @@
 
 ## Docker Image Generation
 
-Docker images are hosted on [registry.scality.com](registry.scality.com).
-Utapi has two namespaces there:
+Docker images are hosted on [ghcr.io](https://github.com/orgs/scality/packages).
+Utapi has one namespace there:
 
-* Production Namespace: registry.scality.com/utapi
-* Dev Namespace: registry.scality.com/utapi-dev
+* Namespace: ghcr.io/scality/utapi
 
 With every CI build, the CI will push images, tagging the
 content with the developer branch's short SHA-1 commit hash.
@@ -18,8 +17,8 @@ Tagged versions of utapi will be stored in the production namespace.
 ## How to Pull Docker Images
 
 ```sh
-docker pull registry.scality.com/utapi-dev/utapi:<commit hash>
-docker pull registry.scality.com/utapi/utapi:<tag>
+docker pull ghcr.io/scality/utapi:<commit hash>
+docker pull ghcr.io/scality/utapi:<tag>
 ```
 
 ## Release Process
