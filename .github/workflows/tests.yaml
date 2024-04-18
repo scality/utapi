@@ -21,18 +21,15 @@ on:
 jobs:
   build-ci:
     uses: ./.github/workflows/build-ci.yaml
-    secrets:
-      REGISTRY_LOGIN: ${{ secrets.REGISTRY_LOGIN }}
-      REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
   lint:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         lfs: true
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v4
       with:
         node-version: '16.13.2'
         cache: yarn
@@ -122,24 +119,19 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         lfs: true
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v4
       with:
         node-version: '16.13.2'
         cache: yarn
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip
+        cache: pip
     - name: Install python deps
-      run: |
-        pip install requests
-        pip install redis
+      run: pip install -r requirements.txt
     - name: install dependencies
       run: yarn install --frozen-lockfile --network-concurrency 1
     - name: ${{ matrix.test.name }}
@@ -216,24 +208,19 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         lfs: true
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v4
       with:
         node-version: '16.13.2'
         cache: yarn
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip
+        cache: pip
     - name: Install python deps
-      run: |
-        pip install requests
-        pip install redis
+      run: pip install -r requirements.txt
     - name: install dependencies
       run: yarn install --frozen-lockfile --network-concurrency 1
     - name: Wait for warp10 for 60 seconds
@@ -246,7 +233,7 @@ jobs:
         UTAPI_LOG_LEVEL: trace
         SETUP_CMD: "run start_v2:server"
     - name: 'Debug: SSH to runner'
-      uses: scality/actions/action-ssh-to-runner@1.6.0
+      uses: scality/actions/action-ssh-to-runner@1.7.0
       timeout-minutes: ${{ fromJSON(github.event.inputs.connection-timeout-m) }}
       continue-on-error: true
       with:
@@ -342,24 +329,19 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         lfs: true
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v4
       with:
         node-version: '16.13.2'
         cache: yarn
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip
+        cache: pip
     - name: Install python deps
-      run: |
-        pip install requests
-        pip install redis
+      run: pip install -r requirements.txt
     - name: install dependencies
       run: yarn install --frozen-lockfile --network-concurrency 1
     - name: Wait for warp10 a little bit
@@ -368,7 +350,7 @@ jobs:
       run: ${{ matrix.test.command }}
       env: ${{ matrix.test.env }}
     - name: 'Debug: SSH to runner'
-      uses: scality/actions/action-ssh-to-runner@1.6.0
+      uses: scality/actions/action-ssh-to-runner@1.7.0
       timeout-minutes: ${{ fromJSON(github.event.inputs.connection-timeout-m) }}
       continue-on-error: true
       with:
