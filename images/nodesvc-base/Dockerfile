@@ -1,4 +1,4 @@
-FROM registry.scality.com/federation/nodesvc-base:7.10.5.0
+FROM ghcr.io/scality/federation/nodesvc-base:7.10.5.0
 
 ENV UTAPI_CONFIG_FILE=${CONF_DIR}/config.json
 

@@ -15,11 +15,9 @@ on:
 
 jobs:
   build:
-    uses: scality/workflows/.github/workflows/docker-build.yaml@v1
+    uses: scality/workflows/.github/workflows/docker-build.yaml@v2
     secrets: inherit
     with:
-      registry: registry.scality.com
-      namespace: utapi
       name: warp10
       context: .
       file: images/warp10/Dockerfile
@@ -31,11 +29,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: softprops/action-gh-release@v1
+      - uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: Release registry.scality.com/utapi/warp10:${{ github.event.inputs.tag }}-warp10
+          name: Release utapi/warp10:${{ github.event.inputs.tag }}-warp10
           tag_name: ${{ github.event.inputs.tag }}-warp10
           generate_release_notes: false
           target_commitish: ${{ github.sha }}
