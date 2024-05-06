@@ -50,7 +50,7 @@ def _encoded(func):
         return urllib.parse.quote(val.encode('utf-8'))
     return inner
 
-Bucket = namedtuple('Bucket', ['userid', 'name', 'object_lock_enabled'], defaults=[False])
+Bucket = namedtuple('Bucket', ['userid', 'name', 'object_lock_enabled'])
 MPU = namedtuple('MPU', ['bucket', 'key', 'upload_id'])
 BucketContents = namedtuple('BucketContents', ['bucket', 'obj_count', 'total_size'])
 
@@ -178,7 +178,7 @@ class BucketDClient:
             buckets = []
             for result in payload.get('Contents', []):
                 match = re.match("(\w+)..\|..(\w+.*)", result['key'])
-                bucket = Bucket(*match.groups())
+                bucket = Bucket(*match.groups(), False)
                 if name is None or bucket.name == name:
                     # We need to get the attributes for each bucket to determine if it is locked
                     if self._only_latest_when_locked:
