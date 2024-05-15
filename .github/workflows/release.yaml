@@ -23,7 +23,6 @@ on:
 jobs:
   build:
     uses: scality/workflows/.github/workflows/docker-build.yaml@v2
-    secrets: inherit
     with:
       namespace: ${{ github.repository_owner }}
       name: ${{ github.event.repository.name }}
