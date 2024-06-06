@@ -36,6 +36,7 @@ def get_options():
     parser.add_argument("-r", "--max-retries", default=2, type=int, help="Max retries before failing a bucketd request")
     parser.add_argument("--only-latest-when-locked", action='store_true', help="Only index the latest version of a key when the bucket has a default object lock policy")
     parser.add_argument("--debug", action='store_true', help="Enable debug logging")
+    parser.add_argument("--dry-run", action="store_true", help="Do not update redis")
     return parser.parse_args()
 
 def chunks(iterable, size):
@@ -443,11 +444,19 @@ if __name__ == '__main__':
                 update_report(account_reports, total.bucket.userid, total.obj_count, total.total_size)
 
             # Bucket reports can be updated as we get them
-            pipeline = redis_client.pipeline(transaction=False)  # No transaction to reduce redis load
-            for bucket, report in bucket_reports.items():
-                update_redis(pipeline, 'buckets', bucket, report['obj_count'], report['total_size'])
-                log_report('buckets', bucket, report['obj_count'], report['total_size'])
-            pipeline.execute()
+            if options.dry_run:
+                for bucket, report in bucket_reports.items():
+                    _log.info(
+                        "DryRun: resource buckets [%s] would be updated with obj_count %i and total_size %i" % (
+                            bucket, report['obj_count'], report['total_size']
+                        )
+                    )
+            else:
+                pipeline = redis_client.pipeline(transaction=False)  # No transaction to reduce redis load
+                for bucket, report in bucket_reports.items():
+                    update_redis(pipeline, 'buckets', bucket, report['obj_count'], report['total_size'])
+                    log_report('buckets', bucket, report['obj_count'], report['total_size'])
+                pipeline.execute()
 
     recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
     if options.bucket is None:
@@ -459,24 +468,37 @@ if __name__ == '__main__':
         stale_buckets = set()
 
     _log.info('Found %s stale buckets' % len(stale_buckets))
-    for chunk in chunks(stale_buckets, ACCOUNT_UPDATE_CHUNKSIZE):
-        pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
-        for bucket in chunk:
-            update_redis(pipeline, 'buckets', bucket, 0, 0)
-            log_report('buckets', bucket, 0, 0)
-        pipeline.execute()
+    if options.dry_run:
+        _log.info("DryRun: not updating stale buckets")
+    else:
+        for chunk in chunks(stale_buckets, ACCOUNT_UPDATE_CHUNKSIZE):
+            pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
+            for bucket in chunk:
+                update_redis(pipeline, 'buckets', bucket, 0, 0)
+                log_report('buckets', bucket, 0, 0)
+            pipeline.execute()
 
     # Account metrics are not updated if a bucket is specified
-    if options.bucket is None:
+    if options.bucket:
+        _log.warning('Account metrics will not be updated when using the --bucket or --bucket-file flags')
+    else:
         # Don't update any accounts with failed listings
         without_failed = filter(lambda x: x[0] not in failed_accounts, account_reports.items())
-        # Update total account reports in chunks
-        for chunk in chunks(without_failed, ACCOUNT_UPDATE_CHUNKSIZE):
-            pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
-            for userid, report in chunk:
-                update_redis(pipeline, 'accounts', userid, report['obj_count'], report['total_size'])
-                log_report('accounts', userid, report['obj_count'], report['total_size'])
-            pipeline.execute()
+        if options.dry_run:
+            for userid, report in account_reports.items():
+                _log.info(
+                    "DryRun: resource account [%s] would be updated with obj_count %i and total_size %i" % (
+                        userid, report['obj_count'], report['total_size']
+                    )
+                )
+        else:
+            # Update total account reports in chunks
+            for chunk in chunks(without_failed, ACCOUNT_UPDATE_CHUNKSIZE):
+                pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
+                for userid, report in chunk:
+                    update_redis(pipeline, 'accounts', userid, report['obj_count'], report['total_size'])
+                    log_report('accounts', userid, report['obj_count'], report['total_size'])
+                pipeline.execute()
 
         # Include failed_accounts in observed_accounts to avoid clearing metrics
         observed_accounts = failed_accounts.union(set(account_reports.keys()))
@@ -485,9 +507,12 @@ if __name__ == '__main__':
         # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
         stale_accounts = recorded_accounts.difference(observed_accounts)
         _log.info('Found %s stale accounts' % len(stale_accounts))
-        for chunk in chunks(stale_accounts, ACCOUNT_UPDATE_CHUNKSIZE):
-            pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
-            for account in chunk:
-                update_redis(pipeline, 'accounts', account, 0, 0)
-                log_report('accounts', account, 0, 0)
-            pipeline.execute()
+        if options.dry_run:
+            _log.info("DryRun: not updating stale accounts")
+        else:
+            for chunk in chunks(stale_accounts, ACCOUNT_UPDATE_CHUNKSIZE):
+                pipeline = redis_client.pipeline(transaction=False) # No transaction to reduce redis load
+                for account in chunk:
+                    update_redis(pipeline, 'accounts', account, 0, 0)
+                    log_report('accounts', account, 0, 0)
+                pipeline.execute()
