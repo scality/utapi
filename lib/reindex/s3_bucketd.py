@@ -168,6 +168,14 @@ class BucketDClient:
             _log.error('Unhandled exception getting bucket attributes bucket:%s'%name)
             raise
 
+    def get_bucket_md(self, name):
+        md = self._get_bucket_attributes(name)
+        canonId = md.get('owner')
+        if canonId is None:
+            _log.error('No owner found for bucket %s'%name)
+            raise InvalidListing(name)
+        return Bucket(canonId, name, md.get('objectLockEnabled', False))
+
     def list_buckets(self, name = None):
 
         def get_next_marker(p):
