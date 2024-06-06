@@ -1,5 +1,6 @@
 import argparse
 import concurrent.futures as futures
+import functools
 import itertools
 import json
 import logging
@@ -141,6 +142,7 @@ class BucketDClient:
             else:
                 is_truncated = len(payload) > 0
 
+    @functools.lru_cache(maxsize=16)
     def _get_bucket_attributes(self, name):
         url = self.__url_attribute_format.format(addr=self._bucketd_addr, bucket=name)
         try:
