@@ -63,6 +63,10 @@ class InvalidListing(Exception):
     def __init__(self, bucket):
         super().__init__('Invalid contents found while listing bucket %s'%bucket)
 
+class BucketNotFound(Exception):
+    def __init__(self, bucket):
+        super().__init__('Bucket %s not found'%bucket)
+
 class BucketDClient:
 
     '''Performs Listing calls against bucketd'''
@@ -151,7 +155,7 @@ class BucketDClient:
                 return resp.json()
             else:
                 _log.error('Error getting bucket attributes bucket:%s status_code:%s'%(name, resp.status_code))
-                raise InvalidListing(name)
+                raise BucketNotFound(name)
         except ValueError as e:
             _log.exception(e)
             _log.error('Invalid attributes response body! bucket:%s'%name)
