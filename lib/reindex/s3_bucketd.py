@@ -38,6 +38,8 @@ def get_options():
     parser.add_argument("--debug", action='store_true', help="Enable debug logging")
     parser.add_argument("--dry-run", action="store_true", help="Do not update redis")
     group = parser.add_mutually_exclusive_group()
+    group.add_argument("-a", "--account", default=[], help="account canonical ID (all account buckets will be processed)", action="append", type=nonempty_string('account'))
+    group.add_argument("--account-file", default=None, help="file containing account canonical IDs, one ID per line", type=existing_file)
     group.add_argument("-b", "--bucket", default=[], help="bucket name", action="append", type=nonempty_string('bucket'))
     group.add_argument("--bucket-file", default=None, help="file containing bucket names, one bucket name per line", type=existing_file)
 
@@ -45,6 +47,9 @@ def get_options():
     if options.bucket_file:
         with open(options.bucket_file) as f:
             options.bucket = [line.strip() for line in f if line.strip()]
+    elif options.account_file:
+        with open(options.account_file) as f:
+            options.account = [line.strip() for line in f if line.strip()]
 
     return options
 
@@ -199,7 +204,7 @@ class BucketDClient:
             raise InvalidListing(name)
         return Bucket(canonId, name, md.get('objectLockEnabled', False))
 
-    def list_buckets(self):
+    def list_buckets(self, account=None):
 
         def get_next_marker(p):
             if p is None:
@@ -211,6 +216,10 @@ class BucketDClient:
             'maxKeys': 1000,
             'marker': get_next_marker
         }
+
+        if account is not None:
+            params['prefix'] = '%s..|..' % account
+
         for _, payload in self._list_bucket(USERS_BUCKET, **params):
             buckets = []
             for result in payload.get('Contents', []):
@@ -359,6 +368,10 @@ class BucketDClient:
 def list_all_buckets(bucket_client):
     return bucket_client.list_buckets()
 
+def list_specific_accounts(bucket_client, accounts):
+    for account in accounts:
+        yield from bucket_client.list_buckets(account=account)
+
 def list_specific_buckets(bucket_client, buckets):
     batch = []
     for bucket in buckets:
@@ -453,7 +466,9 @@ if __name__ == '__main__':
     observed_buckets = set()
     failed_accounts = set()
 
-    if options.bucket:
+    if options.account:
+        batch_generator = list_specific_accounts(bucket_client, options.account)
+    elif options.bucket:
         batch_generator = list_specific_buckets(bucket_client, options.bucket)
     else:
         batch_generator = list_all_buckets(bucket_client)
@@ -496,6 +511,8 @@ if __name__ == '__main__':
     recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
     if options.bucket:
         stale_buckets = { b for b in options.bucket if b not in observed_buckets }
+    elif options.account:
+        _log.warning('Stale buckets will not be cleared when using the --account or --account-file flags')
     else:
         stale_buckets = recorded_buckets.difference(observed_buckets)
 
@@ -532,12 +549,21 @@ if __name__ == '__main__':
                     log_report('accounts', userid, report['obj_count'], report['total_size'])
                 pipeline.execute()
 
+        if options.account:
+            for account in options.account:
+                if account in failed_accounts:
+                    _log.error("No metrics updated for account %s, one or more buckets failed" % account)
+
         # Include failed_accounts in observed_accounts to avoid clearing metrics
         observed_accounts = failed_accounts.union(set(account_reports.keys()))
         recorded_accounts = set(get_resources_from_redis(redis_client, 'accounts'))
 
-        # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
-        stale_accounts = recorded_accounts.difference(observed_accounts)
+        if options.account:
+            stale_accounts = { a for a in options.account if a not in observed_accounts }
+        else:
+            # Stale accounts and buckets are ones that do not appear in the listing, but have recorded values
+            stale_accounts = recorded_accounts.difference(observed_accounts)
+
         _log.info('Found %s stale accounts' % len(stale_accounts))
         if options.dry_run:
             _log.info("DryRun: not updating stale accounts")
