@@ -9,6 +9,7 @@ import re
 import sys
 import time
 import urllib
+from pathlib import Path
 from collections import defaultdict, namedtuple
 from concurrent.futures import ThreadPoolExecutor
 
@@ -32,12 +33,33 @@ def get_options():
     parser.add_argument("-n", "--sentinel-cluster-name", default='scality-s3', help="Redis cluster name")
     parser.add_argument("-s", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
     parser.add_argument("-w", "--worker", default=10, type=int, help="Number of workers")
-    parser.add_argument("-b", "--bucket", default=None, help="Bucket to be processed")
     parser.add_argument("-r", "--max-retries", default=2, type=int, help="Max retries before failing a bucketd request")
     parser.add_argument("--only-latest-when-locked", action='store_true', help="Only index the latest version of a key when the bucket has a default object lock policy")
     parser.add_argument("--debug", action='store_true', help="Enable debug logging")
     parser.add_argument("--dry-run", action="store_true", help="Do not update redis")
-    return parser.parse_args()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-b", "--bucket", default=[], help="bucket name", action="append", type=nonempty_string('bucket'))
+    group.add_argument("--bucket-file", default=None, help="file containing bucket names, one bucket name per line", type=existing_file)
+
+    options = parser.parse_args()
+    if options.bucket_file:
+        with open(options.bucket_file) as f:
+            options.bucket = [line.strip() for line in f if line.strip()]
+
+    return options
+
+def nonempty_string(flag):
+    def inner(value):
+        if not value.strip():
+            raise argparse.ArgumentTypeError("%s: value must not be empty"%flag)
+        return value
+    return inner
+
+def existing_file(path):
+    path = Path(path).resolve()
+    if not path.exists():
+        raise argparse.ArgumentTypeError("File does not exist: %s"%path)
+    return path
 
 def chunks(iterable, size):
     it = iter(iterable)
@@ -177,7 +199,7 @@ class BucketDClient:
             raise InvalidListing(name)
         return Bucket(canonId, name, md.get('objectLockEnabled', False))
 
-    def list_buckets(self, name = None):
+    def list_buckets(self):
 
         def get_next_marker(p):
             if p is None:
@@ -194,20 +216,15 @@ class BucketDClient:
             for result in payload.get('Contents', []):
                 match = re.match("(\w+)..\|..(\w+.*)", result['key'])
                 bucket = Bucket(*match.groups(), False)
-                if name is None or bucket.name == name:
-                    # We need to get the attributes for each bucket to determine if it is locked
-                    if self._only_latest_when_locked:
-                        bucket_attrs = self._get_bucket_attributes(bucket.name)
-                        object_lock_enabled = bucket_attrs.get('objectLockEnabled', False)
-                        bucket = bucket._replace(object_lock_enabled=object_lock_enabled)
-                    buckets.append(bucket)
+                # We need to get the attributes for each bucket to determine if it is locked
+                if self._only_latest_when_locked:
+                    bucket_attrs = self._get_bucket_attributes(bucket.name)
+                    object_lock_enabled = bucket_attrs.get('objectLockEnabled', False)
+                    bucket = bucket._replace(object_lock_enabled=object_lock_enabled)
+                buckets.append(bucket)
 
             if buckets:
                 yield buckets
-                if name is not None:
-                    # Break on the first matching bucket if a name is given
-                    break
-
 
     def list_mpus(self, bucket):
         _bucket = MPU_SHADOW_BUCKET_PREFIX + bucket.name
@@ -339,6 +356,19 @@ class BucketDClient:
             total_size=total_size
         )
 
+def list_all_buckets(bucket_client):
+    return bucket_client.list_buckets()
+
+def list_specific_buckets(bucket_client, buckets):
+    batch = []
+    for bucket in buckets:
+        try:
+            batch.append(bucket_client.get_bucket_md(bucket))
+        except BucketNotFound:
+            _log.error('Failed to list bucket %s. Removing from results.'%bucket)
+            continue
+
+    yield batch
 
 def index_bucket(client, bucket):
     '''
@@ -414,18 +444,22 @@ def log_report(resource, name, obj_count, total_size):
 
 if __name__ == '__main__':
     options = get_options()
-    if options.bucket is not None and not options.bucket.strip():
-        print('You must provide a bucket name with the --bucket flag')
-        sys.exit(1)
     if options.debug:
         _log.setLevel(logging.DEBUG)
+
     bucket_client = BucketDClient(options.bucketd_addr, options.max_retries, options.only_latest_when_locked)
     redis_client = get_redis_client(options)
     account_reports = {}
     observed_buckets = set()
     failed_accounts = set()
+
+    if options.bucket:
+        batch_generator = list_specific_buckets(bucket_client, options.bucket)
+    else:
+        batch_generator = list_all_buckets(bucket_client)
+
     with ThreadPoolExecutor(max_workers=options.worker) as executor:
-        for batch in bucket_client.list_buckets(options.bucket):
+        for batch in batch_generator:
             bucket_reports = {}
             jobs = { executor.submit(index_bucket, bucket_client, b): b for b in batch }
             for job in futures.as_completed(jobs.keys()):
@@ -458,14 +492,12 @@ if __name__ == '__main__':
                     log_report('buckets', bucket, report['obj_count'], report['total_size'])
                 pipeline.execute()
 
+    stale_buckets = set()
     recorded_buckets = set(get_resources_from_redis(redis_client, 'buckets'))
-    if options.bucket is None:
-        stale_buckets = recorded_buckets.difference(observed_buckets)
-    elif observed_buckets and options.bucket not in recorded_buckets:
-        # The provided bucket does not exist, so clean up any metrics
-        stale_buckets = { options.bucket }
+    if options.bucket:
+        stale_buckets = { b for b in options.bucket if b not in observed_buckets }
     else:
-        stale_buckets = set()
+        stale_buckets = recorded_buckets.difference(observed_buckets)
 
     _log.info('Found %s stale buckets' % len(stale_buckets))
     if options.dry_run:
