@@ -1,16 +1,20 @@
-import requests
-import redis
-import json
+import argparse
 import ast
-import sys
-import time
-import urllib
+from concurrent.futures import ThreadPoolExecutor
+import json
+import logging
 import re
+import redis
+import requests
 import sys
 from threading import Thread
-from concurrent.futures import ThreadPoolExecutor
+import time
+import urllib
 
-import argparse
+logging.basicConfig(level=logging.INFO)
+_log = logging.getLogger('utapi-reindex:reporting')
+
+EXIT_CODE_SENTINEL_CONNECTION_ERROR = 100
 
 def get_options():
     parser = argparse.ArgumentParser()
@@ -29,8 +33,13 @@ class askRedis():
 
     def __init__(self, ip="127.0.0.1", port="16379", sentinel_cluster_name="scality-s3", password=None):
         self._password = password
-        r = redis.Redis(host=ip, port=port, db=0, password=password)
-        self._ip, self._port = r.sentinel_get_master_addr_by_name(sentinel_cluster_name)
+        r = redis.Redis(host=ip, port=port, db=0, password=password, socket_connect_timeout=10)
+        try:
+            self._ip, self._port = r.sentinel_get_master_addr_by_name(sentinel_cluster_name)
+        except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
+            _log.error(f'Failed to connect to redis sentinel at {ip}:{port}: {e}')
+            # use a specific error code to hint on retrying with another sentinel node
+            sys.exit(EXIT_CODE_SENTINEL_CONNECTION_ERROR)
 
     def read(self, resource, name):
         r = redis.Redis(host=self._ip, port=self._port, db=0, password=self._password)
