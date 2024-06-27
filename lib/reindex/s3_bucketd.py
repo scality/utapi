@@ -25,6 +25,9 @@ MPU_SHADOW_BUCKET_PREFIX = 'mpuShadowBucket'
 
 ACCOUNT_UPDATE_CHUNKSIZE = 100
 
+SENTINEL_CONNECT_TIMEOUT_SECONDS = 10
+EXIT_CODE_SENTINEL_CONNECTION_ERROR = 100
+
 def get_options():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--sentinel-ip", default='127.0.0.1', help="Sentinel IP")
@@ -421,9 +424,16 @@ def get_redis_client(options):
         host=options.sentinel_ip,
         port=options.sentinel_port,
         db=0,
-        password=options.redis_password
+        password=options.redis_password,
+        socket_connect_timeout=SENTINEL_CONNECT_TIMEOUT_SECONDS
     )
-    ip, port = sentinel.sentinel_get_master_addr_by_name(options.sentinel_cluster_name)
+    try:
+        ip, port = sentinel.sentinel_get_master_addr_by_name(options.sentinel_cluster_name)
+    except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
+        _log.error(f'Failed to connect to redis sentinel at {options.sentinel_ip}:{options.sentinel_port}: {e}')
+        # use a specific error code to hint on retrying with another sentinel node
+        sys.exit(EXIT_CODE_SENTINEL_CONNECTION_ERROR)
+
     return redis.Redis(
         host=ip,
         port=port,
