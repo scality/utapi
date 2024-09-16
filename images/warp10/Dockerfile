@@ -36,7 +36,8 @@ ENV warpscript.extension.macrovalueencoder 'io.warp10.continuum.ingress.MacroVal
 
 RUN wget https://github.com/just-containers/s6-overlay/releases/download/v${S6_VERSION}/s6-overlay-amd64.tar.gz -O /tmp/s6-overlay-amd64.tar.gz \
     && tar xzf /tmp/s6-overlay-amd64.tar.gz -C / \
-    && rm -rf /tmp/s6-overlay-amd64.tar.gz
+    && rm -rf /tmp/s6-overlay-amd64.tar.gz \
+    && apk upgrade --no-cache
 
 # Install jmx exporter
 ADD https://repo1.maven.org/maven2/io/prometheus/jmx/jmx_prometheus_javaagent/0.16.1/jmx_prometheus_javaagent-0.16.1.jar /opt/jmx_prom_agent.jar
