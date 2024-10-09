@@ -3,18 +3,17 @@ import concurrent.futures as futures
 import itertools
 import json
 import logging
-import os
 import re
 import sys
 import time
 import urllib
-from collections import defaultdict, namedtuple
 import uuid
+from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
 
 import redis
 import requests
-from requests import ConnectionError, HTTPError, Timeout
+from requests import ConnectionError, Timeout
 
 logging.basicConfig(level=logging.INFO)
 _log = logging.getLogger('utapi-reindex')
