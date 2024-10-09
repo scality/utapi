@@ -258,7 +258,7 @@ class BucketDClient:
                 total_size += size
 
         except InvalidListing:
-            _log.error('Invalid contents in listing. bucket:%s status_code:%s'%(bucket.name, status_code))
+            _log.error('Invalid contents in listing. bucket:%s'%(bucket.name))
             raise InvalidListing(bucket.name)
         return count, total_size
 
