@@ -9,6 +9,7 @@ import sys
 import time
 import urllib
 from collections import defaultdict, namedtuple
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 import redis
@@ -387,11 +388,13 @@ def update_redis(client, resource, name, obj_count, total_size):
     timestamp = int(time.time() - 15 * 60) * 1000
     obj_count_key = 's3:%s:%s:numberOfObjects' % (resource, name)
     total_size_key = 's3:%s:%s:storageUtilized' % (resource, name)
+    obj_count_serialized = f"{obj_count}:{uuid.uuid4()}"
+    total_size_serialized = f"{total_size}:{uuid.uuid4()}"
 
     client.zremrangebyscore(obj_count_key, timestamp, timestamp)
     client.zremrangebyscore(total_size_key, timestamp, timestamp)
-    client.zadd(obj_count_key, {obj_count: timestamp})
-    client.zadd(total_size_key, {total_size: timestamp})
+    client.zadd(obj_count_key, {obj_count_serialized: timestamp})
+    client.zadd(total_size_key, {total_size_serialized: timestamp})
     client.set(obj_count_key + ':counter', obj_count)
     client.set(total_size_key + ':counter', total_size)
 
