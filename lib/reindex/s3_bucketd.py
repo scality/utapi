@@ -4,18 +4,19 @@ import functools
 import itertools
 import json
 import logging
-import os
 import re
 import sys
 import time
 import urllib
-from pathlib import Path
-from collections import defaultdict, namedtuple
+import uuid
+from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from pathlib import Path
 
 import redis
 import requests
-from requests import ConnectionError, HTTPError, Timeout
+from requests import ConnectionError, Timeout
 
 logging.basicConfig(level=logging.INFO)
 _log = logging.getLogger('utapi-reindex')
@@ -442,14 +443,21 @@ def get_redis_client(options):
     )
 
 def update_redis(client, resource, name, obj_count, total_size):
-    timestamp = int(time.time() - 15 * 60) * 1000
+    now = datetime.utcnow()
+    # Round down to the nearest 15 minute interval
+    rounded_minute = now.minute - (now.minute % 15)
+    now = now.replace(minute=rounded_minute, second=0, microsecond=0)
+    # Convert to milliseconds
+    timestamp = int(now.timestamp()) * 1000
     obj_count_key = 's3:%s:%s:numberOfObjects' % (resource, name)
     total_size_key = 's3:%s:%s:storageUtilized' % (resource, name)
+    obj_count_serialized = f"{obj_count}:{uuid.uuid4()}"
+    total_size_serialized = f"{total_size}:{uuid.uuid4()}"
 
     client.zremrangebyscore(obj_count_key, timestamp, timestamp)
     client.zremrangebyscore(total_size_key, timestamp, timestamp)
-    client.zadd(obj_count_key, {obj_count: timestamp})
-    client.zadd(total_size_key, {total_size: timestamp})
+    client.zadd(obj_count_key, {obj_count_serialized: timestamp})
+    client.zadd(total_size_key, {total_size_serialized: timestamp})
     client.set(obj_count_key + ':counter', obj_count)
     client.set(total_size_key + ':counter', total_size)
 
