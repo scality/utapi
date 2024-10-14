@@ -10,6 +10,7 @@ import urllib
 import uuid
 from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
 import redis
 import requests
@@ -384,7 +385,12 @@ def get_redis_client(options):
     )
 
 def update_redis(client, resource, name, obj_count, total_size):
-    timestamp = int(time.time() - 15 * 60) * 1000
+    now = datetime.utcnow()
+    # Round down to the nearest 15 minute interval
+    rounded_minute = now.minute - (now.minute % 15)
+    now = now.replace(minute=rounded_minute, second=0, microsecond=0)
+    # Convert to milliseconds
+    timestamp = int(now.timestamp()) * 1000
     obj_count_key = 's3:%s:%s:numberOfObjects' % (resource, name)
     total_size_key = 's3:%s:%s:storageUtilized' % (resource, name)
     obj_count_serialized = f"{obj_count}:{uuid.uuid4()}"
