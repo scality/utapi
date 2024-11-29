@@ -1,7 +1,7 @@
 {
   "name": "utapi",
   "engines": {
-    "node": ">=16"
+    "node": ">=22"
   },
   "version": "8.1.16",
   "description": "API for tracking resource utilization and reporting metrics",
@@ -19,13 +19,13 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "git+https://github.com/scality/Arsenal#8.1.87",
+    "arsenal": "git+https://github.com/scality/Arsenal#7e142a1bfca7f516c107d2072baeae54cbbe379c",
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
     "backo": "^1.1.0",
     "body-parser": "^1.19.0",
-    "bucketclient": "scality/bucketclient#8.1.9",
+    "bucketclient": "scality/bucketclient#735550971f36842eac2285b448d781cdd4f60238",
     "byte-size": "^7.0.0",
     "commander": "^5.1.0",
     "cron-parser": "^2.15.0",
@@ -40,8 +40,8 @@
     "oas-tools": "^2.2.2",
     "prom-client": "^13.1.0",
     "uuid": "^3.3.2",
-    "vaultclient": "scality/vaultclient#8.2.8",
-    "werelogs": "scality/werelogs#8.1.0"
+    "vaultclient": "scality/vaultclient#8.5.1",
+    "werelogs": "scality/werelogs#8.2.1"
   },
   "devDependencies": {
     "eslint": "6.0.1",
