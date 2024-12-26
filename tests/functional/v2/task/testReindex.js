@@ -188,12 +188,10 @@ describe('Test ReindexTask', function () {
                 // Once the timeout promise resolves, bucketd is able to be called.
                 // If we make a call after 10 seconds, this shows that retries
                 // have been occuring during bucketd downtime.
-                () => {
-                    return {
-                        key: 'foo',
-                        value: 'bar',
-                    };
-                },
+                () => ({
+                    key: 'foo',
+                    value: 'bar',
+                }),
             );
 
             const reindexPromise = new Promise((resolve, reject) => {

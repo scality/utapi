@@ -133,7 +133,7 @@ class VaultClient {
                     if (err) {
                         return reject(err);
                     }
-                    resolve(res.account);
+                    return resolve(res.account);
                 },
             ));
     }

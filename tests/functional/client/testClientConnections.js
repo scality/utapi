@@ -73,6 +73,7 @@ describe('Client connections', async function test() {
             Object.entries(expected).forEach(([k, v]) => {
                 assert.strictEqual(data[0][k], v);
             });
+            return done();
         });
     };
 
@@ -108,7 +109,8 @@ describe('Client connections', async function test() {
     it('should not add connections after failover under load', done => {
         sentinel.sentinel('failover', 'scality-s3', (err, res) => {
             if (err) {
-                return done(err);
+                done(err);
+                return;
             }
             assert.strictEqual(res, 'OK');
 
@@ -116,11 +118,14 @@ describe('Client connections', async function test() {
             // during the failover window so and async.race is used to resolve
             async.race([
                 () => setTimeout(() => this.loadgen.emit('finished'), 3000),
-                () => async.times(
-                    100,
-                    () => makeRequest(this, done),
-                    () => this.loadgen.emit('finished'),
-                ),
+                () => {
+                    async.times(
+                        100,
+                        () => makeRequest(this, done),
+                        () => this.loadgen.emit('finished'),
+                    );
+                    return null;
+                },
             ]);
         });
 

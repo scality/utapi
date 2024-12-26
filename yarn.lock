@@ -408,10 +408,10 @@
   resolved "https://registry.yarnpkg.com/@rtsao/scc/-/scc-1.1.0.tgz#927dd2fae9bc3361403ac2c7a00c32ddce9ad7e8"
   integrity sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==
 
-"@senx/warp10@^1.0.14":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@senx/warp10/-/warp10-1.1.4.tgz#2674e62e05bbfea5e7811a6f171115025161024d"
-  integrity sha512-2UmvM6HP4sxNgPimjYwIzVqhOFPGli7JeeFsdiwrF39RAEZxxSBpj9OCiZf5rLml/XeNnumVObajAopuuc+wuw==
+"@senx/warp10@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@senx/warp10/-/warp10-2.0.3.tgz#dcce3890d491c6380f2967abcf126909ed208969"
+  integrity sha512-FB3acF3vEGyyfwV17oBsJcbzagcOAQIZv3dZGuyBjiuSqf3KrOqn8hGGLyPXrZ6a6igD5v4M1ROHvqJklAffgA==
   dependencies:
     dayjs "^1.11.10"
 
@@ -955,9 +955,9 @@ arraybuffer.prototype.slice@^1.0.3:
     is-array-buffer "^3.0.4"
     is-shared-array-buffer "^1.0.2"
 
-"arsenal@git+https://github.com/scality/Arsenal#7e142a1bfca7f516c107d2072baeae54cbbe379c":
+"arsenal@git+https://github.com/scality/Arsenal#e293f894917cd375f8e1ab6d03f4fb6869df136a":
   version "8.2.0"
-  resolved "git+https://github.com/scality/Arsenal#7e142a1bfca7f516c107d2072baeae54cbbe379c"
+  resolved "git+https://github.com/scality/Arsenal#e293f894917cd375f8e1ab6d03f4fb6869df136a"
   dependencies:
     "@azure/identity" "^4.5.0"
     "@azure/storage-blob" "^12.25.0"
@@ -1172,11 +1172,11 @@ bson@^6.10.0, bson@^6.8.0:
   resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.0.tgz#559c767cc8b605c3ab14e5896214c8f2abdd6a12"
   integrity sha512-ROchNosXMJD2cbQGm84KoP7vOGPO6/bOAW0veMMbzhXLqoZptcaYRVLitwvuhwhjjpU1qP4YZRWLhgETdgqUQw==
 
-bucketclient@scality/bucketclient#735550971f36842eac2285b448d781cdd4f60238:
+bucketclient@scality/bucketclient#0fe349950922700af82b57b157f6ef5fe29c6f12:
   version "8.1.11"
-  resolved "https://codeload.github.com/scality/bucketclient/tar.gz/735550971f36842eac2285b448d781cdd4f60238"
+  resolved "https://codeload.github.com/scality/bucketclient/tar.gz/0fe349950922700af82b57b157f6ef5fe29c6f12"
   dependencies:
-    arsenal "git+https://github.com/scality/Arsenal#7e142a1bfca7f516c107d2072baeae54cbbe379c"
+    arsenal "git+https://github.com/scality/Arsenal#e293f894917cd375f8e1ab6d03f4fb6869df136a"
     httpagent "git+https://github.com/scality/httpagent#1.0.6"
     werelogs scality/werelogs#8.1.5
 
@@ -2584,7 +2584,6 @@ http-signature@~1.2.0:
 
 "httpagent@git+https://github.com/scality/httpagent#1.1.0":
   version "1.1.0"
-  uid "8f9958eb9cde086db7819a86582fba640a5f8876"
   resolved "git+https://github.com/scality/httpagent#8f9958eb9cde086db7819a86582fba640a5f8876"
   dependencies:
     agentkeepalive "^4.5.0"
