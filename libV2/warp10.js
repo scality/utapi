@@ -19,7 +19,7 @@ class Warp10Client {
         this._connectTimeout = (config && config.connectTimeout) || 30000;
         const host = (config && config.host) || 'localhost';
         const port = (config && config.port) || 4802;
-        this._client = new Warp10(`${proto}://${host}:${port}`, this._requestTimeout, this._connectTimeout);
+        this._client = new Warp10().endpoint(`${proto}://${host}:${port}`, this._requestTimeout, this._connectTimeout);
     }
 
     async update(payload) {
