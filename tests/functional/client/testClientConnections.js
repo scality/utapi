@@ -107,48 +107,45 @@ describe('Client connections', async function test() {
     });
 
     it('should not add connections after failover under load', done => {
-        let doneCalled = false;
-        const safeDone = err => {
-            if (!doneCalled) {
-                doneCalled = true;
-                done(err);
-            }
-        };
-
         sentinel.sentinel('failover', 'scality-s3', (err, res) => {
             if (err) {
-                safeDone(err);
-                return;
+                return done(err);
             }
             assert.strictEqual(res, 'OK');
 
-            async.race([
-                cb => setTimeout(() => {
-                    this.loadgen.emit('finished');
-                    cb();
-                }, 3000),
+            return async.race([
+                cb => {
+                    setTimeout(() => {
+                        this.loadgen.emit('finished');
+                        cb();
+                    }, 3000);
+                    return undefined;
+                },
                 cb => {
                     async.times(
                         100,
                         (n, next) => makeRequest(this, next),
-                        () => {
+                        err => {
+                            if (err) return cb(err);
                             this.loadgen.emit('finished');
-                            cb();
+                            return cb();
                         },
                     );
+                    return undefined;
                 },
-            ], safeDone);
+            ]);
         });
 
-        sentinelSub.on('message', (chan, message) => {
+        // Add return statement here
+        return sentinelSub.once('message', (chan, message) => {
             assert.strictEqual(chan, '+slave');
             const data = message.split(' ');
             const [oldPort, newPort] = [data[3], data[7]];
             assert.notStrictEqual(oldPort, newPort);
 
-            this.loadgen.on('finished', () => {
+            return this.loadgen.once('finished', () => {
                 assert(this.requestsDuringFailover > 1);
-                safeDone();
+                return done();
             });
         });
     });
