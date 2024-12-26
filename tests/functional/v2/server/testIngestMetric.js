@@ -6,7 +6,7 @@ const { generateFakeEvents } = require('../../../utils/v2Data');
 function utapiRequest(events) {
     return needle(
         'post',
-        'http://localhost:8100/v2/ingest',
+        'http://127.0.0.1:8100/v2/ingest',
         events,
     );
 }

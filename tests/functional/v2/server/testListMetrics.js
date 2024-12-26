@@ -41,7 +41,7 @@ async function listMetrics(level, resources, start, end, credentials) {
     }
 
     const headers = {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8100,
         method: 'POST',
         service: 's3',
@@ -61,7 +61,7 @@ async function listMetrics(level, resources, start, end, credentials) {
 
     return needle(
         'post',
-        `http://localhost:8100/${level}?Action=ListMetrics`,
+        `http://127.0.0.1:8100/${level}?Action=ListMetrics`,
 
         body,
         {
