@@ -1,5 +1,3 @@
-const { promisify } = require('util');
-const getFolderSize = require('get-folder-size');
 const byteSize = require('byte-size');
 
 const diskSpecRegex = /(\d+)([bkmgtpxz])(i?b)?/;
@@ -13,6 +11,11 @@ const suffixToExp = {
     x: 6,
     z: 7,
 };
+
+async function getFolderSizeWrapper(...args) {
+    const getFolderSize = await import('get-folder-size');
+    return getFolderSize.default(...args);
+}
 
 /**
  * Converts a string specifying disk size into its value in bytes
@@ -48,6 +51,6 @@ function formatDiskSize(value) {
 
 module.exports = {
     parseDiskSizeSpec,
-    getFolderSize: promisify(getFolderSize),
+    getFolderSize: getFolderSizeWrapper,
     formatDiskSize,
 };
