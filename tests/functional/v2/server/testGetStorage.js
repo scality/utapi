@@ -122,7 +122,7 @@ describe('Test getStorage handler', function () {
     });
 
     it('should return a 0 instead of a negative value', async () => {
-        const account = `imaaccount-${uuid.v4()}`;
+        const account = `imaaccount-${uuid()}`;
         const event = new UtapiMetric({
             timestamp: now(),
             account,
