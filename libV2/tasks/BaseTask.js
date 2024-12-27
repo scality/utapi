@@ -44,7 +44,7 @@ class BaseTask extends Process {
                     },
                 )
                 .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10))
-                .option('-n, --node-id <id>', 'Set a custom node id');
+                .option('-i --node-id <id>', 'Set a custom node id');
         }
 
         if (this._enableMetrics) {
