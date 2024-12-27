@@ -12,7 +12,7 @@ const moduleLogger = new LoggerContext({
 
 function _loadOpenApiSpec() {
     const spec = fs.readFileSync(path.join(__dirname, '../../openapi.yaml'), 'utf8');
-    return jsyaml.safeLoad(spec);
+    return jsyaml.load(spec);
 }
 
 function _getApiOperationIds(routes) {
