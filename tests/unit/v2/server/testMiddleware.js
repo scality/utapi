@@ -124,7 +124,7 @@ describe('Test middleware', () => {
             );
             const count = duration.filter(metric => metric.metricName === `${durationMetric}_count`);
             assert.deepStrictEqual(count, [{
-                "exemplar": [undefined]
+                "exemplar": [undefined],
                 labels: {
                     action: 'listMetrics',
                     code: 200,
