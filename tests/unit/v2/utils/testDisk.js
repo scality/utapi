@@ -21,6 +21,6 @@ describe('test parseDiskSizeSpec', () => {
 
 describe('test formatDiskSize', () => {
     it('should format bytes as a human readable string', () => {
-        assert.strictEqual(formatDiskSize(1024), '1.0KiB');
+        assert.strictEqual(formatDiskSize(1024), '1KiB');
     });
 });
