@@ -29,11 +29,11 @@ const { UtapiClient } = require('utapi');
 
 const config = {
     redis: {
-        host: '127.0.0.1',
+        host: 'localhost',
         port: 6379
     },
     localCache: {
-        host: '127.0.0.1',
+        host: 'localhost',
         port: 6379
     }
 }
@@ -276,7 +276,7 @@ deployment would be
 
 ```
 node bin/list_metrics --metric buckets --buckets demo --start 1476231300000
---end 1476233099999 -a myAccessKey -k mySecretKey -h 127.0.0.1 -p 8100 --ssl
+--end 1476233099999 -a myAccessKey -k mySecretKey -h localhost -p 8100 --ssl
 ```
 
 Both start and end times are time expressed as UNIX epoch timestamps **expressed

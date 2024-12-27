@@ -52,7 +52,7 @@ class VaultClient {
      * @return {object} Vault endpoint information
      */
     static getEndpointInformation() {
-        let host = '127.0.0.1';
+        let host = 'localhost';
         let port = 8600;
         let ca = undefined;
         let cert = undefined;
@@ -109,7 +109,7 @@ class VaultClient {
     }
 
     static getIAMClient(credentials) {
-        const endpoint = process.env.VAULT_ENDPOINT || 'http://127.0.0.1:8600';
+        const endpoint = process.env.VAULT_ENDPOINT || 'http://localhost:8600';
         const info = {
             endpoint,
             sslEnabled: false,

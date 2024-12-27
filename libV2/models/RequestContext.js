@@ -29,7 +29,7 @@ const RequestContextModel = buildModel('RequestContext', contextSchema);
 
 class RequestContext extends RequestContextModel {
     constructor(request) {
-        const host = request.headers.host || '127.0.0.1';
+        const host = request.headers.host || 'localhost';
         const protocol = RequestContext._determineProtocol(request);
         const encrypted = protocol === 'https';
         const url = `${protocol}://${host}${request.url}`;

@@ -6,7 +6,7 @@ secret_key = 'T5mK/skkkwJ/mTjXZnHyZ5UzgGIN=k9nl4dyTmDH'
 
 method = 'POST'
 service = 's3'
-host = '127.0.0.1:8100'
+host = 'localhost:8100'
 region = 'us-east-1'
 canonical_uri = '/buckets'
 canonical_querystring = 'Action=ListMetrics&Version=20160815'

@@ -14,7 +14,7 @@ const requestBody = JSON.stringify({
     timeRange: [startTime, endTime],
 });
 const header = {
-    host: '127.0.0.1',
+    host: 'localhost',
     port: 8100,
     method: 'POST',
     service: 's3',

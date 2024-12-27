@@ -48,7 +48,7 @@ describe('Test BaseTask metrics', () => {
     it('should start a metrics server on the provided port', async () => {
         const res = await needle(
             'get',
-            `http://127.0.0.1:${METRICS_SERVER_PORT}${DEFAULT_METRICS_ROUTE}`,
+            `http://localhost:${METRICS_SERVER_PORT}${DEFAULT_METRICS_ROUTE}`,
         );
         const lines = res.body.split('\n');
         const first = lines[0];

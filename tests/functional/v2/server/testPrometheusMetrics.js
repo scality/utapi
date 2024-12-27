@@ -15,9 +15,9 @@ const testMetrics = async pair => {
 
 describe('Test Prometheus Metrics', () => {
     const nameUrlPairs = [
-        ['utapi nodejs service exporter', 'http://127.0.0.1:8100/_/metrics'],
-        ['sensision exporter', 'http://127.0.0.1:9718/metrics'],
-        ['redis exporter', 'http://127.0.0.1:9121/metrics'],
+        ['utapi nodejs service exporter', 'http://localhost:8100/_/metrics'],
+        ['sensision exporter', 'http://localhost:9718/metrics'],
+        ['redis exporter', 'http://localhost:9121/metrics'],
     ];
     nameUrlPairs.forEach(pair => testMetrics(pair));
 });

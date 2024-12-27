@@ -15,7 +15,7 @@ const metricTypes = {
     accountId: 'foo-account',
     userId: 'foo-user',
 };
-const redisLocal = { host: '127.0.0.1', port: 6379 };
+const redisLocal = { host: 'localhost', port: 6379 };
 const config = {
     redis: redisLocal,
     localCache: redisLocal,

@@ -31,11 +31,11 @@ EXIT_CODE_SENTINEL_CONNECTION_ERROR = 100
 
 def get_options():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--sentinel-ip", default='127.0.0.1', help="Sentinel IP")
+    parser.add_argument("-i", "--sentinel-ip", default='localhost', help="Sentinel IP")
     parser.add_argument("-p", "--sentinel-port", default="16379", help="Sentinel Port")
     parser.add_argument("-v", "--redis-password", default=None, help="Redis AUTH Password")
     parser.add_argument("-n", "--sentinel-cluster-name", default='scality-s3', help="Redis cluster name")
-    parser.add_argument("-s", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
+    parser.add_argument("-s", "--bucketd-addr", default='http://localhost:9000', help="URL of the bucketd server")
     parser.add_argument("-w", "--worker", default=10, type=int, help="Number of workers")
     parser.add_argument("-r", "--max-retries", default=2, type=int, help="Max retries before failing a bucketd request")
     parser.add_argument("--only-latest-when-locked", action='store_true', help="Only index the latest version of a key when the bucket has a default object lock policy")

@@ -16,7 +16,7 @@ class ManualAdjust extends BaseTask {
         // Don't include default flags
         await super._setup(false);
         this._program
-            .option('-h, --host <host>', 'Utapi server host', '127.0.0.1')
+            .option('-h, --host <host>', 'Utapi server host', 'localhost')
             .option('-p, --port <port>', 'Utapi server port', '8100', parseInt)
             .option('-b, --bucket <buckets...>', 'target these buckets', collectArgs, [])
             .option('-a, --account <accounts...>', 'target these accounts', collectArgs, [])

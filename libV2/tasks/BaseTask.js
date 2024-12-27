@@ -25,7 +25,7 @@ class BaseTask extends Process {
         this._defaultSchedule = Now;
         this._defaultLag = 0;
         this._enableMetrics = options.enableMetrics || false;
-        this._metricsHost = options.metricsHost || '127.0.0.1';
+        this._metricsHost = options.metricsHost || 'localhost';
         this._metricsPort = options.metricsPort || 9001;
         this._metricsHandlers = null;
         this._probeServer = null;
