@@ -111,7 +111,7 @@ describe('Test middleware', () => {
                     },
                 },
             });
-
+        
             req.ctx = new RequestContext(req);
             middleware.httpMetricsMiddleware(req, resp);
             await assertMetricValue('s3_utapi_http_requests_total', 1);
@@ -124,7 +124,7 @@ describe('Test middleware', () => {
             );
             const count = duration.filter(metric => metric.metricName === `${durationMetric}_count`);
             assert.deepStrictEqual(count, [{
-                "exemplar": [undefined],
+                exemplar: [undefined],
                 labels: {
                     action: 'listMetrics',
                     code: 200,
