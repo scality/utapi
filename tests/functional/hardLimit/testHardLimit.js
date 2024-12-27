@@ -1,7 +1,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const sinon = require('sinon');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const promClient = require('prom-client');
 
 const { clients: warp10Clients } = require('../../../libV2/warp10');
@@ -10,14 +10,14 @@ const { MonitorDiskUsage } = require('../../../libV2/tasks');
 const { fillDir } = require('../../utils/v2Data');
 const { assertMetricValue } = require('../../utils/prom');
 
-// eslint-disable-next-line func-names
+ 
 describe('Test MonitorDiskUsage hard limit', function () {
     this.timeout(30000);
     let task;
     let path;
 
     beforeEach(async () => {
-        path = `/tmp/diskusage-${uuid.v4()}`;
+        path = `/tmp/diskusage-${uuid()}`;
         fs.mkdirSync(`${path}/datalog`, { recursive: true });
         promClient.register.clear();
         task = new MonitorDiskUsage({ warp10: warp10Clients, enableMetrics: true });

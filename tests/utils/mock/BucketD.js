@@ -138,7 +138,7 @@ class BucketD {
 
     _initiateRoutes() {
         this._app.param('bucketName', (req, res, next, bucketName) => {
-            /* eslint-disable no-param-reassign */
+             
             if (bucketName === constants.usersBucket) {
                 req.body = this._getUsersBucketResponse(req);
             } else if (req.query.listingType === 'MPU') {
@@ -159,7 +159,7 @@ class BucketD {
                 }
             }
 
-            /* eslint-enable no-param-reassign */
+             
             next();
         });
 

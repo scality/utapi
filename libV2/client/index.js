@@ -1,14 +1,12 @@
 const { callbackify } = require('util');
 const { Transform } = require('stream');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const needle = require('needle');
 
 // These modules are added via the `level-mem` package rather than individually
-/* eslint-disable import/no-extraneous-dependencies */
 const levelup = require('levelup');
 const memdown = require('memdown');
 const encode = require('encoding-down');
-/* eslint-enable import/no-extraneous-dependencies */
 
 const { UtapiMetric } = require('../models');
 const {
@@ -257,7 +255,7 @@ class UtapiClient {
 
         // Assign a uuid if one isn't passed
         if (!metric.uuid) {
-            metric.uuid = uuid.v4();
+            metric.uuid = uuid();
         }
 
         // Assign a timestamp if one isn't passed

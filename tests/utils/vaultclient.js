@@ -1,9 +1,9 @@
-/* eslint-disable no-undef-init */
+ 
 /* eslint-disable no-console */
 const { IAM } = require('aws-sdk');
 const vaultclient = require('vaultclient');
 const fs = require('fs');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const { exec } = require('child_process');
 const path = require('path');
 
@@ -61,7 +61,7 @@ class VaultClient {
             const res = /^https?:\/\/([^:]*)(:[0-9]+)?\/?$/.exec(
                 process.env.VAULT_ENDPOINT,
             );
-            // eslint-disable-next-line prefer-destructuring
+             
             [host] = res[1];
             port = parseInt(res[2].substring(1), 10);
             const https = process.env.VAULT_ENDPOINT.startsWith('https://');
@@ -198,7 +198,7 @@ class VaultClient {
             Version: '2012-10-17',
             Statement: [
                 {
-                    Sid: `utapiMetrics-${uuid.v4()}`.replace(/-/g, ''),
+                    Sid: `utapiMetrics-${uuid()}`.replace(/-/g, ''),
                     Action: ['utapi:ListMetrics'],
                     Effect: 'Allow',
                     Resource: `arn:scality:utapi:::${level}/${resource}`,
@@ -210,7 +210,7 @@ class VaultClient {
     static async createAndAttachUtapiPolicy(parentAccount, user, level, resource) {
         const client = VaultClient.getIAMClient(parentAccount);
         const PolicyDocument = VaultClient.templateUtapiPolicy(level, resource);
-        const PolicyName = `utapi-test-policy-${uuid.v4()}`;
+        const PolicyName = `utapi-test-policy-${uuid()}`;
         const res = await client.createPolicy({ PolicyName, PolicyDocument }).promise();
         const { Arn: PolicyArn } = res.Policy;
         await client.attachUserPolicy({ PolicyArn, UserName: user.name }).promise();

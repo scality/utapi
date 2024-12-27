@@ -1,7 +1,7 @@
 const assert = require('assert');
 const async = require('async');
 const sinon = require('sinon');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 
 const UtapiClient = require('../../../libV2/client');
 const { clients: warp10Clients } = require('../../../libV2/warp10');
@@ -22,7 +22,7 @@ const getClient = () => new CacheClient({
     ),
 });
 
-// eslint-disable-next-line func-names
+ 
 describe('Test UtapiClient', function () {
     this.timeout(10000);
 
@@ -40,10 +40,10 @@ describe('Test UtapiClient', function () {
                 drainDelay: 5000,
             });
 
-            account = uuid.v4();
-            bucket = uuid.v4();
+            account = uuid();
+            bucket = uuid();
             const { events: _events } = generateCustomEvents(now() - (60 * 1000000), now() - (10 * 1000000), 50, {
-                [account]: { [uuid.v4()]: [bucket] },
+                [account]: { [uuid()]: [bucket] },
             });
             // Hack because you can't unpack to previously declared variables,
             // and declaring inside the beforeEach wouldn't have the scope needed
@@ -210,7 +210,7 @@ describe('Test UtapiClient', function () {
 
             const { events: _events, totals: _totals } = generateCustomEvents(
                 now() - (60 * 1000000), now() - (10 * 1000000), 50, {
-                    [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] },
+                    [uuid()]: { [uuid()]: [uuid()] },
                 },
             );
             events = _events;

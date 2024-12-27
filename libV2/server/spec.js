@@ -26,7 +26,7 @@ function _getApiOperationIds(routes) {
                         .with({ method: '_getApiOperationIds' })
                         .trace('Registering handler', { tag, operationId: optId });
                     if (optIds[tag] === undefined) {
-                        // eslint-disable-next-line no-param-reassign
+                         
                         optIds[tag] = new Set([optId]);
                     } else {
                         optIds[tag].add(optId);

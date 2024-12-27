@@ -1,10 +1,10 @@
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const { UtapiMetric } = require('../../../libV2/models');
 
 const { range, randChoice, randInt } = require('./rand');
 
 const requiredFields = {
-    uuid: () => uuid.v4(),
+    uuid: () => uuid(),
     account: params => params.account,
     location: params => params.location || 'ring',
 };
@@ -190,7 +190,7 @@ function getRandAccountUserBucket(objects) {
 
 function getRandOrNewKey(existing) {
     if (existing.length === 0 || Math.random() < 0.1) {
-        return [false, uuid.v4()];
+        return [false, uuid()];
     }
     return [true, randChoice(existing)];
 }
@@ -298,7 +298,7 @@ function generateCustomEvents(start, stop, count, accounts, versioning = true) {
 
 function generateFakeEvents(start, stop, count) {
     return generateCustomEvents(start, stop, count, {
-        [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] },
+        [uuid()]: { [uuid()]: [uuid()] },
     }).events;
 }
 

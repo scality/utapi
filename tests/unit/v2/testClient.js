@@ -7,7 +7,7 @@ const UtapiClient = require('../../../libV2/client');
 const events = generateFakeEvents(1, 50, 50);
 const sortEvent = (a, b) => (a.uuid > b.uuid ? 1 : -1);
 
-// eslint-disable-next-line func-names
+ 
 describe('Test UtapiClient', function () {
     this.timeout(10000);
     let client;

@@ -51,7 +51,7 @@ class VaultWrapper extends auth.Vault {
                 }));
     }
 
-    // eslint-disable-next-line class-methods-use-this
+     
     authenticateRequest(request, action, level, resources) {
         const policyContext = new policies.RequestContext(
             request.headers,

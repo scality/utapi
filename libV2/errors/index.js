@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 const utapiErrors = require('./errors.json');
 
 class UtapiError extends Error {

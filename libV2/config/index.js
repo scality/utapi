@@ -137,10 +137,9 @@ class Config {
             new Set([
                 ...Object.keys(parent),
                 ...Object.keys(child)],
-            // eslint-disable-next-line function-paren-newline
+             
             ))
             .reduce((ret, key) => {
-                // eslint-disable-next-line no-param-reassign
                 ret[key] = this._recursiveUpdate(parent[key], child[key]);
                 return ret;
             }, {});

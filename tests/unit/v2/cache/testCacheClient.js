@@ -37,7 +37,7 @@ describe('Test high level cache client', () => {
             if (es[shard]) {
                 es[shard].push(event);
             } else {
-                // eslint-disable-next-line no-param-reassign
+                 
                 es[shard] = [event];
             }
             return es;
@@ -59,7 +59,7 @@ describe('Test high level cache client', () => {
             if (es[shard]) {
                 es[shard].push(event);
             } else {
-                // eslint-disable-next-line no-param-reassign
+                 
                 es[shard] = [event];
             }
             return es;

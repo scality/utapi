@@ -1,4 +1,4 @@
-/* eslint-disable no-restricted-syntax */
+ 
 const arsenal = require('arsenal');
 const async = require('async');
 const metadata = require('./client');
@@ -45,7 +45,7 @@ function _listObject(bucket, prefix, hydrateFunc) {
                 let res;
 
                 try {
-                    // eslint-disable-next-line no-await-in-loop
+                     
                     res = await async.retryable(ebConfig, _listingWrapper)(bucket, { ...listingParams, gt });
                 } catch (error) {
                     moduleLogger.error('Error during listing', { error });

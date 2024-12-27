@@ -1,4 +1,4 @@
-/* eslint-disable class-methods-use-this */
+ 
 const assert = require('assert');
 const url = require('url');
 const { auth, errors, policies } = require('arsenal');

@@ -126,7 +126,7 @@ describe('Client connections', async function test() {
                         100,
                         (n, next) => makeRequest(this, next),
                         err => {
-                            if (err) return cb(err);
+                            if (err) {return cb(err);}
                             this.loadgen.emit('finished');
                             return cb();
                         },

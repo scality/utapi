@@ -21,7 +21,7 @@ class CreateCheckpoint extends BaseTask {
         this._defaultLag = checkpointLagSecs;
     }
 
-    // eslint-disable-next-line class-methods-use-this
+     
     _registerMetricHandlers() {
         const created = new promClient.Counter({
             name: 's3_utapi_create_checkpoint_created_total',

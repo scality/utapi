@@ -1,4 +1,4 @@
-/* eslint-disable implicit-arrow-linebreak */
+ 
 const assert = require('assert');
 const { Logger } = require('werelogs');
 const MemoryBackend = require('../../lib/backend/Memory');

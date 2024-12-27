@@ -1,6 +1,6 @@
 const assert = require('assert');
 const promClient = require('prom-client');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
@@ -39,7 +39,7 @@ function assertResults(totals, series) {
     });
 }
 
-// eslint-disable-next-line func-names
+ 
 describe('Test CreateCheckpoint', function () {
     this.timeout(10000);
 
@@ -48,7 +48,7 @@ describe('Test CreateCheckpoint', function () {
     let checkpointTask;
 
     beforeEach(async () => {
-        prefix = uuid.v4();
+        prefix = uuid();
 
         warp10 = new Warp10Client({ nodeId: prefix });
         checkpointTask = new CreateCheckpoint({ warp10: [warp10], enableMetrics: true });
@@ -65,7 +65,7 @@ describe('Test CreateCheckpoint', function () {
         const start = getTs(-300);
         const stop = getTs(-120);
         const { events, totals } = generateCustomEvents(start, stop, 100,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
+            { [uuid()]: { [uuid()]: [uuid()] } });
 
         await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(0));
@@ -84,7 +84,7 @@ describe('Test CreateCheckpoint', function () {
     });
 
     it('should only include events not in an existing checkpoint', async () => {
-        const accounts = { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } };
+        const accounts = { [uuid()]: { [uuid()]: [uuid()] } };
 
         const { events: historicalEvents } = generateCustomEvents(
             getTs(-500),
@@ -121,7 +121,7 @@ describe('Test CreateCheckpoint', function () {
             getTs(-300),
             getTs(-120),
             100,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } },
+            { [uuid()]: { [uuid()]: [uuid()] } },
         );
 
         await warp10.ingest({ className: 'utapi.event' }, events);

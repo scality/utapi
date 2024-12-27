@@ -6,7 +6,7 @@ collectDefaultMetrics({
 });
 
 async function prometheusMetrics(ctx) {
-    // eslint-disable-next-line no-param-reassign
+     
     ctx.results.statusCode = 200;
     ctx.results.body = await register.metrics();
 }

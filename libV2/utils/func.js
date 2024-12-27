@@ -43,10 +43,10 @@ function comprehend(data, func) {
  */
 async function iterIfError(items, func, onError) {
     let error;
-    // eslint-disable-next-line no-restricted-syntax
+     
     for (const item of items) {
         try {
-            // eslint-disable-next-line no-await-in-loop
+             
             const resp = await func(item);
             return resp;
         } catch (_error) {

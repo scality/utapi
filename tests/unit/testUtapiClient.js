@@ -32,7 +32,7 @@ function isSortedSetKey(key) {
 function deserializeMemoryBackend(data) {
     Object.keys(data).forEach(key => {
         if (isSortedSetKey(key)) {
-            data[key][0][1] = member.deserialize(data[key][0][1]); // eslint-disable-line
+            data[key][0][1] = member.deserialize(data[key][0][1]);  
         }
     });
 }

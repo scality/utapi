@@ -92,7 +92,7 @@ class BaseTask extends Process {
         };
     }
 
-    // eslint-disable-next-line class-methods-use-this
+     
     _registerMetricHandlers() {
         return {};
     }
@@ -175,7 +175,7 @@ class BaseTask extends Process {
         }
     }
 
-    // eslint-disable-next-line class-methods-use-this
+     
     async _execute(timestamp) {
         logger.info(`Default Task ${timestamp}`);
     }

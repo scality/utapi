@@ -1,4 +1,4 @@
-/* eslint-disable symbol-description */
+ 
 const { errors } = require('arsenal');
 const validateMetric = require('./validateMetric');
 const validateTimeRange = require('./validateTimeRange');

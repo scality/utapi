@@ -13,7 +13,7 @@ const sizeSpecTestCases = [
 ];
 
 describe('test parseDiskSizeSpec', () => {
-    sizeSpecTestCases.map(([input, expected]) => {
+    sizeSpecTestCases.forEach(([input, expected]) => {
         it(`should convert ${input} to ${expected} bytes`, () =>
             assert.strictEqual(parseDiskSizeSpec(input), expected));
     });

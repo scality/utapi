@@ -12,15 +12,15 @@ async function ingestMetric(ctx, params) {
             timestamp: convertTimestamp(m.timestamp),
             operationId: ingestionOpTranslationMap[m.operationId] || m.operationId,
         }));
-    } catch (error) {
+    } catch {
         throw errors.InvalidRequest;
     }
     try {
         await Promise.all(metrics.map(m => cacheClient.pushMetric(m)));
-    } catch (error) {
+    } catch {
         throw errors.ServiceUnavailable;
     }
-    // eslint-disable-next-line no-param-reassign
+     
     ctx.results.statusCode = 200;
 }
 

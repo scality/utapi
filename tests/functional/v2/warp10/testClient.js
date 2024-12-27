@@ -1,4 +1,4 @@
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const assert = require('assert');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
@@ -15,7 +15,7 @@ const testWarpscript = "CLEAR [ 'OK' ]";
 describe('Test Warp Client', () => {
     let className;
     beforeEach(() => {
-        className = `utapi.test.${uuid.v4().replace(/-/g, '')}`;
+        className = `utapi.test.${uuid().replace(/-/g, '')}`;
     });
 
     it('should ingest records', async () => {

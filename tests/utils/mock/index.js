@@ -1,4 +1,4 @@
-/* eslint-disable global-require */
+ 
 const index = {
     BucketD: require('./BucketD'),
     Vault: require('./Vault'),

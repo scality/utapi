@@ -87,7 +87,7 @@ describe('Test sliceTimeRange', () => {
         } = testCase;
         it(`should correctly slice range ${start}-${end} with step ${step}`, () => {
             const results = [];
-            // eslint-disable-next-line no-restricted-syntax
+             
             for (const item of sliceTimeRange(start, end, step)) {
                 results.push(item);
             }

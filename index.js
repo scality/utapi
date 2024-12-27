@@ -1,5 +1,5 @@
-/* eslint-disable global-require */
-// eslint-disable-line strict
+ 
+ 
 let toExport;
 
 if (process.env.ENABLE_UTAPI_V2) {
