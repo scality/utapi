@@ -58,6 +58,8 @@ async function listMetrics(level, resources, start, end, credentials) {
     };
 
     const sig = aws4.sign(headers, _credentials);
+    // eslint-disable-next-line no-console
+    console.log('HEEEEEERE SIG', sig);
 
     return needle(
         'post',
