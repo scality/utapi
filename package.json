@@ -34,7 +34,7 @@
     "get-folder-size": "^5.0.0",
     "ioredis": "^5.4.2",
     "js-yaml": "^4.1.0",
-    "level-mem": "^6.0.1",
+    "level-mem": "^5.0.1",
     "needle": "^3.3.1",
     "node-schedule": "^2.1.1",
     "oas-tools": "^2.2.2",
