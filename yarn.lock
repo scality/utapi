@@ -1019,9 +1019,9 @@ arraybuffer.prototype.slice@^1.0.4:
     get-intrinsic "^1.2.6"
     is-array-buffer "^3.0.4"
 
-"arsenal@git+https://github.com/scality/Arsenal#e293f894917cd375f8e1ab6d03f4fb6869df136a":
+"arsenal@git+https://github.com/scality/Arsenal#5fa6ecab848f1ef10acb20cce616d59c50ae5555":
   version "8.2.0"
-  resolved "git+https://github.com/scality/Arsenal#e293f894917cd375f8e1ab6d03f4fb6869df136a"
+  resolved "git+https://github.com/scality/Arsenal#5fa6ecab848f1ef10acb20cce616d59c50ae5555"
   dependencies:
     "@azure/identity" "^4.5.0"
     "@azure/storage-blob" "^12.25.0"
@@ -1042,7 +1042,7 @@ arraybuffer.prototype.slice@^1.0.4:
     diskusage "^1.2.0"
     fcntl "github:scality/node-fcntl#0.2.2"
     hdclient scality/hdclient#1.1.7
-    httpagent scality/httpagent#1.0.6
+    httpagent scality/httpagent#1.1.0
     https-proxy-agent "^7.0.5"
     ioredis "^5.4.1"
     ipaddr.js "^2.2.0"
@@ -1238,11 +1238,11 @@ bson@^6.10.1, bson@^6.8.0:
   resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.1.tgz#dcd04703178f5ecf5b25de04edd2a95ec79385d3"
   integrity sha512-P92xmHDQjSKPLHqFxefqMxASNq/aWJMEZugpCjf+AF/pgcUpMMQCg7t7+ewko0/u8AapvF3luf/FoehddEK+sA==
 
-bucketclient@scality/bucketclient#0fe349950922700af82b57b157f6ef5fe29c6f12:
+bucketclient@scality/bucketclient#878134d36e6b1bd65f1573292ed18f91a61335d0:
   version "8.1.11"
-  resolved "https://codeload.github.com/scality/bucketclient/tar.gz/0fe349950922700af82b57b157f6ef5fe29c6f12"
+  resolved "https://codeload.github.com/scality/bucketclient/tar.gz/878134d36e6b1bd65f1573292ed18f91a61335d0"
   dependencies:
-    arsenal "git+https://github.com/scality/Arsenal#e293f894917cd375f8e1ab6d03f4fb6869df136a"
+    arsenal "git+https://github.com/scality/Arsenal#5fa6ecab848f1ef10acb20cce616d59c50ae5555"
     httpagent "git+https://github.com/scality/httpagent#1.0.6"
     werelogs scality/werelogs#8.1.5
 
@@ -2641,15 +2641,15 @@ http-signature@~1.2.0:
   dependencies:
     agentkeepalive "^4.5.0"
 
-"httpagent@github:scality/httpagent#1.0.6", httpagent@scality/httpagent#1.0.6:
+"httpagent@github:scality/httpagent#1.0.6":
   version "1.0.6"
-  uid "66e97ab93532d79dbddcf6c4ea4df849b84c33c9"
   resolved "https://codeload.github.com/scality/httpagent/tar.gz/66e97ab93532d79dbddcf6c4ea4df849b84c33c9"
   dependencies:
     agentkeepalive "^4.2.1"
 
-"httpagent@github:scality/httpagent#1.1.0":
+"httpagent@github:scality/httpagent#1.1.0", httpagent@scality/httpagent#1.1.0:
   version "1.1.0"
+  uid "8f9958eb9cde086db7819a86582fba640a5f8876"
   resolved "https://codeload.github.com/scality/httpagent/tar.gz/8f9958eb9cde086db7819a86582fba640a5f8876"
   dependencies:
     agentkeepalive "^4.5.0"
