@@ -68,7 +68,7 @@ describe('Test UtapiClient', function () {
             const orig = UtapiClient.prototype._pushToUtapi;
             const pushStub = sandbox
                 .stub(UtapiClient.prototype, '_pushToUtapi')
-                .rejects()
+                .rejects(new Error('Simulated failure'))
                 .onCall(51)
                 .callsFake(orig.bind(client));
 
