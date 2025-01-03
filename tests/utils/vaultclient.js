@@ -52,7 +52,7 @@ class VaultClient {
      * @return {object} Vault endpoint information
      */
     static getEndpointInformation() {
-        let host = 'localhost';
+        let host = '127.0.0.1';
         let port = 8600;
         let ca = undefined;
         let cert = undefined;
