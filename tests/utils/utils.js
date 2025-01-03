@@ -100,7 +100,7 @@ function buildMockResponse({ start, end, val }) {
 
 function makeUtapiClientRequest({ timeRange, resource }, cb) {
     const header = {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8100,
         method: 'POST',
         service: 's3',
@@ -125,7 +125,7 @@ function makeUtapiClientRequest({ timeRange, resource }, cb) {
 
 function makeUtapiGenericClientRequest(reqHeader, reqBody, cb) {
     const header = Object.assign({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8100,
         service: 's3',
     }, reqHeader);
@@ -173,7 +173,7 @@ function _buildRequestBody(resource) {
 function listMetrics(resource, cb) {
     const requestBody = _buildRequestBody(resource);
     const header = {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8100,
         method: 'POST',
         service: 's3',

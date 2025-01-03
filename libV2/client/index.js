@@ -72,7 +72,7 @@ class Uploader extends Transform {
 
 class UtapiClient {
     constructor(config) {
-        this._host = (config && config.host) || 'localhost';
+        this._host = (config && config.host) || '127.0.0.1';
         this._port = (config && config.port) || '8100';
         this._tls = (config && config.tls) || {};
         this._transport = (config && config.tls) ? 'https' : 'http';

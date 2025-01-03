@@ -258,7 +258,7 @@ program.version(version);
 ].forEach(cmd => {
     program
         .command(cmd.name)
-        .option('--iam-endpoint <url>', 'IAM endpoint', 'http://localhost:8600')
+        .option('--iam-endpoint <url>', 'IAM endpoint', 'http://127.0.0.1:8600')
         .option('--log-level <level>', 'log level', 'info')
         .option('--log-dump-level <level>', 'log level that triggers a dump of the debug buffer', 'error')
         .action(wrapAction.bind(null, cmd.actionFunc));

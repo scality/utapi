@@ -107,7 +107,7 @@ jobs:
           warpscript.maxops: '10000000'
           ENABLE_SENSISION: 't'
         options: >-
-          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-cmd "curl 127.0.0.1:4802/api/v0/check"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -188,7 +188,7 @@ jobs:
         - 8082:8082
         - 9718:9718
         options: >-
-          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-cmd "curl 127.0.0.1:4802/api/v0/check"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -201,7 +201,7 @@ jobs:
         - 8700:8700
         - 8800:8800
         options: >-
-          --health-cmd "curl http://localhost:8500/_/healthcheck"
+          --health-cmd "curl http://127.0.0.1:8500/_/healthcheck"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -309,7 +309,7 @@ jobs:
         - 8082:8082
         - 9718:9718
         options: >-
-          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-cmd "curl 127.0.0.1:4802/api/v0/check"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -322,7 +322,7 @@ jobs:
         - 8700:8700
         - 8800:8800
         options: >-
-          --health-cmd "curl http://localhost:8500/_/healthcheck"
+          --health-cmd "curl http://127.0.0.1:8500/_/healthcheck"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
