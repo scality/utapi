@@ -49,7 +49,6 @@ async function listMetrics(level, resources, start, end, credentials) {
         headers: {
             'Content-Type': 'application/json',
         },
-        get: true;
     };
 
     const { accessKey: accessKeyId, secretKey: secretAccessKey } = credentials;
