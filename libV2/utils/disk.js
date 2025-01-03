@@ -14,7 +14,8 @@ const suffixToExp = {
 
 async function getFolderSizeWrapper(...args) {
     const { default: getFolderSize } = await import('get-folder-size');
-    return getFolderSize(...args);
+    const result = await getFolderSize(...args);
+    return result.size || 0;
 }
 
 /**
