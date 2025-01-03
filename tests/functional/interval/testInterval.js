@@ -11,17 +11,17 @@ describe('UtapiClient: Across time intervals', function test() {
     this.timeout((1000 * 60) * 2);
 
     const redis = redisClient({
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 6379,
     }, mock.log);
 
     const utapi = new UtapiClient({
         redis: {
-            host: 'localhost',
+            host: '127.0.0.1',
             port: 6379,
         },
         localCache: {
-            host: 'localhost',
+            host: '127.0.0.1',
             port: 6379,
         },
         component: 's3',

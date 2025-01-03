@@ -11,22 +11,22 @@ const safeJsonParse = require('../../../utils/safeJsonParse');
 
 const log = new Logger('UTAPIReplayTest');
 const localCache = redisClient({
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 6379,
 }, log);
 const redis = new RedisClientv2({
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 6379,
 });
 redis.connect();
 const datastore = new Datastore().setClient(redis);
 const utapiClient = new UtapiClient({
     redis: {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 4242, // Set the datastore client to a port it cannot connect on.
     },
     localCache: {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 6379, // Set the local cache a port for successful connection.
     },
     component: 's3',
@@ -247,10 +247,10 @@ describe('Replay', () => {
         const TTL = 60 * 15; // fifteen minutes
         // Set redis to correct port so replay successfully pushes metrics.
         const replay = new UtapiReplay({
-            redis: { host: 'localhost', port: 6379 },
+            redis: { host: '127.0.0.1', port: 6379 },
             replaySchedule: '*/1 * * * * *', // Run replay every second.
             localCache: {
-                host: 'localhost',
+                host: '127.0.0.1',
                 port: 6379,
             },
         });

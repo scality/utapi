@@ -19,11 +19,11 @@ EXIT_CODE_SENTINEL_CONNECTION_ERROR = 100
 
 def get_options():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--sentinel-ip", default='localhost', help="Sentinel IP")
+    parser.add_argument("-i", "--sentinel-ip", default='127.0.0.1', help="Sentinel IP")
     parser.add_argument("-p", "--sentinel-port", default="16379", help="Sentinel Port")
     parser.add_argument("-v", "--redis-password", default=None, help="Redis AUTH Password")
     parser.add_argument("-n", "--sentinel-cluster-name", default='scality-s3', help="Redis cluster name")
-    parser.add_argument("-b", "--bucketd-addr", default='http://localhost:9000', help="URL of the bucketd server")
+    parser.add_argument("-b", "--bucketd-addr", default='http://127.0.0.1:9000', help="URL of the bucketd server")
     return parser.parse_args()
 
 def safe_print(content):
@@ -32,7 +32,7 @@ def safe_print(content):
 
 class askRedis():
 
-    def __init__(self, ip="localhost", port="16379", sentinel_cluster_name="scality-s3", password=None):
+    def __init__(self, ip="127.0.0.1", port="16379", sentinel_cluster_name="scality-s3", password=None):
         self._password = password
         r = redis.Redis(
             host=ip,
@@ -62,7 +62,7 @@ class askRedis():
 
 class S3ListBuckets():
 
-    def __init__(self, host='localhost:9000'):
+    def __init__(self, host='127.0.0.1:9000'):
         self.bucketd_host = host
 
     def run(self):

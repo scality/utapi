@@ -2,18 +2,18 @@
     "port": 8100,
     "workers": 10,
     "healthChecks": {
-        "allowFrom": ["localhost/8", "::1"]
+        "allowFrom": ["127.0.0.1/8", "::1"]
     },
     "log": {
         "logLevel": "info",
         "dumpLevel": "error"
     },
     "redis": {
-        "host": "localhost",
+        "host": "127.0.0.1",
         "port": 6379
     },
     "vaultd": {
-        "host": "localhost",
+        "host": "127.0.0.1",
         "port": 8500
     },
     "expireMetrics": false,

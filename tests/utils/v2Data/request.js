@@ -49,7 +49,7 @@ function templateRequest(overrides) {
     const results = new ResponseContainer();
 
     return {
-        ip: 'localhost',
+        ip: '127.0.0.1',
         socket: { remotePort: 12345 },
         headers: { host: 'example.com' },
         connection: { encrypted: false },

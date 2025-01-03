@@ -14,11 +14,11 @@ const {
 
 const log = new Logger('TestUtapiClient');
 const redis = redisClient({
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 6379,
 }, log);
 const redisV2 = new RedisClientv2({
-    host: 'localhost',
+    host: '127.0.0.1',
     port: 6379,
 });
 redisV2.connect();
@@ -27,11 +27,11 @@ const datastore = new Datastore().setClient(
 );
 const utapiConfig = {
     redis: {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 6379,
     },
     localCache: {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 6379,
     },
     component: 's3',
