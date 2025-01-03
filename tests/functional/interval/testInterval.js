@@ -53,7 +53,6 @@ describe('UtapiClient: Across time intervals', function test() {
             done();
         });
     });
-    });
 
     after(() => {
         vault.end();
