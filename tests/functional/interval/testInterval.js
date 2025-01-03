@@ -47,8 +47,12 @@ describe('UtapiClient: Across time intervals', function test() {
 
     const vault = new mock.Vault();
 
-    before(() => {
+    before(done => {
         vault.start();
+        redis.on('ready', () => {
+            done();
+        });
+    });
     });
 
     after(() => {
