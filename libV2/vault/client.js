@@ -93,7 +93,7 @@ class VaultWrapper extends auth.Vault {
                     }
 
                     resolve({ authed: true, authInfo, authorizedResources });
-                }, 's3', [policyContext],
+                }, 's3', [policyContext], { get: true },
             );
         });
     }
