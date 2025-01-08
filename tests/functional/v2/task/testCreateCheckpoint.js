@@ -142,6 +142,6 @@ describe('Test CreateCheckpoint', function () {
             className: 'utapi.checkpoint', labels: { node: prefix }, start: getTs(1), stop: 10 * 1000 * 1000,
         });
 
-        assert.strictEqual(JSON.parse(results.result[0]).length, 0);
+        assert.strictEqual(results.result.length, 0);
     });
 });
