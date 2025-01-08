@@ -254,7 +254,7 @@ class Router {
             log.trace('passed security checks');
             return cb();
         },
-        's3', requestContext);
+        's3', requestContext, { get: true });
     }
 
     /**
