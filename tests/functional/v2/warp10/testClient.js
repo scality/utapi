@@ -44,10 +44,10 @@ describe('Test Warp Client', () => {
         const ev = generateFakeEvents(startTime, endTime, 100);
         const count = await warp10.ingest({ className }, ev);
         let fetchResp = await warp10.fetch({ className, start: endTime, stop: startTime });
-        assert.strictEqual(fetchResp.result[0].length, 1);
+        assert.strictEqual(fetchResp.result.length, 1);
         assert.strictEqual(fetchResp.result[0].v.length, count);
         await warp10.delete({ className, start: startTime, end: endTime });
         fetchResp = await warp10.fetch({ className, start: endTime, stop: startTime });
-        assert.strictEqual(fetchResp.result[0].length, 0);
+        assert.strictEqual(fetchResp.result.length, 0);
     });
 });
