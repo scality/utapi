@@ -1,6 +1,6 @@
 const assert = require('assert');
 const async = require('async');
-const uuid = require('uuid/v4');
+const { v4: uuid } = require('uuid');
 
 const UtapiClient = require('../../../lib/UtapiClient');
 const mock = require('../../utils/mock');

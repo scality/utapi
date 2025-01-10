@@ -18,7 +18,7 @@ describe('Invalid requests', () => {
         {
             describe: 'should forbid a GET request ',
             header: {
-                host: 'localhost',
+                host: '127.0.0.1',
                 port: 8100,
                 method: 'GET',
                 service: 's3',
@@ -30,7 +30,7 @@ describe('Invalid requests', () => {
         {
             describe: 'should forbid a GET request ',
             header: {
-                host: 'localhost',
+                host: '127.0.0.1',
                 port: 8100,
                 method: 'GET',
                 service: 's3',

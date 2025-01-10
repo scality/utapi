@@ -1,5 +1,5 @@
 const assert = require('assert');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const { RedisCache } = require('../../../../libV2/cache').backends;
 const { shardFromTimestamp } = require('../../../../libV2/utils');
 const schema = require('../../../../libV2/cache/schema');
@@ -13,7 +13,7 @@ describe('Test cache redis backend', () => {
     let cache;
     let prefix;
     beforeEach(async () => {
-        prefix = uuid.v4();
+        prefix = uuid();
         cache = new RedisCache({}, prefix);
         return cache.connect();
     });

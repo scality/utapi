@@ -1,6 +1,6 @@
 const assert = require('assert');
 const async = require('async');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 
 const UtapiClient = require('../../../../libV2/client');
 const { clients: warp10Clients } = require('../../../../libV2/warp10');
@@ -22,7 +22,7 @@ const getClient = () => new CacheClient({
 
 const warp10 = warp10Clients[0];
 
-// eslint-disable-next-line func-names
+ 
 describe('Test getStorage handler', function () {
     this.timeout(120000);
     let client;
@@ -40,7 +40,7 @@ describe('Test getStorage handler', function () {
 
         const { events: _events, totals: _totals } = generateCustomEvents(
             now() - (120 * 1000000), now() - (30 * 1000000), 50, {
-                [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] },
+                [uuid()]: { [uuid()]: [uuid()] },
             },
         );
         events = _events;
@@ -122,7 +122,7 @@ describe('Test getStorage handler', function () {
     });
 
     it('should return a 0 instead of a negative value', async () => {
-        const account = `imaaccount-${uuid.v4()}`;
+        const account = `imaaccount-${uuid()}`;
         const event = new UtapiMetric({
             timestamp: now(),
             account,

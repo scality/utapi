@@ -9,7 +9,6 @@ const { expirationChunkDuration } = require('../../../libV2/constants');
 
 const { fetchRecords } = require('../../utils/v2Data');
 
-// eslint-disable-next-line func-names
 describe('Test MonitorDiskUsage soft limit', function () {
     this.timeout(30000);
     let task;

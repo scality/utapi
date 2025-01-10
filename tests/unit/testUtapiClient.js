@@ -15,7 +15,7 @@ const metricTypes = {
     accountId: 'foo-account',
     userId: 'foo-user',
 };
-const redisLocal = { host: 'localhost', port: 6379 };
+const redisLocal = { host: '127.0.0.1', port: 6379 };
 const config = {
     redis: redisLocal,
     localCache: redisLocal,
@@ -32,7 +32,7 @@ function isSortedSetKey(key) {
 function deserializeMemoryBackend(data) {
     Object.keys(data).forEach(key => {
         if (isSortedSetKey(key)) {
-            data[key][0][1] = member.deserialize(data[key][0][1]); // eslint-disable-line
+            data[key][0][1] = member.deserialize(data[key][0][1]);  
         }
     });
 }

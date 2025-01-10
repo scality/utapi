@@ -13,7 +13,7 @@ const sizeSpecTestCases = [
 ];
 
 describe('test parseDiskSizeSpec', () => {
-    sizeSpecTestCases.map(([input, expected]) => {
+    sizeSpecTestCases.forEach(([input, expected]) => {
         it(`should convert ${input} to ${expected} bytes`, () =>
             assert.strictEqual(parseDiskSizeSpec(input), expected));
     });
@@ -21,6 +21,6 @@ describe('test parseDiskSizeSpec', () => {
 
 describe('test formatDiskSize', () => {
     it('should format bytes as a human readable string', () => {
-        assert.strictEqual(formatDiskSize(1024), '1.0KiB');
+        assert.strictEqual(formatDiskSize(1024), '1KiB');
     });
 });

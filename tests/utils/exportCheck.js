@@ -1,4 +1,3 @@
-/* eslint-disable global-require */
 /* eslint-disable no-console */
 const assert = require('assert');
 
@@ -38,7 +37,7 @@ try {
         console.log('Test has passed!');
         passed = true;
     }
-} catch (err) {
+} catch {
     console.error('Test has failed!');
 }
 

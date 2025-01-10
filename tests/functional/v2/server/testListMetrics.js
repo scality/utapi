@@ -1,7 +1,6 @@
-/* eslint-disable func-names */
 const assert = require('assert');
 const needle = require('needle');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const aws4 = require('aws4');
 
 const { clients: warp10Clients } = require('../../../../libV2/warp10');
@@ -41,7 +40,7 @@ async function listMetrics(level, resources, start, end, credentials) {
     }
 
     const headers = {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 8100,
         method: 'POST',
         service: 's3',
@@ -58,10 +57,9 @@ async function listMetrics(level, resources, start, end, credentials) {
     };
 
     const sig = aws4.sign(headers, _credentials);
-
     return needle(
         'post',
-        `http://localhost:8100/${level}?Action=ListMetrics`,
+        `http://127.0.0.1:8100/${level}?Action=ListMetrics`,
 
         body,
         {
@@ -101,15 +99,15 @@ describe('Test listMetric', function () {
     let otherUser;
     let serviceAccount;
     let serviceUser;
-    const bucket = uuid.v4();
-    const otherBucket = uuid.v4();
+    const bucket = uuid();
+    const otherBucket = uuid();
     let totals;
 
     before(async () => {
-        account = await vaultclient.createAccountAndKeys(uuid.v4());
-        user = await vaultclient.createUserAndKeys(account, uuid.v4());
-        otherAccount = await vaultclient.createAccountAndKeys(uuid.v4());
-        otherUser = await vaultclient.createUser(otherAccount, uuid.v4());
+        account = await vaultclient.createAccountAndKeys(uuid());
+        user = await vaultclient.createUserAndKeys(account, uuid());
+        otherAccount = await vaultclient.createAccountAndKeys(uuid());
+        otherUser = await vaultclient.createUser(otherAccount, uuid());
         serviceAccount = await vaultclient.createInternalServiceAccountAndKeys();
         serviceUser = await vaultclient.ensureServiceUser(serviceAccount);
 

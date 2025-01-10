@@ -1,6 +1,6 @@
 const assert = require('assert');
 const promClient = require('prom-client');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
@@ -39,7 +39,7 @@ function assertResults(totals, series) {
     });
 }
 
-// eslint-disable-next-line func-names
+ 
 describe('Test CreateSnapshot', function () {
     this.timeout(10000);
 
@@ -50,7 +50,7 @@ describe('Test CreateSnapshot', function () {
     let snapshotTask;
 
     beforeEach(async () => {
-        prefix = uuid.v4();
+        prefix = uuid();
         warp10 = new Warp10Client({ nodeId: prefix });
 
         checkpointTask = new CreateCheckpoint({ warp10: [warp10] });
@@ -73,7 +73,7 @@ describe('Test CreateSnapshot', function () {
         const start = getTs(-300);
         const stop = getTs(-120);
         const { events, totals } = generateCustomEvents(start, stop, 100,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
+            { [uuid()]: { [uuid()]: [uuid()] } });
 
         await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-1));
@@ -95,7 +95,7 @@ describe('Test CreateSnapshot', function () {
         const start = getTs(-500);
         const stop = getTs(-50);
         const { events, totals } = generateCustomEvents(start, stop, 500,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
+            { [uuid()]: { [uuid()]: [uuid()] } });
 
         await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-400));
@@ -120,7 +120,7 @@ describe('Test CreateSnapshot', function () {
         const start = getTs(-500);
         const stop = getTs(-50);
         const { events, totals } = generateCustomEvents(start, stop, 500,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
+            { [uuid()]: { [uuid()]: [uuid()] } });
 
         await warp10.ingest({ className: 'utapi.event' }, events);
         await checkpointTask._execute(getTs(-300));
@@ -140,7 +140,7 @@ describe('Test CreateSnapshot', function () {
     });
 
     it('should not include checkpoints more recent than the execution timestamp', async () => {
-        const accounts = { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } };
+        const accounts = { [uuid()]: { [uuid()]: [uuid()] } };
         const start = getTs(-500);
         const stop = getTs(-50);
         const { events, totals } = generateCustomEvents(start, stop, 500, accounts);
@@ -168,7 +168,7 @@ describe('Test CreateSnapshot', function () {
         const start = getTs(-300);
         const stop = getTs(-120);
         const { events, totals } = generateCustomEvents(start, stop, 100,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
+            { [uuid()]: { [uuid()]: [uuid()] } });
 
         await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(-1));
