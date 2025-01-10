@@ -53,14 +53,14 @@ function buildModel(name, schema) {
     Object.keys(schema).forEach(key =>
         Object.defineProperty(Model.prototype, key, {
             // `function` is used rather than `=>` to work around context problem with `this`
-            /* eslint-disable func-names, object-shorthand */
+            /* eslint-disable object-shorthand */
             get: function () {
                 return this._get(key);
             },
             set: function (value) {
                 this._set(key, value);
             },
-            /* eslint-enable func-names, object-shorthand */
+            /* eslint-enable object-shorthand */
         }));
     return Model;
 }

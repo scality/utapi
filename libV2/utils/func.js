@@ -42,11 +42,9 @@ function comprehend(data, func) {
  * @returns {*} -
  */
 async function iterIfError(items, func, onError) {
-    let error;
-    // eslint-disable-next-line no-restricted-syntax
+    let error;     
     for (const item of items) {
-        try {
-            // eslint-disable-next-line no-await-in-loop
+        try {             
             const resp = await func(item);
             return resp;
         } catch (_error) {

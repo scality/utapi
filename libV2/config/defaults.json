@@ -38,7 +38,7 @@
     "repairSchedule": "0 */5 * * * *",
     "reindexSchedule": "0 0 0 * * Sun",
     "diskUsageSchedule": "0 */15 * * * *",
-    "bucketd": [ "localhost:9000" ],
+    "bucketd": [ "127.0.0.1:9000" ],
     "reindex": {
         "enabled": true,
         "schedule": "0 0 0 * * 6"
@@ -57,7 +57,7 @@
     },
     "metrics" : {
         "enabled": false,
-        "host": "localhost",
+        "host": "127.0.0.1",
         "ingestPort": 10902,
         "checkpointPort": 10903,
         "snapshotPort": 10904,

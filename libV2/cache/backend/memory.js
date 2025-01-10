@@ -19,13 +19,11 @@ class MemoryCache {
         this._prefix = 'utapi';
         this._expirations = {};
     }
-
-    // eslint-disable-next-line class-methods-use-this
+     
     async connect() {
         return true;
     }
-
-    // eslint-disable-next-line class-methods-use-this
+     
     async disconnect() {
         Object.values(this._expirations).forEach(clearTimeout);
         return true;

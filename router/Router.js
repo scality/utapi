@@ -1,4 +1,3 @@
-/* eslint-disable class-methods-use-this */
 const assert = require('assert');
 const url = require('url');
 const { auth, errors, policies } = require('arsenal');
@@ -254,7 +253,7 @@ class Router {
             log.trace('passed security checks');
             return cb();
         },
-        's3', requestContext);
+        's3', requestContext,  { get: true });
     }
 
     /**

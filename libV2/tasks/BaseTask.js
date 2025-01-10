@@ -25,7 +25,7 @@ class BaseTask extends Process {
         this._defaultSchedule = Now;
         this._defaultLag = 0;
         this._enableMetrics = options.enableMetrics || false;
-        this._metricsHost = options.metricsHost || 'localhost';
+        this._metricsHost = options.metricsHost || '127.0.0.1';
         this._metricsPort = options.metricsPort || 9001;
         this._metricsHandlers = null;
         this._probeServer = null;
@@ -44,7 +44,7 @@ class BaseTask extends Process {
                     },
                 )
                 .option('-l, --lag <lag>', 'Set a custom lag time in seconds', v => parseInt(v, 10))
-                .option('-n, --node-id <id>', 'Set a custom node id');
+                .option('-i --node-id <id>', 'Set a custom node id');
         }
 
         if (this._enableMetrics) {
@@ -91,8 +91,7 @@ class BaseTask extends Process {
             executionFailures,
         };
     }
-
-    // eslint-disable-next-line class-methods-use-this
+     
     _registerMetricHandlers() {
         return {};
     }
@@ -175,7 +174,7 @@ class BaseTask extends Process {
         }
     }
 
-    // eslint-disable-next-line class-methods-use-this
+     
     async _execute(timestamp) {
         logger.info(`Default Task ${timestamp}`);
     }

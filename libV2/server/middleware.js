@@ -39,7 +39,6 @@ async function initializeOasTools(spec, app) {
 }
 
 function loggerMiddleware(req, res, next) {
-    // eslint-disable-next-line no-param-reassign
     req.logger = buildRequestLogger(req);
     req.logger.info('Received request');
     return next();
@@ -83,11 +82,11 @@ function errorMiddleware(err, req, res, next) {
     // failed request validation by oas-tools
     if (err.failedValidation) {
         // You can't actually use destructing here
-        /* eslint-disable prefer-destructuring */
+         
         statusCode = errors.InvalidRequest.code;
         code = errors.InvalidRequest.message;
         message = errors.InvalidRequest.description;
-        /* eslint-enable prefer-destructuring */
+         
     }
 
     if (!err.utapiError && !config.development) {
@@ -103,7 +102,7 @@ function errorMiddleware(err, req, res, next) {
     responseLoggerMiddleware(req, res, () => httpMetricsMiddleware(req, res));
 }
 
-// eslint-disable-next-line no-unused-vars
+ 
 async function authV4Middleware(request, response, params) {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('AWS4-')) {

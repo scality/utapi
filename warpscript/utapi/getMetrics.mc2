@@ -1,4 +1,4 @@
-// @endpoint http://localhost:4802/api/v0/exec
+// @endpoint http://127.0.0.1:4802/api/v0/exec
 
 {
   'name' 'utapi/getMetrics'

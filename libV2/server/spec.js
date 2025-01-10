@@ -12,7 +12,7 @@ const moduleLogger = new LoggerContext({
 
 function _loadOpenApiSpec() {
     const spec = fs.readFileSync(path.join(__dirname, '../../openapi.yaml'), 'utf8');
-    return jsyaml.safeLoad(spec);
+    return jsyaml.load(spec);
 }
 
 function _getApiOperationIds(routes) {
@@ -25,8 +25,7 @@ function _getApiOperationIds(routes) {
                     moduleLogger
                         .with({ method: '_getApiOperationIds' })
                         .trace('Registering handler', { tag, operationId: optId });
-                    if (optIds[tag] === undefined) {
-                        // eslint-disable-next-line no-param-reassign
+                    if (optIds[tag] === undefined) {                         
                         optIds[tag] = new Set([optId]);
                     } else {
                         optIds[tag].add(optId);

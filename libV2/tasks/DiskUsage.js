@@ -48,8 +48,7 @@ class MonitorDiskUsage extends BaseTask {
                 'Manually trigger an unlock of the warp 10 database. This will cause all other options to be ignored.',
             );
     }
-
-    // eslint-disable-next-line class-methods-use-this
+     
     _registerMetricHandlers() {
         const isLocked = new promClient.Gauge({
             name: 's3_utapi_monitor_disk_usage_is_locked',
@@ -143,7 +142,7 @@ class MonitorDiskUsage extends BaseTask {
         return this._program.lock !== undefined;
     }
 
-    // eslint-disable-next-line class-methods-use-this
+     
     async _getUsage(path) {
         moduleLogger.debug(`calculating disk usage for ${path}`);
         if (!fs.existsSync(path)) {

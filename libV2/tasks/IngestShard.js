@@ -28,8 +28,7 @@ class IngestShardTask extends BaseTask {
         this._defaultLag = config.ingestionLagSeconds;
         this._stripEventUUID = options.stripEventUUID !== undefined ? options.stripEventUUID : true;
     }
-
-    // eslint-disable-next-line class-methods-use-this
+     
     _registerMetricHandlers() {
         const ingestedTotal = new promClient.Counter({
             name: 's3_utapi_ingest_shard_task_ingest_total',
@@ -151,7 +150,7 @@ class IngestShardTask extends BaseTask {
 
                         let ingestedIntoNodeId;
                         const status = await this.withWarp10(async warp10 => {
-                            // eslint-disable-next-line prefer-destructuring
+                             
                             ingestedIntoNodeId = warp10.nodeId;
                             return warp10.ingest(
                                 {
