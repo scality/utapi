@@ -23,7 +23,7 @@ jobs:
     uses: ./.github/workflows/build-ci.yaml
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-2core
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22.11.0'
         cache: yarn
     - name: install dependencies
       run: yarn install --frozen-lockfile --network-concurrency 1
@@ -43,7 +43,7 @@ jobs:
   tests-v1:
     needs:
       - build-ci
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-2core
     env:
       REINDEX_PYTHON_INTERPRETER: python3
     name: ${{ matrix.test.name }}
@@ -107,7 +107,7 @@ jobs:
           warpscript.maxops: '10000000'
           ENABLE_SENSISION: 't'
         options: >-
-          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-cmd "curl 127.0.0.1:4802/api/v0/check"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -124,7 +124,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22.11.0'
         cache: yarn
     - uses: actions/setup-python@v5
       with:
@@ -141,7 +141,7 @@ jobs:
   tests-v2-with-vault:
     needs:
       - build-ci
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-2core
     env:
       REINDEX_PYTHON_INTERPRETER: python3
     services:
@@ -188,7 +188,7 @@ jobs:
         - 8082:8082
         - 9718:9718
         options: >-
-          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-cmd "curl 127.0.0.1:4802/api/v0/check"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -201,7 +201,7 @@ jobs:
         - 8700:8700
         - 8800:8800
         options: >-
-          --health-cmd "curl http://localhost:8500/_/healthcheck"
+          --health-cmd "curl http://127.0.0.1:8500/_/healthcheck"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -213,7 +213,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22.11.0'
         cache: yarn
     - uses: actions/setup-python@v5
       with:
@@ -242,11 +242,10 @@ jobs:
         tmate-server-rsa-fingerprint: ${{ secrets.TMATE_SERVER_RSA_FINGERPRINT }}
         tmate-server-ed25519-fingerprint: ${{ secrets.TMATE_SERVER_ED25519_FINGERPRINT }}
       if: ${{ ( github.event.inputs.debug == true || github.event.inputs.debug == 'true' ) }}
-
   tests-v2-without-sensision:
     needs:
       - build-ci
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-2core
     env:
       REINDEX_PYTHON_INTERPRETER: python3
     name: ${{ matrix.test.name }}
@@ -309,7 +308,7 @@ jobs:
         - 8082:8082
         - 9718:9718
         options: >-
-          --health-cmd "curl localhost:4802/api/v0/check"
+          --health-cmd "curl 127.0.0.1:4802/api/v0/check"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -322,7 +321,7 @@ jobs:
         - 8700:8700
         - 8800:8800
         options: >-
-          --health-cmd "curl http://localhost:8500/_/healthcheck"
+          --health-cmd "curl http://127.0.0.1:8500/_/healthcheck"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 10
@@ -334,7 +333,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22.11.0'
         cache: yarn
     - uses: actions/setup-python@v5
       with:
