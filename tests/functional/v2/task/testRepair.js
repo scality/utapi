@@ -1,6 +1,6 @@
 const assert = require('assert');
 const promClient = require('prom-client');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { convertTimestamp } = require('../../../../libV2/utils');
@@ -40,7 +40,7 @@ function assertResults(totals, series) {
     });
 }
 
-// eslint-disable-next-line func-names
+ 
 describe('Test Repair', function () {
     this.timeout(10000);
 
@@ -49,7 +49,7 @@ describe('Test Repair', function () {
     let repairTask;
 
     beforeEach(async () => {
-        prefix = uuid.v4();
+        prefix = uuid();
         warp10 = new Warp10Client({ nodeId: prefix });
         repairTask = new RepairTask({ warp10: [warp10], enableMetrics: true });
         await repairTask.setup();
@@ -65,7 +65,7 @@ describe('Test Repair', function () {
         const start = getTs(-300);
         const stop = getTs(-120);
         const { events, totals } = generateCustomEvents(start, stop, 100,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } });
+            { [uuid()]: { [uuid()]: [uuid()] } });
 
         await warp10.ingest({ className: 'utapi.repair.event' }, events);
         await repairTask._execute(getTs(0));
@@ -84,7 +84,7 @@ describe('Test Repair', function () {
     });
 
     it('should only include events not in an existing correction', async () => {
-        const accounts = { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } };
+        const accounts = { [uuid()]: { [uuid()]: [uuid()] } };
 
         const { events: historicalEvents } = generateCustomEvents(
             getTs(-500),
@@ -121,7 +121,7 @@ describe('Test Repair', function () {
             getTs(-300),
             getTs(-120),
             100,
-            { [uuid.v4()]: { [uuid.v4()]: [uuid.v4()] } },
+            { [uuid()]: { [uuid()]: [uuid()] } },
         );
 
         await warp10.ingest({ className: 'utapi.repair.event' }, events);

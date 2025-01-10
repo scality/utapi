@@ -1,6 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const { constants: arsenalConstants, models: arsenalModels } = require('arsenal');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
@@ -24,8 +24,7 @@ const accountRecord = {
     objD: 1,
 };
 
-
-// eslint-disable-next-line func-names
+ 
 describe('Test ReindexTask', function () {
     this.timeout(120000);
 
@@ -37,7 +36,7 @@ describe('Test ReindexTask', function () {
     before(() => bucketd.start());
 
     beforeEach(() => {
-        prefix = uuid.v4();
+        prefix = uuid();
         warp10 = new Warp10Client({ nodeId: prefix });
         reindexTask = new ReindexTask({ warp10: [warp10] });
         reindexTask._program = { bucket: [], nodeId: prefix };
@@ -188,12 +187,10 @@ describe('Test ReindexTask', function () {
                 // Once the timeout promise resolves, bucketd is able to be called.
                 // If we make a call after 10 seconds, this shows that retries
                 // have been occuring during bucketd downtime.
-                () => {
-                    return {
-                        key: 'foo',
-                        value: 'bar',
-                    };
-                },
+                () => ({
+                    key: 'foo',
+                    value: 'bar',
+                }),
             );
 
             const reindexPromise = new Promise((resolve, reject) => {

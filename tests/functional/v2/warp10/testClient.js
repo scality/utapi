@@ -1,4 +1,4 @@
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 const assert = require('assert');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
@@ -15,7 +15,7 @@ const testWarpscript = "CLEAR [ 'OK' ]";
 describe('Test Warp Client', () => {
     let className;
     beforeEach(() => {
-        className = `utapi.test.${uuid.v4().replace(/-/g, '')}`;
+        className = `utapi.test.${uuid().replace(/-/g, '')}`;
     });
 
     it('should ingest records', async () => {
@@ -27,7 +27,7 @@ describe('Test Warp Client', () => {
     it('should fetch records', async () => {
         await warp10.ingest({ className }, testValues);
         const res = await warp10.fetch({ className, start: `${new Date().getTime()}000`, stop: -100 });
-        const parsed = JSON.parse(res.result[0])[0];
+        const parsed = res.result[0];
         assert.strictEqual(parsed.c, className);
         assert.deepStrictEqual(
             parsed.v.map(v => v[0]),
@@ -44,10 +44,10 @@ describe('Test Warp Client', () => {
         const ev = generateFakeEvents(startTime, endTime, 100);
         const count = await warp10.ingest({ className }, ev);
         let fetchResp = await warp10.fetch({ className, start: endTime, stop: startTime });
-        assert.strictEqual(JSON.parse(fetchResp.result[0]).length, 1);
-        assert.strictEqual(JSON.parse(fetchResp.result[0])[0].v.length, count);
+        assert.strictEqual(fetchResp.result.length, 1);
+        assert.strictEqual(fetchResp.result[0].v.length, count);
         await warp10.delete({ className, start: startTime, end: endTime });
         fetchResp = await warp10.fetch({ className, start: endTime, stop: startTime });
-        assert.strictEqual(JSON.parse(fetchResp.result[0]).length, 0);
+        assert.strictEqual(fetchResp.result.length, 0);
     });
 });

@@ -24,7 +24,6 @@ function execShim(version, env, callback) {
     });
 }
 
-// eslint-disable-next-line func-names
 describe('Test v2 Feature Toggle', function () {
     this.timeout(10000);
 

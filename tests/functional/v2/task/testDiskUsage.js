@@ -1,7 +1,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const promClient = require('prom-client');
-const uuid = require('uuid');
+const { v4: uuid } = require('uuid');
 
 const { MonitorDiskUsage } = require('../../../../libV2/tasks');
 const { getFolderSize } = require('../../../../libV2/utils');
@@ -25,7 +25,7 @@ const testCases = [
     { count: 100, size: 1024 * 1024, expected: 104857600 },
 ];
 
-// eslint-disable-next-line func-names
+ 
 describe('Test MonitorDiskUsage', () => {
     let task;
     let path;
@@ -37,16 +37,16 @@ describe('Test MonitorDiskUsage', () => {
     // In an effort to mitigate this we calculate the size of an empty directory
     // and file and add it to our expected values.
     before(async () => {
-        let dir = `/tmp/diskusage-${uuid.v4()}`;
+        let dir = `/tmp/diskusage-${uuid()}`;
         fillDir(dir, { count: 0, size: 1 });
         emptyDirSize = await getFolderSize(dir);
-        dir = `/tmp/diskusage-${uuid.v4()}`;
+        dir = `/tmp/diskusage-${uuid()}`;
         fillDir(dir, { count: 1, size: 1 });
         emptyFileSize = await getFolderSize(dir) - emptyDirSize - 1;
     });
 
     beforeEach(async () => {
-        path = `/tmp/diskusage-${uuid.v4()}`;
+        path = `/tmp/diskusage-${uuid()}`;
         fs.mkdirSync(path);
         task = new MonitorDiskUsageShim({ warp10: [], enableMetrics: true });
         task._path = path;
@@ -59,7 +59,7 @@ describe('Test MonitorDiskUsage', () => {
         promClient.register.clear();
     });
 
-    testCases.map(testCase => {
+    testCases.forEach(testCase => {
         it(`should calculate disk usage for ${testCase.count} files of ${testCase.size} bytes each`,
             async () => {
                 fillDir(`${path}/leveldb`, testCase);

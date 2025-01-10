@@ -73,6 +73,7 @@ describe('Client connections', async function test() {
             Object.entries(expected).forEach(([k, v]) => {
                 assert.strictEqual(data[0][k], v);
             });
+            return done();
         });
     };
 
@@ -112,27 +113,37 @@ describe('Client connections', async function test() {
             }
             assert.strictEqual(res, 'OK');
 
-            // Requests made with async.times will stay open when they occur
-            // during the failover window so and async.race is used to resolve
-            async.race([
-                () => setTimeout(() => this.loadgen.emit('finished'), 3000),
-                () => async.times(
-                    100,
-                    () => makeRequest(this, done),
-                    () => this.loadgen.emit('finished'),
-                ),
+            return async.race([
+                cb => {
+                    setTimeout(() => {
+                        this.loadgen.emit('finished');
+                        cb();
+                    }, 3000);
+                    return undefined;
+                },
+                cb => {
+                    async.times(
+                        100,
+                        (n, next) => makeRequest(this, next),
+                        err => {
+                            if (err) {return cb(err);}
+                            this.loadgen.emit('finished');
+                            return cb();
+                        },
+                    );
+                    return undefined;
+                },
             ]);
         });
 
-        sentinelSub.on('message', (chan, message) => {
-            // wait until the old master is added as a replica so any stale connections would be transfered
+        // Add return statement here
+        return sentinelSub.once('message', (chan, message) => {
             assert.strictEqual(chan, '+slave');
-            // checks that ports differ between old and new master
             const data = message.split(' ');
             const [oldPort, newPort] = [data[3], data[7]];
             assert.notStrictEqual(oldPort, newPort);
 
-            return this.loadgen.on('finished', () => {
+            return this.loadgen.once('finished', () => {
                 assert(this.requestsDuringFailover > 1);
                 return done();
             });

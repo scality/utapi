@@ -11,8 +11,7 @@ const { getMetricValues } = require('../../../utils/prom');
 
 const METRICS_SERVER_PORT = 10999;
 
-class CustomTask extends BaseTask {
-    // eslint-disable-next-line class-methods-use-this
+class CustomTask extends BaseTask {     
     _registerMetricHandlers() {
         const foo = new promClient.Gauge({
             name: 's3_utapi_custom_task_foo_total',
@@ -48,7 +47,7 @@ describe('Test BaseTask metrics', () => {
     it('should start a metrics server on the provided port', async () => {
         const res = await needle(
             'get',
-            `http://localhost:${METRICS_SERVER_PORT}${DEFAULT_METRICS_ROUTE}`,
+            `http://127.0.0.1:${METRICS_SERVER_PORT}${DEFAULT_METRICS_ROUTE}`,
         );
         const lines = res.body.split('\n');
         const first = lines[0];
