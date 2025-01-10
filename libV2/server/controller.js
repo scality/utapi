@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 const { apiOperations, apiOperationMiddleware } = require('./spec');
 const { middleware: utapiMiddleware } = require('./middleware');
 const RequestContext = require('../models/RequestContext');
@@ -23,7 +22,6 @@ class APIController {
 
     static _safeRequire(path) {
         try {
-            // eslint-disable-next-line import/no-dynamic-require, global-require
             return require(path);
         } catch (error) {
             if (error.code !== 'MODULE_NOT_FOUND') {

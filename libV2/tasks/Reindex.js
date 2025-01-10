@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 const async = require('async');
 const { mpuBucketPrefix } = require('arsenal').constants;
 const BaseTask = require('./BaseTask');
@@ -60,13 +59,13 @@ class ReindexTask extends BaseTask {
 
         for await (const obj of metadata.listObjects(bucket)) {
             if (obj.value.isDeleteMarker || obj.value.isPHD) {
-                // eslint-disable-next-line no-continue
+                 
                 continue;
             }
 
             if (!Number.isInteger(obj.value['content-length'])) {
                 logger.debug('object missing content-length, not including in count');
-                // eslint-disable-next-line no-continue
+                 
                 continue;
             }
 

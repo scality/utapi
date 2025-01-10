@@ -33,13 +33,11 @@ class Process extends EventEmitter {
         await this._join();
     }
 
-    /* eslint-disable class-methods-use-this,no-empty-function */
     async _setup() {}
 
     async _start() {}
 
-    async _join() {}
-    /* eslint-enable class-methods-use-this,no-empty-function */
+    async _join() {}     
 }
 
 module.exports = Process;

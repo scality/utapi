@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop, no-restricted-syntax, no-loop-func */
 const async = require('async');
 const { jsutil } = require('arsenal');
 const BaseTask = require('./BaseTask');
@@ -206,7 +205,7 @@ class MigrateTask extends BaseTask {
 
     async _findOldestSnapshot(level, resource, beginTimestamp) {
         let pos = beginTimestamp;
-        // eslint-disable-next-line no-constant-condition
+         
         while (true) {
             const resp = await this.withWarp10(async warp10 => warp10.fetch({
                 className: 'utapi.snapshot',
@@ -249,7 +248,7 @@ class MigrateTask extends BaseTask {
         const incomingBytes = (a.incomingBytes || 0) + (b.incomingBytes || 0);
         const outgoingBytes = (a.outgoingBytes || 0) + (b.outgoingBytes || 0);
         const operationKeys = new Set(Object.keys(a.operations || {}).concat(Object.keys(b.operations || {})));
-        // eslint-disable-next-line no-unused-vars
+         
         const operations = comprehend(Array.from(operationKeys), (_, key) => (
             {
                 key,

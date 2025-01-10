@@ -50,8 +50,7 @@ class VaultWrapper extends auth.Vault {
                     })));
                 }));
     }
-
-    // eslint-disable-next-line class-methods-use-this
+     
     authenticateRequest(request, action, level, resources) {
         const policyContext = new policies.RequestContext(
             request.headers,
@@ -93,7 +92,7 @@ class VaultWrapper extends auth.Vault {
                     }
 
                     resolve({ authed: true, authInfo, authorizedResources });
-                }, 's3', [policyContext],
+                }, 's3', [policyContext], { get: true },
             );
         });
     }

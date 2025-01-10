@@ -5,8 +5,7 @@ collectDefaultMetrics({
     gcDurationBuckets: [0.001, 0.01, 0.1, 1, 2, 5],
 });
 
-async function prometheusMetrics(ctx) {
-    // eslint-disable-next-line no-param-reassign
+async function prometheusMetrics(ctx) {     
     ctx.results.statusCode = 200;
     ctx.results.body = await register.metrics();
 }

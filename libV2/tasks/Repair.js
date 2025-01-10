@@ -20,8 +20,7 @@ class RepairTask extends BaseTask {
         this._defaultSchedule = config.repairSchedule;
         this._defaultLag = repairLagSecs;
     }
-
-    // eslint-disable-next-line class-methods-use-this
+     
     _registerMetricHandlers() {
         const created = new promClient.Counter({
             name: 's3_utapi_repair_task_created_total',

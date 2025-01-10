@@ -1,5 +1,4 @@
 const http = require('http');
-// eslint-disable-next-line import/no-extraneous-dependencies
 const aws4 = require('aws4');
 
 // Input AWS access key, secret key, and session token.
