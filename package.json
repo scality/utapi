@@ -19,13 +19,13 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^1.0.14",
-    "arsenal": "git+https://github.com/scality/arsenal#41e0675c9aa9882fe71a0976b03ef64e3785fe23",
+    "arsenal": "git+https://github.com/scality/arsenal#c46bc2a1fd7cba334a4681758ce21c8065eba5ef",
     "async": "^3.2.0",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.8.0",
     "backo": "^1.1.0",
     "body-parser": "^1.19.0",
-    "bucketclient": "scality/bucketclient#ad53052bf98bb730c59d656159b0b656d6e40a30",
+    "bucketclient": "scality/bucketclient#00ba1466104720f5fc2cf8051b0b0c5cbcd47f0a",
     "byte-size": "^7.0.0",
     "commander": "^5.1.0",
     "cron-parser": "^2.15.0",
@@ -57,9 +57,7 @@
     "**/@yarnpkg/fslib": "2.4.0",
     "**/@yarnpkg/libzip": "2.2.1",
     "**/@yarnpkg/json-proxy": "2.1.0",
-    "**/@yarnpkg/parsers": "2.3.0",
-    "fcntl": "github:scality/node-fcntl#fead179c11f35c5a435c6057b672311821f08b60",
-    "arsenal": "git+https://github.com/scality/arsenal#41e0675c9aa9882fe71a0976b03ef64e3785fe23"
+    "**/@yarnpkg/parsers": "2.3.0"
   },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional",
