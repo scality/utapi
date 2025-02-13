@@ -58,7 +58,8 @@
     "**/@yarnpkg/libzip": "2.2.1",
     "**/@yarnpkg/json-proxy": "2.1.0",
     "**/@yarnpkg/parsers": "2.3.0",
-    "fcntl": "github:scality/node-fcntl#fead179c11f35c5a435c6057b672311821f08b60"
+    "fcntl": "github:scality/node-fcntl#fead179c11f35c5a435c6057b672311821f08b60",
+    "arsenal": "git+https://github.com/scality/arsenal#8.2.1"
   },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional",
