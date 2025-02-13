@@ -31,7 +31,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22'
         cache: yarn
     - name: install dependencies
       run: yarn install --frozen-lockfile --network-concurrency 1
@@ -124,7 +124,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22'
         cache: yarn
     - uses: actions/setup-python@v5
       with:
@@ -213,7 +213,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22'
         cache: yarn
     - uses: actions/setup-python@v5
       with:
@@ -334,7 +334,7 @@ jobs:
         lfs: true
     - uses: actions/setup-node@v4
       with:
-        node-version: '16.13.2'
+        node-version: '22'
         cache: yarn
     - uses: actions/setup-python@v5
       with:
