@@ -22,7 +22,6 @@ const getClient = () => new CacheClient({
 
 const warp10 = warp10Clients[0];
 
- 
 describe('Test getStorage handler', function () {
     this.timeout(120000);
     let client;

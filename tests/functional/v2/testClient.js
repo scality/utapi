@@ -22,7 +22,6 @@ const getClient = () => new CacheClient({
     ),
 });
 
- 
 describe('Test UtapiClient', function () {
     this.timeout(10000);
 

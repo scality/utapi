@@ -118,32 +118,29 @@ describe('Client connections', async function test() {
                     setTimeout(() => {
                         this.loadgen.emit('finished');
                         cb();
-                    }, 3000);
-                    return undefined;
+                    }, 5000);
                 },
                 cb => {
                     async.times(
                         100,
                         (n, next) => makeRequest(this, next),
                         err => {
-                            if (err) {return cb(err);}
+                            if (err) { return cb(err); }
                             this.loadgen.emit('finished');
                             return cb();
                         },
                     );
-                    return undefined;
                 },
             ]);
         });
 
-        // Add return statement here
-        return sentinelSub.once('message', (chan, message) => {
+        return sentinelSub.on('message', (chan, message) => {
             assert.strictEqual(chan, '+slave');
             const data = message.split(' ');
             const [oldPort, newPort] = [data[3], data[7]];
             assert.notStrictEqual(oldPort, newPort);
 
-            return this.loadgen.once('finished', () => {
+            return this.loadgen.on('finished', () => {
                 assert(this.requestsDuringFailover > 1);
                 return done();
             });

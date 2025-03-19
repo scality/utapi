@@ -39,7 +39,6 @@ function assertResults(totals, series) {
     });
 }
 
- 
 describe('Test CreateSnapshot', function () {
     this.timeout(10000);
 

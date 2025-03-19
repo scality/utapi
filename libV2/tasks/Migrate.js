@@ -205,7 +205,6 @@ class MigrateTask extends BaseTask {
 
     async _findOldestSnapshot(level, resource, beginTimestamp) {
         let pos = beginTimestamp;
-         
         while (true) {
             const resp = await this.withWarp10(async warp10 => warp10.fetch({
                 className: 'utapi.snapshot',
@@ -248,7 +247,6 @@ class MigrateTask extends BaseTask {
         const incomingBytes = (a.incomingBytes || 0) + (b.incomingBytes || 0);
         const outgoingBytes = (a.outgoingBytes || 0) + (b.outgoingBytes || 0);
         const operationKeys = new Set(Object.keys(a.operations || {}).concat(Object.keys(b.operations || {})));
-         
         const operations = comprehend(Array.from(operationKeys), (_, key) => (
             {
                 key,

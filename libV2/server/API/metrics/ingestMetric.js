@@ -19,7 +19,7 @@ async function ingestMetric(ctx, params) {
         await Promise.all(metrics.map(m => cacheClient.pushMetric(m)));
     } catch {
         throw errors.ServiceUnavailable;
-    }     
+    }
     ctx.results.statusCode = 200;
 }
 

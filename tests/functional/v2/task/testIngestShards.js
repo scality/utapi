@@ -45,7 +45,6 @@ function assertResults(events, series) {
     });
 }
 
- 
 describe('Test IngestShards', function () {
     this.timeout(10000);
 

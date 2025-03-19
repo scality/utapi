@@ -50,7 +50,7 @@ class VaultWrapper extends auth.Vault {
                     })));
                 }));
     }
-     
+
     authenticateRequest(request, action, level, resources) {
         const policyContext = new policies.RequestContext(
             request.headers,

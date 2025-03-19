@@ -20,7 +20,7 @@ class CreateCheckpoint extends BaseTask {
         this._defaultSchedule = config.checkpointSchedule;
         this._defaultLag = checkpointLagSecs;
     }
-     
+
     _registerMetricHandlers() {
         const created = new promClient.Counter({
             name: 's3_utapi_create_checkpoint_created_total',

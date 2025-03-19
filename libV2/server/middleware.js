@@ -82,11 +82,9 @@ function errorMiddleware(err, req, res, next) {
     // failed request validation by oas-tools
     if (err.failedValidation) {
         // You can't actually use destructing here
-         
         statusCode = errors.InvalidRequest.code;
         code = errors.InvalidRequest.message;
         message = errors.InvalidRequest.description;
-         
     }
 
     if (!err.utapiError && !config.development) {
@@ -102,7 +100,6 @@ function errorMiddleware(err, req, res, next) {
     responseLoggerMiddleware(req, res, () => httpMetricsMiddleware(req, res));
 }
 
- 
 async function authV4Middleware(request, response, params) {
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('AWS4-')) {

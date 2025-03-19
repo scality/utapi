@@ -25,7 +25,7 @@ function _getApiOperationIds(routes) {
                     moduleLogger
                         .with({ method: '_getApiOperationIds' })
                         .trace('Registering handler', { tag, operationId: optId });
-                    if (optIds[tag] === undefined) {                         
+                    if (optIds[tag] === undefined) {
                         optIds[tag] = new Set([optId]);
                     } else {
                         optIds[tag].add(optId);

@@ -20,7 +20,7 @@ class CreateSnapshot extends BaseTask {
         this._defaultSchedule = config.snapshotSchedule;
         this._defaultLag = snapshotLagSecs;
     }
-     
+
     _registerMetricHandlers() {
         const created = new promClient.Counter({
             name: 's3_utapi_create_snapshot_created_total',

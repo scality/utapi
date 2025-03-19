@@ -137,7 +137,7 @@ class BucketD {
     }
 
     _initiateRoutes() {
-        this._app.param('bucketName', (req, res, next, bucketName) => {             
+        this._app.param('bucketName', (req, res, next, bucketName) => {
             if (bucketName === constants.usersBucket) {
                 req.body = this._getUsersBucketResponse(req);
             } else if (req.query.listingType === 'MPU') {
@@ -157,7 +157,6 @@ class BucketD {
                     req.body = req.body.Contents;
                 }
             }
-             
             next();
         });
 

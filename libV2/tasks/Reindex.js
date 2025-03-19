@@ -59,13 +59,11 @@ class ReindexTask extends BaseTask {
 
         for await (const obj of metadata.listObjects(bucket)) {
             if (obj.value.isDeleteMarker || obj.value.isPHD) {
-                 
                 continue;
             }
 
             if (!Number.isInteger(obj.value['content-length'])) {
                 logger.debug('object missing content-length, not including in count');
-                 
                 continue;
             }
 

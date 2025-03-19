@@ -11,7 +11,7 @@ const { getMetricValues } = require('../../../utils/prom');
 
 const METRICS_SERVER_PORT = 10999;
 
-class CustomTask extends BaseTask {     
+class CustomTask extends BaseTask {
     _registerMetricHandlers() {
         const foo = new promClient.Gauge({
             name: 's3_utapi_custom_task_foo_total',

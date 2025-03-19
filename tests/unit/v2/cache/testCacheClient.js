@@ -36,7 +36,7 @@ describe('Test high level cache client', () => {
             const shard = shardFromTimestamp(event.timestamp);
             if (es[shard]) {
                 es[shard].push(event);
-            } else {                 
+            } else {
                 es[shard] = [event];
             }
             return es;
@@ -58,7 +58,6 @@ describe('Test high level cache client', () => {
             if (es[shard]) {
                 es[shard].push(event);
             } else {
-                 
                 es[shard] = [event];
             }
             return es;

@@ -111,7 +111,6 @@ describe('Test middleware', () => {
                     },
                 },
             });
-        
             req.ctx = new RequestContext(req);
             middleware.httpMetricsMiddleware(req, resp);
             await assertMetricValue('s3_utapi_http_requests_total', 1);

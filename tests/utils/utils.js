@@ -38,7 +38,6 @@ function getAllResourceTypeKeys() {
         return counters.concat(keys);
     });
     // Concatenate each array of resourceType keys into one single array.
-     
     return [].concat.apply([], allResourceTypeKeys);
 }
 

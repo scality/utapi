@@ -136,7 +136,7 @@ class Config {
         return Array.from(
             new Set([
                 ...Object.keys(parent),
-                ...Object.keys(child)],             
+                ...Object.keys(child)],
             ))
             .reduce((ret, key) => {
                 ret[key] = this._recursiveUpdate(parent[key], child[key]);

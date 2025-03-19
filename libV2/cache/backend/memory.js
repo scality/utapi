@@ -19,11 +19,11 @@ class MemoryCache {
         this._prefix = 'utapi';
         this._expirations = {};
     }
-     
+
     async connect() {
         return true;
     }
-     
+
     async disconnect() {
         Object.values(this._expirations).forEach(clearTimeout);
         return true;

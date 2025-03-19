@@ -91,7 +91,7 @@ class BaseTask extends Process {
             executionFailures,
         };
     }
-     
+
     _registerMetricHandlers() {
         return {};
     }
@@ -174,7 +174,6 @@ class BaseTask extends Process {
         }
     }
 
-     
     async _execute(timestamp) {
         logger.info(`Default Task ${timestamp}`);
     }

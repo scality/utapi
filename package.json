@@ -1,7 +1,7 @@
 {
   "name": "utapi",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "version": "8.1.16",
   "description": "API for tracking resource utilization and reporting metrics",
@@ -31,7 +31,7 @@
     "cron-parser": "^4.9.0",
     "diskusage": "^1.2.0",
     "express": "^4.21.2",
-    "get-folder-size": "^5.0.0",
+    "get-folder-size": "^2.0.1",
     "ioredis": "^5.4.2",
     "js-yaml": "^4.1.0",
     "level-mem": "^5.0.1",

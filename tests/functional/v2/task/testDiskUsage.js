@@ -25,7 +25,6 @@ const testCases = [
     { count: 100, size: 1024 * 1024, expected: 104857600 },
 ];
 
- 
 describe('Test MonitorDiskUsage', () => {
     let task;
     let path;

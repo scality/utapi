@@ -60,7 +60,6 @@ class VaultClient {
             const res = /^https?:\/\/([^:]*)(:[0-9]+)?\/?$/.exec(
                 process.env.VAULT_ENDPOINT,
             );
-             
             [host] = res[1];
             port = parseInt(res[2].substring(1), 10);
             const https = process.env.VAULT_ENDPOINT.startsWith('https://');

@@ -23,7 +23,8 @@ function positiveOrZero(value) {
 async function listMetric(ctx, params) {
     const labelName = serviceToWarp10Label[params.level];
     const resources = params.body[params.level];
-    let [start, end] = params.body.timeRange; // eslint-disable-line prefer-const
+    const start = params.body.timeRange[0];
+    let end = params.body.timeRange[1];
     if (end === undefined) {
         end = Date.now();
     }

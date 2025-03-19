@@ -42,9 +42,9 @@ function comprehend(data, func) {
  * @returns {*} -
  */
 async function iterIfError(items, func, onError) {
-    let error;     
+    let error;
     for (const item of items) {
-        try {             
+        try {
             const resp = await func(item);
             return resp;
         } catch (_error) {

@@ -39,7 +39,6 @@ function assertResults(totals, series) {
     });
 }
 
- 
 describe('Test CreateCheckpoint', function () {
     this.timeout(10000);
 

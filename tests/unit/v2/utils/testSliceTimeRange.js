@@ -86,7 +86,7 @@ describe('Test sliceTimeRange', () => {
             start, end, step, expected,
         } = testCase;
         it(`should correctly slice range ${start}-${end} with step ${step}`, () => {
-            const results = [];            
+            const results = [];
             for (const item of sliceTimeRange(start, end, step)) {
                 results.push(item);
             }

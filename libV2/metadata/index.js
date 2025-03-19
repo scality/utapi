@@ -44,7 +44,6 @@ function _listObject(bucket, prefix, hydrateFunc) {
                 let res;
 
                 try {
-                     
                     res = await async.retryable(ebConfig, _listingWrapper)(bucket, { ...listingParams, gt });
                 } catch (error) {
                     moduleLogger.error('Error during listing', { error });

@@ -24,7 +24,6 @@ const accountRecord = {
     objD: 1,
 };
 
- 
 describe('Test ReindexTask', function () {
     this.timeout(120000);
 

@@ -40,7 +40,6 @@ function assertResults(totals, series) {
     });
 }
 
- 
 describe('Test Repair', function () {
     this.timeout(10000);
 

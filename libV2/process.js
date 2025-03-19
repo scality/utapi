@@ -37,7 +37,7 @@ class Process extends EventEmitter {
 
     async _start() {}
 
-    async _join() {}     
+    async _join() {}
 }
 
 module.exports = Process;

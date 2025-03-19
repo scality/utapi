@@ -20,7 +20,6 @@ class RepairTask extends BaseTask {
         this._defaultSchedule = config.repairSchedule;
         this._defaultLag = repairLagSecs;
     }
-     
     _registerMetricHandlers() {
         const created = new promClient.Counter({
             name: 's3_utapi_repair_task_created_total',
