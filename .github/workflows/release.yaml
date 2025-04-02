@@ -3,13 +3,6 @@ name: release
 on:
   workflow_dispatch:
     inputs:
-      dockerfile:
-        description: Dockerfile to build image from
-        type: choice
-        options:
-          - images/nodesvc-base/Dockerfile
-          - Dockerfile
-        required: true
       tag:
         type: string
         description: 'Tag to be released'
@@ -27,8 +20,19 @@ jobs:
       namespace: ${{ github.repository_owner }}
       name: ${{ github.event.repository.name }}
       context: .
-      file: ${{ github.event.inputs.dockerfile}}
-      tag: ${{ github.event.inputs.tag }}
+      tag: ${{ inputs.tag }}
+
+  build-nodesvc-base:
+    needs: build
+    uses: scality/workflows/.github/workflows/docker-build.yaml@v2
+    with:
+      namespace: ${{ github.repository_owner }}
+      name: ${{ github.event.repository.name }}
+      context: .
+      file: images/nodesvc-base/Dockerfile
+      tag: ${{ inputs.tag }}-nodesvc-base
+      build-args: |
+        UTAPI_VERSION=${{ inputs.tag }}
 
   release:
     if: ${{ inputs.create-github-release }}
