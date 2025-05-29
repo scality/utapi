@@ -973,9 +973,9 @@ bson@^1.1.4:
   resolved "https://registry.yarnpkg.com/bson/-/bson-1.1.6.tgz#fb819be9a60cd677e0853aee4ca712a785d6618a"
   integrity sha512-EvVNVeGo4tHxwi8L6bPj3y3itEvStdwvvlojVxxbyYfoaxJ6keLgrTuKdyfEAszFK+H3olzBuafE0yoh0D1gdg==
 
-bucketclient@scality/bucketclient#8.1.9:
-  version "8.1.9"
-  resolved "https://codeload.github.com/scality/bucketclient/tar.gz/acbd1c4f6a0e337d19fc6ebc18d31504cec88b35"
+bucketclient@scality/bucketclient#8.1.14:
+  version "8.1.14"
+  resolved "https://codeload.github.com/scality/bucketclient/tar.gz/b63aea763c3ce04bf315511aaca51f410ab75cfa"
   dependencies:
     arsenal "git+https://github.com/scality/Arsenal#8.1.87"
     httpagent "git+https://github.com/scality/httpagent#1.0.5"
@@ -2441,7 +2441,6 @@ http-signature@~1.2.0:
 
 "httpagent@git+https://github.com/scality/httpagent#1.0.5":
   version "1.0.5"
-  uid ec4e28f05001eaa6528daa174dbeab9e1df40ff6
   resolved "git+https://github.com/scality/httpagent#ec4e28f05001eaa6528daa174dbeab9e1df40ff6"
   dependencies:
     agentkeepalive "^4.2.1"
