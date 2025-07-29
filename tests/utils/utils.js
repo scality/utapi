@@ -123,27 +123,36 @@ function makeUtapiClientRequest({ timeRange, resource }, cb) {
     req.end();
 }
 
-function makeUtapiGenericClientRequest(reqHeader, reqBody, cb) {
+function makeUtapiGenericClientRequest(reqHeader, reqBody, cb, useToken = false) {
     const header = Object.assign({
         host: 'localhost',
         port: 8100,
         service: 's3',
     }, reqHeader);
+
     const credentials = {
         accessKeyId: 'accessKey1',
         secretAccessKey: 'verySecretKey1',
     };
+
+    if (useToken) {
+        credentials.sessionToken = 'a'.repeat(128);
+    }
+
     const options = aws4.sign(header, credentials);
     const req = http.request(options, res => {
         const body = [];
         res.on('data', chunk => body.push(chunk));
         res.on('end', () => cb(null, `${body.join('')}`));
     });
+
     req.on('error', err => cb(err));
+
     if (header.method === 'POST') {
         const body = Object.assign({}, reqBody);
         req.write(JSON.stringify(body));
     }
+
     req.end();
 }
 
