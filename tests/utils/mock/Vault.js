@@ -10,13 +10,25 @@ class Vault {
     }
 
     _onRequest(req, res) {
-        res.writeHead(200);
         const { query } = url.parse(req.url, true);
         if (query.Action === 'AccountsCanonicalIds') {
             const body = JSON.stringify([{ canonicalId: CANONICAL_ID, accountId: query.accountIds }]);
+            res.writeHead(200);
             res.write(body);
+            res.end();
+            return;
         }
-        return res.end();
+
+        const reqCtx = JSON.parse(query.requestContext);
+        if (reqCtx.headers['x-amz-security-token'] && !query.securityToken) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.write(JSON.stringify({ code: 'InvalidSecurityToken', message: 'Security token is missing' }));
+            res.end();
+            return;
+        }
+
+        res.writeHead(200);
+        res.end();
     }
 
     start() {
