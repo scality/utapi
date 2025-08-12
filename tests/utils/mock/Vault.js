@@ -1,5 +1,6 @@
 const http = require('http');
 const url = require('url');
+const querystring = require('querystring');
 
 const config = require('../../../lib/Config');
 const { CANONICAL_ID } = require('./values');
@@ -19,12 +20,34 @@ class Vault {
             return;
         }
 
-        const reqCtx = JSON.parse(query.requestContext);
-        if (reqCtx.headers['x-amz-security-token'] && !query.securityToken) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.write(JSON.stringify({ code: 'InvalidSecurityToken', message: 'Security token is missing' }));
-            res.end();
+        if (req.method === 'GET') {
+            Vault._checkSecurityToken(query, res);
             return;
+        } else if (req.method === 'POST') {
+            const body = [];
+            req.on('data', chunk => {
+                body.push(chunk);
+            });
+            req.on('end', () => {
+                const data = querystring.parse(Buffer.concat(body).toString());
+                Vault._checkSecurityToken(data, res);
+            });
+            return;
+        }
+
+        res.writeHead(200);
+        res.end();
+    }
+
+    static _checkSecurityToken(reqData, res) {
+        if (reqData.requestContext) {
+            const reqCtx = JSON.parse(reqData.requestContext);
+            if (reqCtx?.headers['x-amz-security-token'] && !reqData.securityToken) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.write(JSON.stringify({ code: 'InvalidSecurityToken', message: 'Security token is missing' }));
+                res.end();
+                return;
+            }
         }
 
         res.writeHead(200);
