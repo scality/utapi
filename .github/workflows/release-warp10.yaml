@@ -1,4 +1,5 @@
 name: release-warp10
+run-name: release ${{ inputs.tag }}
 
 on:
   workflow_dispatch:
