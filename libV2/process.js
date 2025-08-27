@@ -31,6 +31,9 @@ class Process extends EventEmitter {
     async join() {
         this.emit('exit');
         await this._join();
+        ['SIGINT', 'SIGQUIT', 'SIGTERM', 'uncaughtException'].forEach(eventName => {
+            process.removeAllListeners(eventName);
+        });
     }
 
     async _setup() {}
