@@ -21,6 +21,7 @@ on:
 
 env:
   AWS_SDK_JS_SUPPRESS_MAINTENANCE_MODE_MESSAGE: '1'
+  NODE_OPTIONS: '--trace-warnings'
 
 jobs:
   build-ci:
@@ -141,6 +142,11 @@ jobs:
     - name: ${{ matrix.test.name }}
       run: ${{ matrix.test.command }}
       env: ${{ matrix.test.env }}
+    - name: Print stderr logs
+      run: grep -H "" *.stderr.log || true
+      if: always()
+    - name: Error if stderr logs are not empty
+      run: if [ -n "$(find . -name '*.stderr.log' -size +0c)" ]; then exit 1; fi
 
   tests-v2-with-vault:
     needs:
@@ -246,6 +252,13 @@ jobs:
         tmate-server-rsa-fingerprint: ${{ secrets.TMATE_SERVER_RSA_FINGERPRINT }}
         tmate-server-ed25519-fingerprint: ${{ secrets.TMATE_SERVER_ED25519_FINGERPRINT }}
       if: ${{ ( github.event.inputs.debug == true || github.event.inputs.debug == 'true' ) }}
+    - name: Print stderr logs
+      run: grep -H "" *.stderr.log || true
+      if: always()
+    - name: Error if stderr logs are not empty
+      run: if [ -n "$(find . -name '*.stderr.log' -size +0c)" ]; then exit 1; fi
+
+
   tests-v2-without-sensision:
     needs:
       - build-ci
@@ -362,3 +375,8 @@ jobs:
         tmate-server-rsa-fingerprint: ${{ secrets.TMATE_SERVER_RSA_FINGERPRINT }}
         tmate-server-ed25519-fingerprint: ${{ secrets.TMATE_SERVER_ED25519_FINGERPRINT }}
       if: ${{ ( github.event.inputs.debug == true || github.event.inputs.debug == 'true' ) }}
+    - name: Print stderr logs
+      run: grep -H "" *.stderr.log || true
+      if: always()
+    - name: Error if stderr logs are not empty
+      run: if [ -n "$(find . -name '*.stderr.log' -size +0c)" ]; then exit 1; fi

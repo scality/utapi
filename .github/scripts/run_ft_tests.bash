@@ -17,6 +17,15 @@ if [ -z "$SETUP_CMD" ]; then
   SETUP_CMD="start"
 fi
 
-UTAPI_INTERVAL_TEST_MODE=$1 npm $SETUP_CMD 2>&1 | tee -a "setup_$2.log" &
+# Redirect stderr to a separate file (without "Killed" to look for warnings / error messages)
+# While still keeping it in terminal
+
+UTAPI_INTERVAL_TEST_MODE=$1 npm $SETUP_CMD \
+  2> >(grep -v -E "^Killed$" | tee -a "setup_$2.stderr.log" >&2) \
+  | tee -a "setup_$2.log" &
+
 bash tests/utils/wait_for_local_port.bash $PORT 40
-UTAPI_INTERVAL_TEST_MODE=$1 npm run $2 | tee -a "test_$2.log"
+
+UTAPI_INTERVAL_TEST_MODE=$1 npm run $2 \
+  2> >(tee -a "test_$2.stderr.log" >&2) \
+  | tee -a "test_$2.log"
