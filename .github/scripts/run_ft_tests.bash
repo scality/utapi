@@ -19,9 +19,10 @@ fi
 
 # Redirect stderr to a separate file (without "Killed" to look for warnings / error messages)
 # While still keeping it in terminal
+# ignore punycode warning from oas-tools@2.2.2 in utapiV2 tests
 
 UTAPI_INTERVAL_TEST_MODE=$1 npm $SETUP_CMD \
-  2> >(grep -v -E "^Killed$" | tee -a "setup_$2.stderr.log" >&2) \
+  2> >(grep -v -E "^Killed$|--trace-deprecation|punycode" | tee -a "setup_$2.stderr.log" >&2) \
   | tee -a "setup_$2.log" &
 
 bash tests/utils/wait_for_local_port.bash $PORT 40
