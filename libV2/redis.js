@@ -1,5 +1,5 @@
 const EventEmitter = require('events');
-const { callbackify, promisify } = require('util');
+const { callbackify } = require('util');
 const IORedis = require('ioredis');
 const { jsutil } = require('arsenal');
 const BackOff = require('backo');
@@ -7,6 +7,7 @@ const { whilst } = require('async');
 
 const errors = require('./errors');
 const { LoggerContext, asyncOrCallback } = require('./utils');
+const flexiblePromisify = require('./utils/flexiblePromisify');
 
 const moduleLogger = new LoggerContext({
     module: 'redis',
@@ -201,7 +202,9 @@ class RedisClient extends EventEmitter {
         if (callback !== undefined) {
             // If a callback is provided `func` is assumed to also take a callback
             // and is converted to a promise using promisify
-            return callbackify(this._call.bind(this))(promisify(func), callback);
+            // Note (DEP0174): flexiblePromisify avoids promisifying a function that already returns a promise
+            // With redisClientV2 func returns a promise even if there is a callback
+            return callbackify(this._call.bind(this))(flexiblePromisify(func), callback);
         }
         return this._call(func);
     }
