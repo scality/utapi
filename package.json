@@ -3,7 +3,7 @@
   "engines": {
     "node": ">=22"
   },
-  "version": "8.2.3",
+  "version": "8.2.4",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
@@ -19,7 +19,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "^2.0.3",
-    "arsenal": "https://github.com/scality/Arsenal#8.2.28",
+    "arsenal": "git+https://github.com/scality/Arsenal#8.2.28",
     "async": "^3.2.6",
     "aws-sdk": "^2.1005.0",
     "aws4": "^1.13.2",
