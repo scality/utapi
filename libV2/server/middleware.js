@@ -1,6 +1,5 @@
-const oasTools = require('oas-tools');
+const oasTools = require('@oas-tools/core');
 const path = require('path');
-const { promisify } = require('util');
 const { ipCheck } = require('arsenal');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
@@ -9,33 +8,41 @@ const { translateAndAuthorize } = require('../vault');
 const metricHandlers = require('./metrics');
 
 const oasOptions = {
-    controllers: path.join(__dirname, './API/'),
-    checkControllers: true,
-    loglevel: config.logging.level === 'trace' ? 'debug' : 'info', // oasTools is very verbose
-    customLogger: logger,
-    customErrorHandling: true,
-    strict: true,
-    router: true,
-    validator: true,
-    docs: {
-        apiDocs: '/openapi.json',
-        apiDocsPrefix: '',
+    packageJSON: path.join(__dirname, '../../package.json'),
+    oasFile: path.join(__dirname, '../../openapi.yaml'),
+    logger: {
+        level: config.logging.level === 'trace' ? 'debug' : 'info', // oasTools is very verbose
+        customLogger: logger,
+    },
+    middleware: {
+        router: {
+            controllers: path.join(__dirname, './API/'),
+            disable: false,
+        },
+        validator: {
+            strict: true,
+            requestValidation: true,
+            responseValidation: true,
+        },
+        swagger: {
+            disable: true,
+            path: '/_/docs',
+        },
+        error: {
+            disable: false,
+            customHandler: errorMiddleware,
+        },
     },
     ignoreUnknownFormats: true,
 };
 
 // If in development mode, enable the swagger ui
 if (config.development) {
-    oasOptions.docs = {
-        swaggerUi: '/_/docs',
-        swaggerUiPrefix: '',
-        ...oasOptions.docs,
-    };
+    oasOptions.middleware.swagger.disable = false;
 }
 
 async function initializeOasTools(spec, app) {
-    oasTools.configure(oasOptions);
-    return promisify(oasTools.initialize)(spec, app);
+    return oasTools.initialize(app, oasOptions);
 }
 
 function loggerMiddleware(req, res, next) {
