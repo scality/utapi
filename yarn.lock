@@ -198,7 +198,24 @@
     fast-xml-parser "^5.0.7"
     tslib "^2.8.1"
 
-"@azure/identity@^4.10.2", "@azure/identity@^4.5.0":
+"@azure/identity@^4.12.0":
+  version "4.12.0"
+  resolved "https://registry.yarnpkg.com/@azure/identity/-/identity-4.12.0.tgz#272e39a8742191aac0b9f5ec683984bf4d88e7cb"
+  integrity sha512-6vuh2R3Cte6SD6azNalLCjIDoryGdcvDVEV7IDRPtm5lHX5ffkDlIalaoOp5YJU08e4ipjJENel20kSMDLAcug==
+  dependencies:
+    "@azure/abort-controller" "^2.0.0"
+    "@azure/core-auth" "^1.9.0"
+    "@azure/core-client" "^1.9.2"
+    "@azure/core-rest-pipeline" "^1.17.0"
+    "@azure/core-tracing" "^1.0.0"
+    "@azure/core-util" "^1.11.0"
+    "@azure/logger" "^1.0.0"
+    "@azure/msal-browser" "^4.2.0"
+    "@azure/msal-node" "^3.5.0"
+    open "^10.1.0"
+    tslib "^2.2.0"
+
+"@azure/identity@^4.5.0":
   version "4.11.1"
   resolved "https://registry.yarnpkg.com/@azure/identity/-/identity-4.11.1.tgz#19ba5b7601ae4f2ded010c55ca55200ffa6c79ec"
   integrity sha512-0ZdsLRaOyLxtCYgyuqyWqGU5XQ9gGnjxgfoNTt1pvELGkkUFrMATABZFIq8gusM7N1qbqpVtwLOhk0d/3kacLg==
@@ -256,7 +273,7 @@
     jsonwebtoken "^9.0.0"
     uuid "^8.3.0"
 
-"@azure/storage-blob@^12.25.0", "@azure/storage-blob@^12.27.0":
+"@azure/storage-blob@^12.25.0", "@azure/storage-blob@^12.28.0":
   version "12.28.0"
   resolved "https://registry.yarnpkg.com/@azure/storage-blob/-/storage-blob-12.28.0.tgz#a64ce49f0fe9fe08f1f7c1b36164033678d38cf6"
   integrity sha512-VhQHITXXO03SURhDiGuHhvc/k/sD2WvJUS7hqhiVNbErVCuQoLtWql7r97fleBlIRKHJaa9R7DpBjfE0pfLYcA==
@@ -393,10 +410,27 @@
   dependencies:
     "@hapi/hoek" "^9.0.0"
 
+"@hapi/address@^5.1.1":
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/@hapi/address/-/address-5.1.1.tgz#e9925fc1b65f5cc3fbea821f2b980e4652e84cb6"
+  integrity sha512-A+po2d/dVoY7cYajycYI43ZbYMXukuopIsqCjh5QzsBCipDtdofHntljDlpccMjIfTy6UOkg+5KPriwYch2bXA==
+  dependencies:
+    "@hapi/hoek" "^11.0.2"
+
 "@hapi/formula@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@hapi/formula/-/formula-2.0.0.tgz#edade0619ed58c8e4f164f233cda70211e787128"
   integrity sha512-V87P8fv7PI0LH7LiVi8Lkf3x+KCO7pQozXRssAHNXXL9L1K+uyu4XypLXwxqVDKgyQai6qj3/KteNlrqDx4W5A==
+
+"@hapi/formula@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@hapi/formula/-/formula-3.0.2.tgz#81b538060ee079481c906f599906d163c4badeaf"
+  integrity sha512-hY5YPNXzw1He7s0iqkRQi+uMGh383CGdyyIGYtB+W5N3KHPXoqychklvHhKCC9M3Xtv0OCs/IHw+r4dcHtBYWw==
+
+"@hapi/hoek@^11.0.2", "@hapi/hoek@^11.0.7":
+  version "11.0.7"
+  resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-11.0.7.tgz#56a920793e0a42d10e530da9a64cc0d3919c4002"
+  integrity sha512-HV5undWkKzcB4RZUusqOpcgxOaq6VOAH7zhhIr2g3G8NF/MlFO75SjOr2NfuSx0Mh40+1FqCkagKLJRykUWoFQ==
 
 "@hapi/hoek@^9.0.0", "@hapi/hoek@^9.3.0":
   version "9.3.0"
@@ -414,10 +448,15 @@
     "@hapi/pinpoint" "^2.0.0"
     "@hapi/topo" "^5.0.0"
 
-"@hapi/pinpoint@^2.0.0":
+"@hapi/pinpoint@^2.0.0", "@hapi/pinpoint@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@hapi/pinpoint/-/pinpoint-2.0.1.tgz#32077e715655fc00ab8df74b6b416114287d6513"
   integrity sha512-EKQmr16tM8s16vTT3cA5L0kZZcTMU5DUOZTuvpnY738m+jyP3JIUj+Mm1xc1rsLkGBQ/gVnfKYPwOmPg1tUR4Q==
+
+"@hapi/tlds@^1.1.1":
+  version "1.1.3"
+  resolved "https://registry.yarnpkg.com/@hapi/tlds/-/tlds-1.1.3.tgz#bf5fee927d213f140cd54d4650965e504a546789"
+  integrity sha512-QIvUMB5VZ8HMLZF9A2oWr3AFM430QC8oGd0L35y2jHpuW6bIIca6x/xL7zUf4J7L9WJ3qjz+iJII8ncaeMbpSg==
 
 "@hapi/topo@^5.0.0", "@hapi/topo@^5.1.0":
   version "5.1.0"
@@ -425,6 +464,13 @@
   integrity sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==
   dependencies:
     "@hapi/hoek" "^9.0.0"
+
+"@hapi/topo@^6.0.2":
+  version "6.0.2"
+  resolved "https://registry.yarnpkg.com/@hapi/topo/-/topo-6.0.2.tgz#f219c1c60da8430228af4c1f2e40c32a0d84bbb4"
+  integrity sha512-KR3rD5inZbGMrHmgPxsJ9dbi6zEK+C3ZwUwTa+eMwWLz7oijWUTWD2pMSNNYJAU6Qq+65NkxXjqHr/7LM2Xkqg==
+  dependencies:
+    "@hapi/hoek" "^11.0.2"
 
 "@humanfs/core@^0.19.1":
   version "0.19.1"
@@ -790,6 +836,11 @@
   resolved "https://registry.yarnpkg.com/@socket.io/component-emitter/-/component-emitter-3.1.2.tgz#821f8442f4175d8f0467b9daf26e3a18e2d02af2"
   integrity sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==
 
+"@standard-schema/spec@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@standard-schema/spec/-/spec-1.0.0.tgz#f193b73dc316c4170f2e82a881da0f550d551b9c"
+  integrity sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==
+
 "@types/async@^3.2.24":
   version "3.2.25"
   resolved "https://registry.yarnpkg.com/@types/async/-/async-3.2.25.tgz#8439f7cde2627e34a15897eb80878835dbea2421"
@@ -1121,45 +1172,6 @@ arraybuffer.prototype.slice@^1.0.4:
     get-intrinsic "^1.2.6"
     is-array-buffer "^3.0.4"
 
-"arsenal@git+https://github.com/scality/Arsenal#8.2.28":
-  version "8.2.28"
-  resolved "git+https://github.com/scality/Arsenal#7df5088715bb26a62ff1db2045e611029ff17de1"
-  dependencies:
-    "@azure/identity" "^4.10.2"
-    "@azure/storage-blob" "^12.27.0"
-    "@js-sdsl/ordered-set" "^4.4.2"
-    "@scality/hdclient" "^1.3.1"
-    JSONStream "^1.3.5"
-    agentkeepalive "^4.6.0"
-    ajv "6.12.3"
-    async "~2.6.4"
-    aws-sdk "^2.1691.0"
-    backo "^1.1.0"
-    base-x "3.0.8"
-    base62 "^2.0.2"
-    debug "^4.4.1"
-    fcntl "github:scality/node-fcntl#0.3.0"
-    httpagent scality/httpagent#1.1.0
-    https-proxy-agent "^7.0.6"
-    ioredis "^5.6.1"
-    ipaddr.js "^2.2.0"
-    joi "^17.13.3"
-    level "~5.0.1"
-    level-sublevel "~6.6.5"
-    mongodb "^6.17.0"
-    node-forge "^1.3.1"
-    prom-client "^15.1.3"
-    simple-glob "^0.2.0"
-    socket.io "^4.8.0"
-    socket.io-client "^4.8.0"
-    sproxydclient "github:scality/sproxydclient#8.1.0"
-    utf8 "^3.0.0"
-    uuid "^10.0.0"
-    werelogs scality/werelogs#8.2.2
-    xml2js "^0.6.2"
-  optionalDependencies:
-    ioctl "^2.0.2"
-
 "arsenal@git+https://github.com/scality/Arsenal#8.2.4":
   version "8.2.4"
   resolved "git+https://github.com/scality/Arsenal#96ef6a3e26d7528f877300606586759f1da6d0cd"
@@ -1191,6 +1203,45 @@ arraybuffer.prototype.slice@^1.0.4:
     level "~5.0.1"
     level-sublevel "~6.6.5"
     mongodb "^6.11.0"
+    node-forge "^1.3.1"
+    prom-client "^15.1.3"
+    simple-glob "^0.2.0"
+    socket.io "^4.8.0"
+    socket.io-client "^4.8.0"
+    sproxydclient "github:scality/sproxydclient#8.1.0"
+    utf8 "^3.0.0"
+    uuid "^10.0.0"
+    werelogs scality/werelogs#8.2.2
+    xml2js "^0.6.2"
+  optionalDependencies:
+    ioctl "^2.0.2"
+
+"arsenal@git+https://github.com/scality/Arsenal#revert/azure-upgrade":
+  version "8.2.29"
+  resolved "git+https://github.com/scality/Arsenal#4d34ff34fe9ab219ea767da23ebb67144c3fbdb9"
+  dependencies:
+    "@azure/identity" "^4.12.0"
+    "@azure/storage-blob" "^12.28.0"
+    "@js-sdsl/ordered-set" "^4.4.2"
+    "@scality/hdclient" "^1.3.1"
+    JSONStream "^1.3.5"
+    agentkeepalive "^4.6.0"
+    ajv "6.12.3"
+    async "~2.6.4"
+    aws-sdk "^2.1691.0"
+    backo "^1.1.0"
+    base-x "3.0.8"
+    base62 "^2.0.2"
+    debug "^4.4.1"
+    fcntl "github:scality/node-fcntl#0.3.0"
+    httpagent scality/httpagent#1.1.0
+    https-proxy-agent "^7.0.6"
+    ioredis "^5.7.0"
+    ipaddr.js "^2.2.0"
+    joi "^18.0.1"
+    level "~5.0.1"
+    level-sublevel "~6.6.5"
+    mongodb "^6.19.0"
     node-forge "^1.3.1"
     prom-client "^15.1.3"
     simple-glob "^0.2.0"
@@ -2897,7 +2948,7 @@ ioctl@^2.0.2:
     bindings "^1.5.0"
     nan "^2.14.0"
 
-ioredis@^5.4.1, ioredis@^5.6.1:
+ioredis@^5.4.1, ioredis@^5.7.0:
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-5.7.0.tgz#be8f4a09bfb67bfa84ead297ff625973a5dcefc3"
   integrity sha512-NUcA93i1lukyXU+riqEyPtSEkyFq8tX90uL659J+qpCZ3rEdViB/APC58oAhIh3+bJln2hzdlZbBZsGNrlsR8g==
@@ -3271,6 +3322,19 @@ joi@^17.13.3:
     "@sideway/address" "^4.1.5"
     "@sideway/formula" "^3.0.1"
     "@sideway/pinpoint" "^2.0.0"
+
+joi@^18.0.1:
+  version "18.0.1"
+  resolved "https://registry.yarnpkg.com/joi/-/joi-18.0.1.tgz#1e1885d035cc6ca1624e81bf22112e7c1ee38e1b"
+  integrity sha512-IiQpRyypSnLisQf3PwuN2eIHAsAIGZIrLZkd4zdvIar2bDyhM91ubRjy8a3eYablXsh9BeI/c7dmPYHca5qtoA==
+  dependencies:
+    "@hapi/address" "^5.1.1"
+    "@hapi/formula" "^3.0.2"
+    "@hapi/hoek" "^11.0.7"
+    "@hapi/pinpoint" "^2.0.1"
+    "@hapi/tlds" "^1.1.1"
+    "@hapi/topo" "^6.0.2"
+    "@standard-schema/spec" "^1.0.0"
 
 js-yaml@^3.10.0, js-yaml@^3.13.1:
   version "3.14.1"
@@ -3955,7 +4019,7 @@ mongodb-connection-string-url@^3.0.0:
     "@types/whatwg-url" "^11.0.2"
     whatwg-url "^14.1.0 || ^13.0.0"
 
-mongodb@^6.11.0, mongodb@^6.17.0:
+mongodb@^6.11.0, mongodb@^6.19.0:
   version "6.19.0"
   resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-6.19.0.tgz#d28df0ae4cb3bea4381206e2d9efc3c7b77531fe"
   integrity sha512-H3GtYujOJdeKIMLKBT9PwlDhGrQfplABNF1G904w6r5ZXKWyv77aB0X9B+rhmaAwjtllHzaEkvi9mkGVZxs2Bw==
