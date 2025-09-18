@@ -93,7 +93,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis-sentinel:
-        image: bitnami/redis-sentinel:7.2.4
+        image: bitnamilegacy/redis-sentinel:7.2.4
         env:
           REDIS_MASTER_SET: scality-s3
           REDIS_SENTINEL_PORT_NUMBER: '16379'
@@ -175,7 +175,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis-sentinel:
-        image: bitnami/redis-sentinel:7.2.4
+        image: bitnamilegacy/redis-sentinel:7.2.4
         env:
           REDIS_MASTER_SET: scality-s3
           REDIS_SENTINEL_PORT_NUMBER: '16379'
@@ -303,7 +303,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       redis-sentinel:
-        image: bitnami/redis-sentinel:7.2.4
+        image: bitnamilegacy/redis-sentinel:7.2.4
         env:
           REDIS_MASTER_SET: scality-s3
           REDIS_SENTINEL_PORT_NUMBER: '16379'
