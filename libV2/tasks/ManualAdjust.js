@@ -75,7 +75,7 @@ class ManualAdjust extends BaseTask {
         if (opts.user.length) {
             logger.info('adjusting users');
             await async.eachSeries(
-                this._program.user,
+                opts.user,
                 async user => this._pushAdjustmentMetric({
                     user, objectDelta, sizeDelta, timestamp,
                 }),
