@@ -38,7 +38,7 @@ describe('Test ReindexTask', function () {
         prefix = uuid();
         warp10 = new Warp10Client({ nodeId: prefix });
         reindexTask = new ReindexTask({ warp10: [warp10] });
-        reindexTask._program = { bucket: [], nodeId: prefix };
+        reindexTask._program = { opts: () => ({ bucket: [], nodeId: prefix }) };
     });
 
     afterEach(() => {

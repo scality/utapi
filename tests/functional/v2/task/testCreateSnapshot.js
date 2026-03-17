@@ -53,14 +53,14 @@ describe('Test CreateSnapshot', function () {
         warp10 = new Warp10Client({ nodeId: prefix });
 
         checkpointTask = new CreateCheckpoint({ warp10: [warp10] });
-        checkpointTask._program = { lag: 0, nodeId: prefix };
+        checkpointTask._program = { opts: () => ({ lag: 0, nodeId: prefix }) };
 
         snapshotTask = new CreateSnapshot({ warp10: [warp10], enableMetrics: true });
         await snapshotTask.setup();
-        snapshotTask._program = { lag: 0, nodeId: prefix };
+        snapshotTask._program = { opts: () => ({ lag: 0, nodeId: prefix }) };
 
         repairTask = new RepairTask({ warp10: [warp10] });
-        repairTask._program = { lag: 0, nodeId: prefix };
+        repairTask._program = { opts: () => ({ lag: 0, nodeId: prefix }) };
     });
 
     afterEach(async () => {

@@ -49,7 +49,7 @@ describe('Test getStorage handler', function () {
         await cacheClient.connect();
 
         ingestTask = new IngestShard({ warp10: [warp10Clients[0]] });
-        ingestTask._program = { lag: 0 };
+        ingestTask._program = { opts: () => ({ lag: 0 }) };
         await ingestTask._cache.connect();
     });
 
