@@ -117,18 +117,20 @@ class BaseTask extends Process {
     }
 
     get schedule() {
-        if (this._program.now) {
+        const opts = this._program.opts();
+        if (opts.now) {
             return Now;
         }
-        if (this._program.schedule) {
-            return this._program.schedule;
+        if (opts.schedule) {
+            return opts.schedule;
         }
         return this._defaultSchedule;
     }
 
     get lag() {
-        if (this._program.lag !== undefined) {
-            return this._program.lag;
+        const opts = this._program.opts();
+        if (opts.lag !== undefined) {
+            return opts.lag;
         }
         return this._defaultLag;
     }

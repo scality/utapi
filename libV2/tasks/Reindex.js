@@ -158,8 +158,9 @@ class ReindexTask extends BaseTask {
     }
 
     get targetBuckets() {
-        if (this._program.bucket.length) {
-            return this._program.bucket.map(name => ({ name }));
+        const opts = this._program.opts();
+        if (opts.bucket.length) {
+            return opts.bucket.map(name => ({ name }));
         }
         return metadata.listBuckets();
     }

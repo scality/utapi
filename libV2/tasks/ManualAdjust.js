@@ -26,9 +26,10 @@ class ManualAdjust extends BaseTask {
     }
 
     async _start() {
+        const opts = this._program.opts();
         this._utapiClient = new UtapiClient({
-            host: this._program.host,
-            port: this._program.port,
+            host: opts.host,
+            port: opts.port,
             disableRetryCache: true,
         });
         await super._start();
@@ -42,35 +43,36 @@ class ManualAdjust extends BaseTask {
     async _execute() {
         const timestamp = Date.now();
 
-        const objectDelta = this._program.objects;
-        const sizeDelta = this._program.storage;
+        const opts = this._program.opts();
+        const objectDelta = opts.objects;
+        const sizeDelta = opts.storage;
 
-        if (!this._program.bucket.length && !this._program.account.length && !this._program.user.length) {
+        if (!opts.bucket.length && !opts.account.length && !opts.user.length) {
             throw Error('You must provided at least one of --bucket, --account or --user');
         }
 
         logger.info('writing adjustments');
-        if (this._program.bucket.length) {
+        if (opts.bucket.length) {
             logger.info('adjusting buckets');
             await async.eachSeries(
-                this._program.bucket,
+                opts.bucket,
                 async bucket => this._pushAdjustmentMetric({
                     bucket, objectDelta, sizeDelta, timestamp,
                 }),
             );
         }
 
-        if (this._program.account.length) {
+        if (opts.account.length) {
             logger.info('adjusting accounts');
             await async.eachSeries(
-                this._program.account,
+                opts.account,
                 async account => this._pushAdjustmentMetric({
                     account, objectDelta, sizeDelta, timestamp,
                 }),
             );
         }
 
-        if (this._program.user.length) {
+        if (opts.user.length) {
             logger.info('adjusting users');
             await async.eachSeries(
                 this._program.user,
