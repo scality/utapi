@@ -52,7 +52,7 @@ describe('Test Repair', function () {
         warp10 = new Warp10Client({ nodeId: prefix });
         repairTask = new RepairTask({ warp10: [warp10], enableMetrics: true });
         await repairTask.setup();
-        repairTask._program = { lag: 0, nodeId: prefix };
+        repairTask._program = { opts: () => ({ lag: 0, nodeId: prefix }) };
     });
 
     afterEach(async () => {

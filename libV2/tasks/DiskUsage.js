@@ -131,15 +131,15 @@ class MonitorDiskUsage extends BaseTask {
     }
 
     get isLeader() {
-        return this._program.leader !== undefined;
+        return this._program.opts().leader !== undefined;
     }
 
     get isManualUnlock() {
-        return this._program.unlock !== undefined;
+        return this._program.opts().unlock !== undefined;
     }
 
     get isManualLock() {
-        return this._program.lock !== undefined;
+        return this._program.opts().lock !== undefined;
     }
 
     async _getUsage(path) {

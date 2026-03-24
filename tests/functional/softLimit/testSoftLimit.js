@@ -17,7 +17,7 @@ describe('Test MonitorDiskUsage soft limit', function () {
         task = new MonitorDiskUsage({ warp10: warp10Clients });
         await task.setup();
         task._expirationEnabled = true;
-        task._program.leader = true;
+        task._program.opts = () => ({ leader: true });
     });
 
     afterEach(async () => {

@@ -52,7 +52,7 @@ describe('Test CreateCheckpoint', function () {
         warp10 = new Warp10Client({ nodeId: prefix });
         checkpointTask = new CreateCheckpoint({ warp10: [warp10], enableMetrics: true });
         await checkpointTask.setup();
-        checkpointTask._program = { lag: 0, nodeId: prefix };
+        checkpointTask._program = { opts: () => ({ lag: 0, nodeId: prefix }) };
     });
 
     afterEach(async () => {

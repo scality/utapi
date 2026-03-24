@@ -62,7 +62,7 @@ describe('Test IngestShards', function () {
         ingestTask = new IngestShard({ warp10: [warp10], enableMetrics: true });
         await ingestTask.setup();
         ingestTask._cache._cacheBackend._prefix = prefix;
-        ingestTask._program = { lag: 0 };
+        ingestTask._program = { opts: () => ({ lag: 0 }) };
         await ingestTask._cache.connect();
     });
 

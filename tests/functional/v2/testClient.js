@@ -219,7 +219,7 @@ describe('Test UtapiClient', function () {
             await cacheClient.connect();
 
             ingestTask = new IngestShard({ warp10: [warp10] });
-            ingestTask._program = { lag: 0 };
+            ingestTask._program = { opts: () => ({ lag: 0 }) };
             await ingestTask._cache.connect();
         });
 
@@ -245,4 +245,3 @@ describe('Test UtapiClient', function () {
         });
     });
 });
-
