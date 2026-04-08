@@ -69,17 +69,30 @@ class S3ListBuckets():
         docs = []
         url = "%s/default/bucket/users..bucket" % self.bucketd_host
         session = requests.Session()
-        r = session.get(url, timeout=30)
-        if r.status_code == 200:
+        marker = ''
+        page = 0
+        while True:
+            params = {'marker': marker, 'maxKeys': 1000}
+            r = session.get(url, params=params, timeout=30)
+            if r.status_code != 200:
+                _log.error('users..bucket bucketd listing failed with status: %s', r.status_code)
+                break
             payload = json.loads(r.text)
-            for keys in payload['Contents']:
+            contents = payload.get('Contents', [])
+            page += 1
+            _log.info('Listing page %d: got %d entries (marker=%r)', page, len(contents), marker)
+            for keys in contents:
                 key = keys["key"]
                 r1 = re.match("(\w+)..\|..(\w+.*)", key)
-                docs.append(r1.groups())
-
+                if r1:
+                    docs.append(r1.groups())
+                else:
+                    _log.warning('Skipping unexpected key format: %s', key)
+            if not payload.get('IsTruncated') or not contents:
+                _log.info('Listing complete: %d pages, %d buckets total', page, len(docs))
+                break
+            marker = contents[-1]['key']
         return docs
-
-        return(self.userid, self.bucket, user, files, total_size)
 
 if __name__ == '__main__':
     options = get_options()
