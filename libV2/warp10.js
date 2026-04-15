@@ -15,10 +15,10 @@ class Warp10Client {
         this._readToken = (config && config.readToken) || 'readTokenStatic';
         this.nodeId = (config && config.nodeId) || _config.nodeId;
         const proto = (config && config.tls) ? 'https' : 'http';
-        this._requestTimeout = (config && config.requestTimeout) || 30000;
-        this._connectTimeout = (config && config.connectTimeout) || 30000;
         const host = (config && config.host) || '127.0.0.1';
         const port = (config && config.port) || 4802;
+        this._requestTimeout = (config && config.requestTimeout) || 60000;
+        this._connectTimeout = (config && config.connectTimeout) || 60000;
         this._client = new Warp10(`${proto}://${host}:${port}`, this._requestTimeout, this._connectTimeout);
     }
 
