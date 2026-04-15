@@ -18,7 +18,7 @@
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
-    "@senx/warp10": "^2.0.3",
+    "@senx/warp10": "1.0.14",
     "arsenal": "git+https://github.com/scality/Arsenal#8.2.28",
     "async": "^3.2.6",
     "aws-sdk": "^2.1005.0",
