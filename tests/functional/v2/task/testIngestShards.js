@@ -169,7 +169,7 @@ describe('Test IngestShards', function () {
         const results = await warp10.fetch({
             className: 'utapi.event', labels: { node: prefix }, start: start + 1, stop: -2,
         });
-        const series = results.result[0];
+        const series = JSON.parse(results.result[0])[0];
         const timestamps = series.v.map(ev => ev[0]);
         assert.deepStrictEqual([
             start + 1,
@@ -213,7 +213,7 @@ describe('Test IngestShards', function () {
             className: 'utapi.event', labels: { node: prefix }, start: start + 10, stop: -2,
         });
 
-        const series = results.result[0];
+        const series = JSON.parse(results.result[0])[0];
         const timestamps = series.v.map(ev => ev[0]);
         assert.deepStrictEqual([
             start + 5,
