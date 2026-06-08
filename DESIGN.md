@@ -4,7 +4,7 @@ Utapi tracks metrics of a service's usage. Metrics provided by Utapi include the
 number of incoming and outgoing bytes, the number of objects being stored, the
 storage utilized in bytes, and a count of operations performed on a service's
 resources. Operations supported by Utapi include APIs offered by Scality's [S3
-Server](https://github.com/scality/S3). Metrics can be retrieved for a given
+Server](https://github.com/scality/cloudserver). Metrics can be retrieved for a given
 time range in a service's history.
 
 ## Time Range
