@@ -14,10 +14,25 @@ class Process extends EventEmitter {
         ['SIGINT', 'SIGQUIT', 'SIGTERM'].forEach(eventName => {
             process.on(eventName, cleanUpFunc);
         });
-        process.on('uncaughtException', error => {
+        let shuttingDown = false;
+        process.on('uncaughtException', async error => {
             logger.error('uncaught exception',
                 { error, stack: error.stack.split(os.EOL) });
-            cleanUpFunc();
+            // Clean up once, then exit. Without the guard a failure inside _join
+            // (e.g. closing an already-dropped redis connection) raises another
+            // uncaughtException and re-enters here, looping indefinitely. Exiting
+            // lets the supervisor restart us instead of spinning.
+            if (shuttingDown) {
+                return;
+            }
+            shuttingDown = true;
+            try {
+                await cleanUpFunc();
+            } catch (cleanupError) {
+                logger.error('error during cleanup after uncaught exception',
+                    { error: cleanupError });
+            }
+            process.exit(1);
         });
         this._program = new Command();
         await this._setup();
@@ -30,10 +45,13 @@ class Process extends EventEmitter {
 
     async join() {
         this.emit('exit');
-        await this._join();
-        ['SIGINT', 'SIGQUIT', 'SIGTERM', 'uncaughtException'].forEach(eventName => {
-            process.removeAllListeners(eventName);
-        });
+        try {
+            await this._join();
+        } finally {
+            ['SIGINT', 'SIGQUIT', 'SIGTERM', 'uncaughtException'].forEach(eventName => {
+                process.removeAllListeners(eventName);
+            });
+        }
     }
 
     async _setup() {}
