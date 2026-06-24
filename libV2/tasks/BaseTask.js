@@ -168,7 +168,9 @@ class BaseTask extends Process {
             await this._execute(laggedTimestamp);
         } catch (error) {
             logger.error('Error during task execution', { error });
-            this._metricsHandlers.executionFailures.inc(1);
+            if (this._enableMetrics) {
+                this._metricsHandlers.executionFailures.inc(1);
+            }
         }
 
         if (this._enableMetrics) {

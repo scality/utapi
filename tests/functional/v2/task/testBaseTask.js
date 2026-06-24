@@ -80,3 +80,25 @@ describe('Test BaseTask metrics', () => {
         assert.deepStrictEqual(fooValues, [{ value: 1, labels: {} }]);
     });
 });
+
+describe('Test BaseTask without metrics', () => {
+    let task;
+
+    beforeEach(async () => {
+        task = new CustomTask({
+            enableMetrics: false,
+            warp10: [warp10Clients[0]],
+        });
+        await task.setup();
+    });
+
+    afterEach(async () => {
+        await task.join();
+        promClient.register.clear();
+    });
+
+    it('should not throw when a task execution fails and metrics are disabled', async () => {
+        sinon.replace(task, '_execute', sinon.fake.rejects('forced failure'));
+        await assert.doesNotReject(() => task.execute());
+    });
+});
