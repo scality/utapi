@@ -97,6 +97,16 @@ class RedisClient extends EventEmitter {
 
     _onConnect() {
         this._isConnected = true;
+        // ioredis registers the socket 'error' handler with `once`; on a
+        // connection drop, errors from in-flight writes after the first are
+        // unhandled and crash the process. Attach a durable listener to absorb
+        // them. The socket is recreated on reconnect, so re-attach each time.
+        // `_redis` may already be null if disconnect() ran before this fires.
+        if (this._redis && this._redis.stream) {
+            this._redis.stream.on('error', error => {
+                moduleLogger.debug('redis socket error', { error });
+            });
+        }
         this.emit('connect');
     }
 
