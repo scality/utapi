@@ -1,4 +1,5 @@
 const assert = require('assert');
+const { DeletePolicyCommand } = require('@aws-sdk/client-iam');
 
 const vaultclient = require('../../utils/vaultclient');
 
@@ -43,7 +44,7 @@ describe('test bin/ensureServiceUser', () => {
         const detached = await vaultclient.detachUserPolicies(adminAccount, { name: 'service-utapi-user' });
         assert.strictEqual(detached.length, 1);
         const client = vaultclient.getIAMClient(adminAccount);
-        await Promise.all(detached.map(PolicyArn => client.deletePolicy({ PolicyArn }).promise()));
+        await Promise.all(detached.map(PolicyArn => client.send(new DeletePolicyCommand({ PolicyArn }))));
         await vaultclient.ensureServiceUser(adminAccount);
 
         const res = await vaultclient.getInternalServiceUserAndPolicies(adminAccount);

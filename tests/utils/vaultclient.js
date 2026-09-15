@@ -1,5 +1,18 @@
 /* eslint-disable no-console */
-const { IAM } = require('aws-sdk');
+const {
+    IAMClient,
+    AttachUserPolicyCommand,
+    CreateAccessKeyCommand,
+    CreatePolicyCommand,
+    CreateUserCommand,
+    DeletePolicyCommand,
+    DeleteUserCommand,
+    DetachUserPolicyCommand,
+    GetPolicyVersionCommand,
+    GetUserCommand,
+    ListAttachedUserPoliciesCommand,
+    ListUsersCommand,
+} = require('@aws-sdk/client-iam');
 const vaultclient = require('vaultclient');
 const fs = require('fs');
 const { v4: uuid } = require('uuid');
@@ -107,18 +120,15 @@ class VaultClient {
     }
 
     static getIAMClient(credentials) {
-        const endpoint = process.env.VAULT_ENDPOINT || 'http://127.0.0.1:8600';
-        const info = {
-            endpoint,
-            sslEnabled: false,
+        return new IAMClient({
+            endpoint: process.env.VAULT_ENDPOINT || 'http://127.0.0.1:8600',
             region: 'us-east-1',
-            apiVersion: '2010-05-08',
-            signatureVersion: 'v4',
-            accessKeyId: credentials.accessKey,
-            secretAccessKey: credentials.secretKey,
-            maxRetries: 0,
-        };
-        return new IAM(info);
+            credentials: {
+                accessKeyId: credentials.accessKey,
+                secretAccessKey: credentials.secretKey,
+            },
+            maxAttempts: 1,
+        });
     }
 
     static async createAccount(name) {
@@ -164,7 +174,7 @@ class VaultClient {
 
     static async createUser(parentAccount, name, path) {
         const client = VaultClient.getIAMClient(parentAccount);
-        const { User: user } = await client.createUser({ UserName: name, Path: path }).promise();
+        const { User: user } = await client.send(new CreateUserCommand({ UserName: name, Path: path }));
         return {
             name,
             id: user.UserId,
@@ -175,7 +185,7 @@ class VaultClient {
 
     static async createUserKeys(parentAccount, name) {
         const client = VaultClient.getIAMClient(parentAccount);
-        const { AccessKey: creds } = await client.createAccessKey({ UserName: name }).promise();
+        const { AccessKey: creds } = await client.send(new CreateAccessKeyCommand({ UserName: name }));
         return {
             accessKey: creds.AccessKeyId,
             secretKey: creds.SecretAccessKey,
@@ -209,9 +219,9 @@ class VaultClient {
         const client = VaultClient.getIAMClient(parentAccount);
         const PolicyDocument = VaultClient.templateUtapiPolicy(level, resource);
         const PolicyName = `utapi-test-policy-${uuid()}`;
-        const res = await client.createPolicy({ PolicyName, PolicyDocument }).promise();
+        const res = await client.send(new CreatePolicyCommand({ PolicyName, PolicyDocument }));
         const { Arn: PolicyArn } = res.Policy;
-        await client.attachUserPolicy({ PolicyArn, UserName: user.name }).promise();
+        await client.send(new AttachUserPolicyCommand({ PolicyArn, UserName: user.name }));
     }
 
     static async createInternalServiceAccount() {
@@ -244,7 +254,7 @@ class VaultClient {
 
     static async getUserByName(parentAccount, name) {
         const client = VaultClient.getIAMClient(parentAccount);
-        const { User: user } = await client.getUser({ UserName: name }).promise();
+        const { User: user } = await client.send(new GetUserCommand({ UserName: name }));
         return {
             name,
             id: user.UserId,
@@ -255,12 +265,11 @@ class VaultClient {
 
     static async getAttachedPolicies(parentAccount, user) {
         const client = VaultClient.getIAMClient(parentAccount);
-        const res = await client.listAttachedUserPolicies({ UserName: user.name }).promise();
-        const { AttachedPolicies: attached } = res;
+        const res = await client.send(new ListAttachedUserPoliciesCommand({ UserName: user.name }));
+        const attached = res.AttachedPolicies || [];
         const policies = await Promise.all(
             attached.map(
-                ({ PolicyArn }) => client.getPolicyVersion({ PolicyArn, VersionId: 'v1' })
-                    .promise()
+                ({ PolicyArn }) => client.send(new GetPolicyVersionCommand({ PolicyArn, VersionId: 'v1' }))
                     .then(({ PolicyVersion }) => ({
                         arn: PolicyArn,
                         document: JSON.parse(decodeURIComponent(PolicyVersion.Document)),
@@ -281,9 +290,9 @@ class VaultClient {
 
     static async getAccountUsers(parentAccount) {
         const client = VaultClient.getIAMClient(parentAccount);
-        const { Users } = await client.listUsers({}).promise();
+        const { Users } = await client.send(new ListUsersCommand({}));
 
-        return Users.map(user => ({
+        return (Users || []).map(user => ({
             arn: user.Arn,
             id: user.UserId,
             name: user.UserName,
@@ -294,10 +303,10 @@ class VaultClient {
         const client = VaultClient.getIAMClient(parentAccount);
         const policies = await VaultClient.getAttachedPolicies(parentAccount, user);
         return Promise.all(
-            policies.map(policy => client.detachUserPolicy({
+            policies.map(policy => client.send(new DetachUserPolicyCommand({
                 PolicyArn: policy.arn,
                 UserName: user.name,
-            }).promise().then(() => policy.arn)),
+            })).then(() => policy.arn)),
         );
     }
 
@@ -324,8 +333,8 @@ class VaultClient {
         await Promise.all(
             users.map(async user => {
                 const detached = await VaultClient.detachUserPolicies(parentAccount, user);
-                await Promise.all(detached.map(PolicyArn => client.deletePolicy({ PolicyArn }).promise()));
-                await client.deleteUser({ UserName: user.name }).promise();
+                await Promise.all(detached.map(PolicyArn => client.send(new DeletePolicyCommand({ PolicyArn }))));
+                await client.send(new DeleteUserCommand({ UserName: user.name }));
             }),
         );
     }

@@ -4,12 +4,22 @@
 // - deduplicate with Vault's seed script at https://github.com/scality/Vault/pull/1627
 // - add permission boundaries to user when https://scality.atlassian.net/browse/VAULT-4 is implemented
 
-process.env.AWS_SDK_JS_SUPPRESS_MAINTENANCE_MODE_MESSAGE = '1';
 const { errors } = require('arsenal');
 const { program } = require('commander');
 const werelogs = require('werelogs');
 const async = require('async');
-const { IAM } = require('aws-sdk');
+const {
+    IAMClient,
+    AttachUserPolicyCommand,
+    CreateAccessKeyCommand,
+    CreatePolicyCommand,
+    CreateUserCommand,
+    GetUserCommand,
+    ListAccessKeysCommand,
+    ListAttachedUserPoliciesCommand,
+    ListPoliciesCommand,
+    NoSuchEntityException,
+} = require('@aws-sdk/client-iam');
 const { version } = require('../package.json');
 
 const systemPrefix = '/scality-internal/';
@@ -26,8 +36,10 @@ function generateUserPolicyDocument() {
 }
 
 function createIAMClient(opts) {
-    return new IAM({
+    return new IAMClient({
         endpoint: opts.iamEndpoint,
+        // Any region goes against Vault, but the client needs one to sign the request
+        region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
     });
 }
 
@@ -78,19 +90,17 @@ class UserHandler extends BaseHandler {
     }
 
     collect() {
-        return this.iamClient.getUser({
+        return this.iamClient.send(new GetUserCommand({
             UserName: this.serviceName,
-        })
-        .promise()
+        }))
         .then(res => res.User);
     }
 
     create(allResources) {
-        return this.iamClient.createUser({
+        return this.iamClient.send(new CreateUserCommand({
             UserName: this.serviceName,
             Path: systemPrefix,
-        })
-        .promise()
+        }))
         .then(res => res.User);
     }
 
@@ -105,24 +115,22 @@ class PolicyHandler extends BaseHandler {
     }
 
     collect() {
-        return this.iamClient.listPolicies({
+        return this.iamClient.send(new ListPoliciesCommand({
             MaxItems: 100,
             OnlyAttached: false,
             Scope: 'All',
-        })
-        .promise()
-        .then(res => res.Policies.find(p => p.PolicyName === this.serviceName));
+        }))
+        .then(res => (res.Policies || []).find(p => p.PolicyName === this.serviceName));
     }
 
     create(allResources) {
         const doc = generateUserPolicyDocument();
 
-        return this.iamClient.createPolicy({
+        return this.iamClient.send(new CreatePolicyCommand({
             PolicyName: this.serviceName,
             PolicyDocument: JSON.stringify(doc),
             Path: systemPrefix,
-        })
-        .promise()
+        }))
         .then(res => res.Policy);
     }
 
@@ -137,20 +145,18 @@ class PolicyAttachmentHandler extends BaseHandler {
     }
 
     collect() {
-        return this.iamClient.listAttachedUserPolicies({
+        return this.iamClient.send(new ListAttachedUserPoliciesCommand({
             UserName: this.serviceName,
             MaxItems: 100,
-        })
-        .promise()
+        }))
         .then(res => res.AttachedPolicies)
     }
 
     create(allResources) {
-        return this.iamClient.attachUserPolicy({
+        return this.iamClient.send(new AttachUserPolicyCommand({
             PolicyArn: allResources.policy.Arn,
             UserName: this.serviceName,
-        })
-        .promise();
+        }));
     }
 
     conflicts(p) {
@@ -164,19 +170,17 @@ class AccessKeyHandler extends BaseHandler {
     }
 
     collect() {
-        return this.iamClient.listAccessKeys({
+        return this.iamClient.send(new ListAccessKeysCommand({
             UserName: this.serviceName,
             MaxItems: 100,
-        })
-        .promise()
+        }))
         .then(res => res.AccessKeyMetadata)
     }
 
     create(allResources) {
-        return this.iamClient.createAccessKey({
+        return this.iamClient.send(new CreateAccessKeyCommand({
             UserName: this.serviceName,
-        })
-        .promise()
+        }))
         .then(res => res.AccessKey);
     }
 
@@ -189,7 +193,9 @@ function collectResource(v, done) {
     v.collect()
         .then(res => done(null, res))
         .catch(err => {
-            if (err.code === 'NoSuchEntity') {
+            // Vault's NoSuchEntity deserializes to this exception, whose name is
+            // NoSuchEntityException: comparing against the wire code silently misses it
+            if (err instanceof NoSuchEntityException) {
                 return done(null, null);
             }
 

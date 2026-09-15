@@ -17,11 +17,11 @@
   },
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
+    "@aws-sdk/client-iam": "^3.975.0",
     "@hapi/joi": "^17.1.1",
     "@senx/warp10": "1.0.14",
     "arsenal": "git+https://github.com/scality/Arsenal#8.5.6",
     "async": "^3.2.6",
-    "aws-sdk": "^2.1005.0",
     "aws4": "^1.13.2",
     "backo": "^1.1.0",
     "body-parser": "^1.20.3",
