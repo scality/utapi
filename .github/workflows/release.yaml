@@ -12,7 +12,7 @@ on:
         type: boolean
         description: Create a tag and matching Github release.
         required: false
-        default: false
+        default: true
 
 jobs:
   build:
