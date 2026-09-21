@@ -30,11 +30,14 @@
     "commander": "^12.1.0",
     "cron-parser": "^4.9.0",
     "diskusage": "^1.2.0",
+    "encoding-down": "^6.3.0",
     "express": "^4.21.2",
     "get-folder-size": "^2.0.1",
     "ioredis": "^5.4.2",
     "js-yaml": "^4.1.0",
     "level-mem": "^5.0.1",
+    "levelup": "^4.3.2",
+    "memdown": "^5.0.0",
     "needle": "^3.3.1",
     "node-schedule": "^2.1.1",
     "oas-tools": "^2.2.2",
@@ -44,6 +47,8 @@
     "werelogs": "scality/werelogs#8.2.2"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.0",
+    "@eslint/js": "9.22.0",
     "eslint": "^9.17.0",
     "eslint-config-scality": "scality/Guidelines#8.3.0",
     "eslint-plugin-import": "^2.31.0",
