@@ -1,5 +1,5 @@
 const async = require('async');
-const { mpuBucketPrefix } = require('arsenal').constants;
+const { mpuBucketPrefix } = require('@scality/arsenal').constants;
 const BaseTask = require('./BaseTask');
 const { UtapiRecord } = require('../models');
 const config = require('../config');

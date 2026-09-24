@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { errors } = require('arsenal');
+const { errors } = require('@scality/arsenal');
 const { makeUtapiGenericClientRequest } = require('../../utils/utils');
 const Vault = require('../../utils/mock/Vault');
 

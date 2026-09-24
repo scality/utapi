@@ -2,7 +2,7 @@ const assert = require('assert');
 const needle = require('needle');
 const promClient = require('prom-client');
 const sinon = require('sinon');
-const { DEFAULT_METRICS_ROUTE } = require('arsenal').network.probe.ProbeServer;
+const { DEFAULT_METRICS_ROUTE } = require('@scality/arsenal').network.probe.ProbeServer;
 
 const { BaseTask } = require('../../../../libV2/tasks');
 const { clients: warp10Clients } = require('../../../../libV2/warp10');

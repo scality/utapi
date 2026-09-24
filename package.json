@@ -19,13 +19,13 @@
   "dependencies": {
     "@aws-sdk/client-iam": "^3.975.0",
     "@hapi/joi": "^17.1.1",
+    "@scality/arsenal": "^8.6.0-0",
+    "@scality/bucketclient": "scality/bucketclient#8.3.0",
     "@senx/warp10": "1.0.14",
-    "arsenal": "git+https://github.com/scality/Arsenal#8.5.6",
     "async": "^3.2.6",
     "aws4": "^1.13.2",
     "backo": "^1.1.0",
     "body-parser": "^1.20.3",
-    "bucketclient": "scality/bucketclient#8.2.5",
     "byte-size": "^9.0.1",
     "commander": "^12.1.0",
     "cron-parser": "^4.9.0",
@@ -64,8 +64,7 @@
     "**/@yarnpkg/json-proxy": "2.1.0",
     "**/@yarnpkg/parsers": "2.3.0",
     "string-width": "4.2.3",
-    "cliui": "7.0.4",
-    "nan": "v2.22.0"
+    "cliui": "7.0.4"
   },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional --exit",

@@ -1,6 +1,6 @@
 const assert = require('assert');
 const url = require('url');
-const { auth, errors, policies } = require('arsenal');
+const { auth, errors, policies } = require('@scality/arsenal');
 const safeJsonParse = require('../utils/safeJsonParse');
 const Vault = require('../lib/Vault');
 

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const { auth, policies } = require('arsenal');
+const { auth, policies } = require('@scality/arsenal');
 const vaultclient = require('vaultclient');
 const config = require('../config');
 const errors = require('../errors');

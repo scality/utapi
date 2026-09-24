@@ -2,7 +2,7 @@ const http = require('http');
 
 const express = require('express');
 
-const { models, constants } = require('arsenal');
+const { models, constants } = require('@scality/arsenal');
 
 const { CANONICAL_ID, BUCKET_NAME, OBJECT_KEY } = require('./values');
 

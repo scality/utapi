@@ -1,7 +1,7 @@
 const oasTools = require('oas-tools');
 const path = require('path');
 const { promisify } = require('util');
-const { ipCheck } = require('arsenal');
+const { ipCheck } = require('@scality/arsenal');
 const config = require('../config');
 const { logger, buildRequestLogger } = require('../utils');
 const errors = require('../errors');

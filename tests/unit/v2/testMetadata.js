@@ -1,8 +1,8 @@
 const assert = require('assert');
 const sinon = require('sinon');
 
-const { errors } = require('arsenal');
-const { BucketInfo } = require('arsenal').models;
+const { errors } = require('@scality/arsenal');
+const { BucketInfo } = require('@scality/arsenal').models;
 const client = require('../../../libV2/metadata/client');
 const metadata = require('../../../libV2/metadata');
 

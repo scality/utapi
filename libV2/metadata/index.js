@@ -1,4 +1,4 @@
-const arsenal = require('arsenal');
+const arsenal = require('@scality/arsenal');
 const async = require('async');
 const metadata = require('./client');
 const { LoggerContext, logger } = require('../utils');

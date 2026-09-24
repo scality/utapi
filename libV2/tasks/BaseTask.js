@@ -2,7 +2,7 @@ const assert = require('assert');
 const cron = require('node-schedule');
 const cronparser = require('cron-parser');
 const promClient = require('prom-client');
-const { DEFAULT_METRICS_ROUTE } = require('arsenal').network.probe.ProbeServer;
+const { DEFAULT_METRICS_ROUTE } = require('@scality/arsenal').network.probe.ProbeServer;
 
 const { client: cacheClient } = require('../cache');
 const Process = require('../process');

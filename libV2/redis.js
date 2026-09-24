@@ -1,7 +1,7 @@
 const EventEmitter = require('events');
 const { callbackify } = require('util');
 const IORedis = require('ioredis');
-const { jsutil } = require('arsenal');
+const { jsutil } = require('@scality/arsenal');
 const BackOff = require('backo');
 const { whilst } = require('async');
 

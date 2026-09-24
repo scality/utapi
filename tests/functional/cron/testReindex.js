@@ -2,7 +2,7 @@ const assert = require('assert');
 
 const async = require('async');
 
-const { constants } = require('arsenal');
+const { constants } = require('@scality/arsenal');
 
 const UtapiReindex = require('../../../lib/UtapiReindex');
 const redisClient = require('../../../utils/redisClient');

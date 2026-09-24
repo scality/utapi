@@ -1,5 +1,5 @@
 const async = require('async');
-const { jsutil } = require('arsenal');
+const { jsutil } = require('@scality/arsenal');
 const BaseTask = require('./BaseTask');
 const { UtapiRecord } = require('../models');
 const config = require('../config');

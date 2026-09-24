@@ -1,4 +1,4 @@
-const { errors } = require('arsenal');
+const { errors } = require('@scality/arsenal');
 const validateMetric = require('./validateMetric');
 const validateTimeRange = require('./validateTimeRange');
 

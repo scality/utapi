@@ -2,7 +2,7 @@ const http = require('http');
 const https = require('https');
 const express = require('express');
 const bodyParser = require('body-parser');
-const { ciphers, dhparam } = require('arsenal').https;
+const { ciphers, dhparam } = require('@scality/arsenal').https;
 
 const Process = require('../process');
 const config = require('../config');

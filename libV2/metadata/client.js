@@ -1,5 +1,5 @@
-const bucketclient = require('bucketclient');
-const { BucketClientInterface } = require('arsenal').storage.metadata.bucketclient;
+const bucketclient = require('@scality/bucketclient');
+const { BucketClientInterface } = require('@scality/arsenal').storage.metadata.bucketclient;
 
 const config = require('../config');
 const { LoggerContext } = require('../utils');

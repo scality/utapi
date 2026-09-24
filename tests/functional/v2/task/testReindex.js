@@ -1,7 +1,7 @@
 const assert = require('assert');
 const sinon = require('sinon');
 const { v4: uuid } = require('uuid');
-const { constants: arsenalConstants, models: arsenalModels } = require('arsenal');
+const { constants: arsenalConstants, models: arsenalModels } = require('@scality/arsenal');
 
 const { Warp10Client } = require('../../../../libV2/warp10');
 const { ReindexTask } = require('../../../../libV2/tasks');

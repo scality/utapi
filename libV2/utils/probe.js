@@ -1,5 +1,5 @@
 
-const { ProbeServer } = require('arsenal').network.probe.ProbeServer;
+const { ProbeServer } = require('@scality/arsenal').network.probe.ProbeServer;
 
 /**
  * Configure probe servers
