@@ -58,6 +58,10 @@
     "protobufjs": "^7.4.0",
     "sinon": "^19.0.2"
   },
+  "resolutions": {
+    "oas-tools/jsonwebtoken": "^9.0.2",
+    "**/request/form-data": "^2.5.6"
+  },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional --exit",
     "ft_test:client": "mocha --recursive tests/functional/client --exit",
