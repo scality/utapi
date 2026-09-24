@@ -45,10 +45,23 @@ describe('UtapiClient: Across time intervals', function test() {
         }
     }
 
+    function waitForReady(client, isReady) {
+        return new Promise(resolve => (isReady ? resolve() : client.once('ready', resolve)));
+    }
+
     const vault = new mock.Vault();
 
     before(() => {
         vault.start();
+        // waitUntilNextInterval() blocks the event loop, so the redis handshakes
+        // must have completed before the first metric is pushed
+        const ds = utapi.ds.getClient();
+        const localCache = utapi.localCache.getClient();
+        return Promise.all([
+            waitForReady(redis, redis.status === 'ready'),
+            waitForReady(ds, ds.isReady),
+            waitForReady(localCache, localCache.isReady),
+        ]);
     });
 
     after(() => {
