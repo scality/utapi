@@ -25,7 +25,7 @@ push metrics directly to the underlying datastore (Redis) without the need of an
 extra HTTP request to Utapi.
 
 ```js
-const { UtapiClient } = require('utapi');
+const { UtapiClient } = require('@scality/utapi');
 
 const config = {
     redis: {

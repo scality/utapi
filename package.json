@@ -1,9 +1,9 @@
 {
-  "name": "utapi",
+  "name": "@scality/utapi",
   "engines": {
     "node": ">=22"
   },
-  "version": "8.3.1",
+  "version": "8.4.0",
   "description": "API for tracking resource utilization and reporting metrics",
   "main": "index.js",
   "repository": {
