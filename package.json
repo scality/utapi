@@ -58,14 +58,6 @@
     "protobufjs": "^7.4.0",
     "sinon": "^19.0.2"
   },
-  "resolutions": {
-    "**/@yarnpkg/fslib": "2.4.0",
-    "**/@yarnpkg/libzip": "2.2.1",
-    "**/@yarnpkg/json-proxy": "2.1.0",
-    "**/@yarnpkg/parsers": "2.3.0",
-    "string-width": "4.2.3",
-    "cliui": "7.0.4"
-  },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional --exit",
     "ft_test:client": "mocha --recursive tests/functional/client --exit",
