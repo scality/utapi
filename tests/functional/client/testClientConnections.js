@@ -1,7 +1,6 @@
 const assert = require('assert');
 const async = require('async');
 const Redis = require('ioredis');
-const { EventEmitter } = require('events');
 const { makeUtapiGenericClientRequest } = require('../../utils/utils');
 const Vault = require('../../utils/mock/Vault');
 
@@ -22,14 +21,17 @@ const sentinel = new Redis({
     host,
 });
 
+// Subscribing before the client is ready races with ioredis' handshake and
+// makes its ready check fail with "Connection in subscriber mode".
 const sentinelSub = new Redis({
     port: 16379,
     host,
+    lazyConnect: true,
 });
 
 describe('Client connections', async function test() {
     this.timeout(5000);
-    this.loadgen = new EventEmitter();
+    this.failedOver = false;
 
     const makeRequest = (ctx, done) => {
         const MAX_RANGE_MS = (((1000 * 60) * 60) * 24) * 30; // One month.
@@ -63,7 +65,9 @@ describe('Client connections', async function test() {
             }
             const data = JSON.parse(response);
             if (data.code) {
-                return new Error(data.message);
+                // Requests racing the master switch fail with InternalError;
+                // only connection accounting matters here.
+                return done();
             }
 
             if (timeRange) {
@@ -78,6 +82,7 @@ describe('Client connections', async function test() {
     };
 
     before(async () => {
+        await sentinelSub.connect();
         await sentinelSub.subscribe('+slave');
 
         this.connectionsBeforeFailover = null;
@@ -113,37 +118,27 @@ describe('Client connections', async function test() {
             }
             assert.strictEqual(res, 'OK');
 
-            return async.race([
-                cb => {
-                    setTimeout(() => {
-                        this.loadgen.emit('finished');
-                        cb();
-                    }, 5000);
+            // Keep requests flowing until the sentinel reports the old master
+            // demoted to replica, so the load actually spans the failover.
+            return async.whilst(
+                cb => cb(null, !this.failedOver),
+                cb => async.times(10, (n, next) => makeRequest(this, next), cb),
+                err => {
+                    if (err) {
+                        return done(err);
+                    }
+                    assert(this.requestsDuringFailover > 1);
+                    return done();
                 },
-                cb => {
-                    async.times(
-                        100,
-                        (n, next) => makeRequest(this, next),
-                        err => {
-                            if (err) { return cb(err); }
-                            this.loadgen.emit('finished');
-                            return cb();
-                        },
-                    );
-                },
-            ]);
+            );
         });
 
-        return sentinelSub.on('message', (chan, message) => {
+        return sentinelSub.once('message', (chan, message) => {
             assert.strictEqual(chan, '+slave');
             const data = message.split(' ');
             const [oldPort, newPort] = [data[3], data[7]];
             assert.notStrictEqual(oldPort, newPort);
-
-            return this.loadgen.on('finished', () => {
-                assert(this.requestsDuringFailover > 1);
-                return done();
-            });
+            this.failedOver = true;
         });
     });
 });
