@@ -1,6 +1,6 @@
 const assert = require('assert');
-const url = require('url');
-const { auth, errors, policies } = require('@scality/arsenal');
+const querystring = require('querystring');
+const { auth, errors, policies, requestUrl } = require('@scality/arsenal');
 const safeJsonParse = require('../utils/safeJsonParse');
 const Vault = require('../lib/Vault');
 
@@ -41,13 +41,13 @@ class Router {
      */
     static extractRequestData(req, cb) {
         const body = [];
-        const { pathname, query } = url.parse(req.url, true);
+        const { pathname, query } = requestUrl.parseRequestTarget(req.url);
         const resource = pathname.substring(1) || 'service';
         const reqData = {
             resource,
         };
         // assign query params
-        Object.assign(reqData, query);
+        Object.assign(reqData, querystring.parse(query ?? ''));
         req.on('data', data => body.push(data))
             .on('error', cb)
             .on('end', () => {

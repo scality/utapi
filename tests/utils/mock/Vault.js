@@ -1,6 +1,6 @@
 const http = require('http');
-const url = require('url');
 const querystring = require('querystring');
+const { requestUrl } = require('@scality/arsenal');
 
 const config = require('../../../lib/Config');
 const { CANONICAL_ID } = require('./values');
@@ -11,7 +11,7 @@ class Vault {
     }
 
     _onRequest(req, res) {
-        const { query } = url.parse(req.url, true);
+        const query = querystring.parse(requestUrl.parseRequestTarget(req.url).query ?? '');
         if (query.Action === 'AccountsCanonicalIds') {
             const body = JSON.stringify([{ canonicalId: CANONICAL_ID, accountId: query.accountIds }]);
             res.writeHead(200);
