@@ -48,15 +48,27 @@ describe('Test APIController', () => {
 
     it('should extract a requests parameters', () => {
         const req = {
-            swagger: {
-                params: {
-                    foo: {
-                        value: 'bar',
-                    },
+            params: { level: 'buckets', other: 'ignored' },
+            query: { Action: 'ListMetrics', unknown: 'ignored' },
+            headers: { 'x-foo': 'bar' },
+            body: { timeRange: [0, 1] },
+            openapi: {
+                schema: {
+                    parameters: [
+                        { in: 'path', name: 'level' },
+                        { in: 'query', name: 'Action' },
+                        { in: 'header', name: 'X-Foo' },
+                    ],
+                    requestBody: { 'x-name': 'body' },
                 },
             },
         };
-        assert.deepStrictEqual(APIController._extractParams(req), { foo: 'bar' });
+        assert.deepStrictEqual(APIController._extractParams(req), {
+            level: 'buckets',
+            Action: 'ListMetrics',
+            'X-Foo': 'bar',
+            body: { timeRange: [0, 1] },
+        });
     });
 
     describe('Test APIController::_writeResult', () => {
@@ -80,6 +92,15 @@ describe('Test APIController', () => {
             await APIController._writeResult(results, response);
             assert.strictEqual(response._status, 200);
             assert.strictEqual(response._body, 'foo');
+            assert.strictEqual(response._type, 'text/plain');
+        });
+
+        it('should not set a content type for non-string bodies', async () => {
+            results.statusCode = 200;
+            results.body = { foo: 'bar' };
+            await APIController._writeResult(results, response);
+            assert.strictEqual(response._type, null);
+            assert.deepStrictEqual(response._body, { foo: 'bar' });
         });
 
         it('should send only a status code', async () => {

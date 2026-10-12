@@ -1,41 +1,40 @@
-const oasTools = require('oas-tools');
 const path = require('path');
-const { promisify } = require('util');
+const OpenApiValidator = require('express-openapi-validator');
 const { ipCheck } = require('@scality/arsenal');
 const config = require('../config');
-const { logger, buildRequestLogger } = require('../utils');
+const { buildRequestLogger } = require('../utils');
 const errors = require('../errors');
 const { translateAndAuthorize } = require('../vault');
 const metricHandlers = require('./metrics');
 
-const oasOptions = {
-    controllers: path.join(__dirname, './API/'),
-    checkControllers: true,
-    loglevel: config.logging.level === 'trace' ? 'debug' : 'info', // oasTools is very verbose
-    customLogger: logger,
-    customErrorHandling: true,
-    strict: true,
-    router: true,
-    validator: true,
-    docs: {
-        apiDocs: '/openapi.json',
-        apiDocsPrefix: '',
-    },
-    ignoreUnknownFormats: true,
-};
-
-// If in development mode, enable the swagger ui
-if (config.development) {
-    oasOptions.docs = {
-        swaggerUi: '/_/docs',
-        swaggerUiPrefix: '',
-        ...oasOptions.docs,
-    };
+// Dispatch each operation to the `operationId` handler of the controller named by `x-router-controller`
+function operationResolver(basePath, route, apiDoc) {
+    const operation = apiDoc.paths[route.openApiRoute.substring(route.basePath.length)][route.method.toLowerCase()];
+    const controller = require(path.join(basePath, operation['x-router-controller']));
+    const handler = controller[operation.operationId];
+    if (typeof handler !== 'function') {
+        throw new Error(`no handler for operation ${operation['x-router-controller']}::${operation.operationId}`);
+    }
+    return handler;
 }
 
-async function initializeOasTools(spec, app) {
-    oasTools.configure(oasOptions);
-    return promisify(oasTools.initialize)(spec, app);
+async function initializeApi(spec, app) {
+    app.get('/openapi.json', (req, res) => res.send(spec));
+    app.use(OpenApiValidator.middleware({
+        apiSpec: structuredClone(spec),
+        // resolve $refs so handlers see the full parameter definitions in req.openapi
+        $refParser: { mode: 'dereference' },
+        validateRequests: {
+            allowUnknownQueryParameters: true,
+        },
+        validateResponses: false,
+        // undocumented routes and methods fall through to express' default 404
+        ignoreUndocumented: true,
+        operationHandlers: {
+            basePath: path.join(__dirname, './API/'),
+            resolver: operationResolver,
+        },
+    }));
 }
 
 function loggerMiddleware(req, res, next) {
@@ -56,7 +55,7 @@ function responseLoggerMiddleware(req, res, next) {
 }
 
 function httpMetricsMiddleware(request, response, next) {
-    // If the request.ctx is undefined then this is an internal oasTools request (/_/docs)
+    // If the request.ctx is undefined then the request was not routed to an operation (/openapi.json, validation error)
     // No metrics should be pushed
     if (config.metrics.enabled && request.ctx && request.ctx.tag !== 'internal') {
         metricHandlers.httpRequestsTotal
@@ -79,8 +78,8 @@ function errorMiddleware(err, req, res, next) {
     let code = err.message || 'InternalError';
     let message = err.description || 'Internal Error';
 
-    // failed request validation by oas-tools
-    if (err.failedValidation) {
+    // failed request validation against the openapi spec (bad request, unsupported media type...)
+    if (!err.utapiError && err.status >= 400 && err.status < 500) {
         // You can't actually use destructing here
         statusCode = errors.InvalidRequest.code;
         code = errors.InvalidRequest.message;
@@ -165,7 +164,7 @@ async function clientIpLimitMiddleware(request) {
 }
 
 module.exports = {
-    initializeOasTools,
+    initializeApi,
     middleware: {
         loggerMiddleware,
         errorMiddleware,

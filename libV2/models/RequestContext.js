@@ -33,8 +33,8 @@ class RequestContext extends RequestContextModel {
         const protocol = RequestContext._determineProtocol(request);
         const encrypted = protocol === 'https';
         const url = `${protocol}://${host}${request.url}`;
-        const tag = request.swagger.operation['x-router-controller'];
-        const { operationId } = request.swagger.operation;
+        const tag = request.openapi.schema['x-router-controller'];
+        const { operationId } = request.openapi.schema;
 
         const requestTimer = tag !== 'internal'
             ? httpRequestDurationSeconds.startTimer({ action: operationId })

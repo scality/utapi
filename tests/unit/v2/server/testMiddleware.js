@@ -78,6 +78,17 @@ describe('Test middleware', () => {
             });
         });
 
+        [400, 415].forEach(status => {
+            it(`should map a ${status} request validation error to a 400`, () => {
+                middleware.errorMiddleware({ status, message: 'request/body must be array' }, req, resp);
+                assert.strictEqual(resp._status, 400);
+                assert.deepStrictEqual(resp._body, {
+                    code: 'InternalError',
+                    message: 'Internal Error',
+                });
+            });
+        });
+
         it('should call responseLoggerMiddleware after response', () => {
             const spy = sinon.spy();
             req.logger.end = spy;
@@ -104,8 +115,8 @@ describe('Test middleware', () => {
 
         it('should increment the counter if not an internal route', async () => {
             const req = templateRequest({
-                swagger: {
-                    operation: {
+                openapi: {
+                    schema: {
                         'x-router-controller': 'metrics',
                         'operationId': 'listMetrics',
                     },

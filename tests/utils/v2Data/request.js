@@ -5,6 +5,7 @@ class ExpressResponseStub {
         this._status = null;
         this._body = null;
         this._redirect = null;
+        this._type = null;
     }
 
     get statusCode() {
@@ -13,6 +14,11 @@ class ExpressResponseStub {
 
     status(code) {
         this._status = code;
+        return this;
+    }
+
+    type(contentType) {
+        this._type = contentType;
         return this;
     }
 
@@ -57,12 +63,14 @@ function templateRequest(overrides) {
         originalUrl: 'http://example.com/hello/world',
         hostname: 'example.com',
         url: '/hello/world',
-        swagger: {
-            operation: {
+        params: {},
+        query: {},
+        body: {},
+        openapi: {
+            schema: {
                 'x-router-controller': 'internal',
                 'operationId': 'healthcheck',
             },
-            params: {},
         },
         logger: stubLogger,
         results,

@@ -74,8 +74,8 @@ const validTestCases = [
 const invalidTestCases = [
     {
         request: templateRequest({
-            swagger: {
-                operation: {
+            openapi: {
+                schema: {
                     'x-router-controller': 'invalid',
                     'operationId': 'healthcheck',
                 },
@@ -84,8 +84,8 @@ const invalidTestCases = [
     },
     {
         request: templateRequest({
-            swagger: {
-                operation: {
+            openapi: {
+                schema: {
                     'x-router-controller': 'internal',
                     'operationId': 'invalid',
                 },

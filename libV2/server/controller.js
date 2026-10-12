@@ -77,11 +77,27 @@ class APIController {
     }
 
     static _extractParams(req) {
-        return Object.entries(req.swagger.params)
-            .reduce((params, [key, value]) => {
-                params[key] = value.value;
-                return params;
-            }, {});
+        const operation = req.openapi.schema;
+        const params = {};
+        (operation.parameters || []).forEach(({ in: location, name }) => {
+            switch (location) {
+            case 'path':
+                params[name] = req.params[name];
+                break;
+            case 'query':
+                params[name] = req.query[name];
+                break;
+            case 'header':
+                params[name] = req.headers[name.toLowerCase()];
+                break;
+            default:
+                break;
+            }
+        });
+        if (operation.requestBody) {
+            params[operation.requestBody['x-name'] || 'body'] = req.body;
+        }
+        return params;
     }
 
     static async _writeResult(results, response) {
@@ -92,6 +108,10 @@ class APIController {
             && !results.hasStatusCode()
         ) {
             throw errors.InternalError;
+        }
+        // String bodies (prometheus metrics) are plain text, express would otherwise default to html
+        if (typeof results.body === 'string') {
+            response.type('text/plain');
         }
         // If we have a redirect, do it
         if (results.hasRedirect()) {
@@ -170,7 +190,7 @@ class APIController {
     /**
      * buildMap
      *
-     * Constructs an object of `operationId`|`callOperation` pairs for use as a controller with oas-tools
+     * Constructs an object of `operationId`|`callOperation` pairs, used as express handlers for each operation
      * @returns {Object} - Map of operationIds to handler
      */
     buildMap() {

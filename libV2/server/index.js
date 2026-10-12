@@ -6,7 +6,7 @@ const { ciphers, dhparam } = require('@scality/arsenal').https;
 
 const Process = require('../process');
 const config = require('../config');
-const { initializeOasTools, middleware } = require('./middleware');
+const { initializeApi, middleware } = require('./middleware');
 const { spec: apiSpec } = require('./spec');
 const { client: cacheClient } = require('../cache');
 const { LoggerContext } = require('../utils');
@@ -26,7 +26,7 @@ class UtapiServer extends Process {
         const app = express();
         app.use(bodyParser.json({ strict: false }));
         app.use(middleware.loggerMiddleware);
-        await initializeOasTools(spec, app);
+        await initializeApi(spec, app);
         app.use(middleware.errorMiddleware);
         app.use(middleware.httpMetricsMiddleware);
         app.use(middleware.responseLoggerMiddleware);

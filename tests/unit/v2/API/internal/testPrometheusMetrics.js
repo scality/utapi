@@ -5,12 +5,11 @@ const prometheusMetrics = require('../../../../../libV2/server/API/internal/prom
 
 describe('Test prometheusMetrics', () => {
     const overrides = {
-        swagger: {
-            operation: {
+        openapi: {
+            schema: {
                 'x-router-controller': 'internal',
                 'operationId': 'prometheusMetrics',
             },
-            params: {},
         },
     };
     const ctx = new RequestContext(templateRequest(overrides));
