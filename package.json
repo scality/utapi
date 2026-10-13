@@ -56,7 +56,7 @@
     "mocha": "^12.0.3",
     "nodemon": "^3.1.9",
     "protobufjs": "^7.4.0",
-    "sinon": "^19.0.2"
+    "sinon": "^22.1.0"
   },
   "scripts": {
     "ft_test": "mocha --recursive tests/functional --exit",
