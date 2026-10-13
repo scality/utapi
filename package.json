@@ -53,7 +53,7 @@
     "eslint": "^9.17.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-mocha": "^10.5.0",
-    "mocha": "^10.7.3",
+    "mocha": "^12.0.3",
     "nodemon": "^3.1.9",
     "protobufjs": "^7.4.0",
     "sinon": "^19.0.2"
