@@ -1,4 +1,4 @@
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const { buildModel } = require('./Base');
 
 const orNull = schema => Joi.alternatives(schema, Joi.any().valid(null));

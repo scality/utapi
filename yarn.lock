@@ -637,24 +637,12 @@
     protobufjs "^7.5.5"
     yargs "^17.7.2"
 
-"@hapi/address@^4.0.1":
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/@hapi/address/-/address-4.1.0.tgz#d60c5c0d930e77456fdcde2598e77302e2955e1d"
-  integrity sha512-SkszZf13HVgGmChdHo/PxchnSaCJ6cetVqLzyciudzZRT0jcOouIF/Q93mgjw8cce+D+4F4C1Z/WrfFN+O3VHQ==
-  dependencies:
-    "@hapi/hoek" "^9.0.0"
-
 "@hapi/address@^5.1.1":
   version "5.1.1"
   resolved "https://registry.yarnpkg.com/@hapi/address/-/address-5.1.1.tgz#e9925fc1b65f5cc3fbea821f2b980e4652e84cb6"
   integrity sha512-A+po2d/dVoY7cYajycYI43ZbYMXukuopIsqCjh5QzsBCipDtdofHntljDlpccMjIfTy6UOkg+5KPriwYch2bXA==
   dependencies:
     "@hapi/hoek" "^11.0.2"
-
-"@hapi/formula@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@hapi/formula/-/formula-2.0.0.tgz#edade0619ed58c8e4f164f233cda70211e787128"
-  integrity sha512-V87P8fv7PI0LH7LiVi8Lkf3x+KCO7pQozXRssAHNXXL9L1K+uyu4XypLXwxqVDKgyQai6qj3/KteNlrqDx4W5A==
 
 "@hapi/formula@^3.0.2":
   version "3.0.2"
@@ -666,23 +654,7 @@
   resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-11.0.7.tgz#56a920793e0a42d10e530da9a64cc0d3919c4002"
   integrity sha512-HV5undWkKzcB4RZUusqOpcgxOaq6VOAH7zhhIr2g3G8NF/MlFO75SjOr2NfuSx0Mh40+1FqCkagKLJRykUWoFQ==
 
-"@hapi/hoek@^9.0.0":
-  version "9.3.0"
-  resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.3.0.tgz#8368869dcb735be2e7f5cb7647de78e167a251fb"
-  integrity sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==
-
-"@hapi/joi@^17.1.1":
-  version "17.1.1"
-  resolved "https://registry.yarnpkg.com/@hapi/joi/-/joi-17.1.1.tgz#9cc8d7e2c2213d1e46708c6260184b447c661350"
-  integrity sha512-p4DKeZAoeZW4g3u7ZeRo+vCDuSDgSvtsB/NpfjXEHTUjSeINAi/RrVOWiVQ1isaoLzMvFEhe8n5065mQq1AdQg==
-  dependencies:
-    "@hapi/address" "^4.0.1"
-    "@hapi/formula" "^2.0.0"
-    "@hapi/hoek" "^9.0.0"
-    "@hapi/pinpoint" "^2.0.0"
-    "@hapi/topo" "^5.0.0"
-
-"@hapi/pinpoint@^2.0.0", "@hapi/pinpoint@^2.0.1":
+"@hapi/pinpoint@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@hapi/pinpoint/-/pinpoint-2.0.1.tgz#32077e715655fc00ab8df74b6b416114287d6513"
   integrity sha512-EKQmr16tM8s16vTT3cA5L0kZZcTMU5DUOZTuvpnY738m+jyP3JIUj+Mm1xc1rsLkGBQ/gVnfKYPwOmPg1tUR4Q==
@@ -691,13 +663,6 @@
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/@hapi/tlds/-/tlds-1.1.7.tgz#005d10761e7a946aedae32a418b8f1dafd3f998e"
   integrity sha512-MgNjRwy9Ti92yVAixLmDc8dd1bJIKwO9qlWCfFQRwRmUEDPQHYn4G6hwPFvFGUTzAa0FsS+inMjLin7GnyBRhA==
-
-"@hapi/topo@^5.0.0":
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/@hapi/topo/-/topo-5.1.0.tgz#dc448e332c6c6e37a4dc02fd84ba8d44b9afb012"
-  integrity sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==
-  dependencies:
-    "@hapi/hoek" "^9.0.0"
 
 "@hapi/topo@^6.0.2":
   version "6.0.2"
@@ -3480,7 +3445,6 @@ http2-wrapper@^1.0.0-beta.5.2:
 
 "httpagent@git+https://github.com/scality/httpagent#1.1.0":
   version "1.1.0"
-  uid "8f9958eb9cde086db7819a86582fba640a5f8876"
   resolved "git+https://github.com/scality/httpagent#8f9958eb9cde086db7819a86582fba640a5f8876"
   dependencies:
     agentkeepalive "^4.5.0"
@@ -3498,7 +3462,7 @@ http2-wrapper@^1.0.0-beta.5.2:
   dependencies:
     agentkeepalive "^4.5.0"
 
-"httpagent@github:scality/httpagent#1.1.1":
+"httpagent@github:scality/httpagent#1.1.1", httpagent@scality/httpagent#1.1.1:
   version "1.1.1"
   resolved "https://codeload.github.com/scality/httpagent/tar.gz/7c6ef8be1cd89b56651f4a922ea5c92d7673ee2e"
   dependencies:
@@ -6078,7 +6042,7 @@ webidl-conversions@^7.0.0:
     fast-safe-stringify "^2.1.1"
     safe-json-stringify "^1.2.0"
 
-"werelogs@github:scality/werelogs#8.2.5", werelogs@scality/werelogs#8.2.5:
+werelogs@scality/werelogs#8.2.5:
   version "8.2.5"
   resolved "https://codeload.github.com/scality/werelogs/tar.gz/41188826d661227f98ebaaeda7df5e5862809bc7"
   dependencies:

@@ -1,4 +1,4 @@
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 
 const { operations } = require('../constants');
 const { buildModel } = require('./Base');

@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const assert = require('assert');
 
 const {

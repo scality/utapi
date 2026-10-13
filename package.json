@@ -18,7 +18,6 @@
   "homepage": "https://github.com/scality/utapi#readme",
   "dependencies": {
     "@aws-sdk/client-iam": "^3.975.0",
-    "@hapi/joi": "^17.1.1",
     "@scality/arsenal": "^8.6.0-0",
     "@scality/bucketclient": "scality/bucketclient#8.3.0",
     "@senx/warp10": "1.0.14",
@@ -35,6 +34,7 @@
     "express-openapi-validator": "^5.6.2",
     "get-folder-size": "^2.0.1",
     "ioredis": "^5.4.2",
+    "joi": "^18.0.1",
     "js-yaml": "^4.1.0",
     "level-mem": "^5.0.1",
     "levelup": "^4.3.2",
