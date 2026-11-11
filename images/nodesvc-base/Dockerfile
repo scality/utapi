@@ -2,7 +2,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG UTAPI_VERSION=latest
 FROM ghcr.io/scality/utapi:${UTAPI_VERSION} AS base
 
-FROM node:22.14.0-bookworm-slim
+FROM node:22.23.5-bookworm-slim
 
 # Prepare runtime environment
 ENV USER="scality"
